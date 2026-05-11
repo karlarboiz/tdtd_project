@@ -24,8 +24,8 @@ export function AttendanceCalendar() {
   )
 
   return (
-    <div className="min-h-svh bg-neutral-bg px-4 py-8">
-      <div className="mx-auto max-w-md">
+    <div className="w-full">
+      <div className="mx-auto w-full max-w-md lg:max-w-2xl">
         <div className="mb-6 flex items-center gap-3">
           <button
             type="button"

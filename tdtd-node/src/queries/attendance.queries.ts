@@ -30,4 +30,19 @@ export const ATTENDANCE_QUERIES = {
     WHERE date >= ? AND date <= ?
     ORDER BY date
   `,
+  presentStudentsForSession: `
+    SELECT
+      s.id,
+      s.first_name,
+      s.middle_name,
+      s.last_name,
+      s.birth_date,
+      s.gender,
+      s.class_id,
+      s.created_at
+    FROM attendance_records ar
+    INNER JOIN students s ON s.id = ar.student_id
+    WHERE ar.session_id = ?
+    ORDER BY s.last_name COLLATE NOCASE ASC, s.first_name COLLATE NOCASE ASC
+  `,
 } as const

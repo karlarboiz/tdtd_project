@@ -173,26 +173,27 @@ export function Classes() {
   }
 
   return (
-    <div className="min-h-svh bg-neutral-bg px-4 py-8">
-      <div className="mx-auto max-w-md">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <Link
-            to="/"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-          >
-            ← Home
-          </Link>
-        </div>
-
-        <h1 className="text-xl font-semibold text-slate-900">Classes &amp; students</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Create a section, then add students with full details or import from Excel (see sample).
-        </p>
-
-        <form
-          onSubmit={addClass}
-          className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+    <div className="w-full">
+      <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
+        <Link
+          to="/"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
         >
+          ← Home
+        </Link>
+      </div>
+
+      <h1 className="text-xl font-semibold text-slate-900">Classes &amp; students</h1>
+      <p className="mt-1 max-w-2xl text-sm text-slate-600">
+        Create a section, then add students with full details or import from Excel (see sample).
+      </p>
+
+      <div className="mt-8 flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:gap-8">
+        <div className="flex flex-col gap-8 lg:col-span-5">
+          <form
+            onSubmit={addClass}
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          >
           <h2 className="font-semibold text-slate-900">New class</h2>
           <label className="mt-4 block text-sm font-medium text-slate-600" htmlFor="cname">
             Name
@@ -222,88 +223,91 @@ export function Classes() {
           >
             Add class
           </button>
-        </form>
-
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <label className="block text-sm font-medium text-slate-600" htmlFor="pick-class">
-            Active class
-          </label>
-          <select
-            id="pick-class"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 outline-none ring-secondary focus:ring-2"
-            value={selectedClassId}
-            onChange={(e) => setSelectedClassId(e.target.value)}
-          >
-            {classes.length === 0 ? (
-              <option value="">No classes yet</option>
-            ) : (
-              classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} · {formatClassShiftLabel(c.shift)}
-                </option>
-              ))
-            )}
-          </select>
-
-          <form onSubmit={addStudent} className="mt-6 space-y-3">
-            <h2 className="font-semibold text-slate-900">Add student</h2>
-            <input
-              value={stu.firstName}
-              onChange={(e) => setStu((s) => ({ ...s, firstName: e.target.value }))}
-              disabled={!selectedClassId}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
-              placeholder="First name"
-            />
-            <input
-              value={stu.middleName}
-              onChange={(e) => setStu((s) => ({ ...s, middleName: e.target.value }))}
-              disabled={!selectedClassId}
-              className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
-              placeholder="Middle name (optional)"
-            />
-            <input
-              value={stu.lastName}
-              onChange={(e) => setStu((s) => ({ ...s, lastName: e.target.value }))}
-              disabled={!selectedClassId}
-              className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
-              placeholder="Last name"
-            />
-            <input
-              type="date"
-              value={stu.birthDate}
-              onChange={(e) => setStu((s) => ({ ...s, birthDate: e.target.value }))}
-              disabled={!selectedClassId}
-              className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
-            />
-            <label className="block text-sm font-medium text-slate-600" htmlFor="stu-gender">
-              Gender
-            </label>
-            <select
-              id="stu-gender"
-              value={stu.gender}
-              onChange={(e) =>
-                setStu((s) => ({
-                  ...s,
-                  gender: e.target.value as StudentGenderCode,
-                }))
-              }
-              disabled={!selectedClassId}
-              className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
-            >
-              <option value="M">Male (M)</option>
-              <option value="F">Female (F)</option>
-              <option value="O">Other (O)</option>
-            </select>
-            <button
-              type="submit"
-              disabled={!selectedClassId}
-              className="w-full rounded-xl border-2 border-secondary bg-teal-50 py-3 font-semibold text-secondary hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Add student
-            </button>
           </form>
 
-          <div className="mt-6">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <label className="block text-sm font-medium text-slate-600" htmlFor="pick-class">
+              Active class
+            </label>
+            <select
+              id="pick-class"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 outline-none ring-secondary focus:ring-2"
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+            >
+              {classes.length === 0 ? (
+                <option value="">No classes yet</option>
+              ) : (
+                classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} · {formatClassShiftLabel(c.shift)}
+                  </option>
+                ))
+              )}
+            </select>
+
+            <form onSubmit={addStudent} className="mt-6 space-y-3">
+              <h2 className="font-semibold text-slate-900">Add student</h2>
+              <input
+                value={stu.firstName}
+                onChange={(e) => setStu((s) => ({ ...s, firstName: e.target.value }))}
+                disabled={!selectedClassId}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                placeholder="First name"
+              />
+              <input
+                value={stu.middleName}
+                onChange={(e) => setStu((s) => ({ ...s, middleName: e.target.value }))}
+                disabled={!selectedClassId}
+                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                placeholder="Middle name (optional)"
+              />
+              <input
+                value={stu.lastName}
+                onChange={(e) => setStu((s) => ({ ...s, lastName: e.target.value }))}
+                disabled={!selectedClassId}
+                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                placeholder="Last name"
+              />
+              <input
+                type="date"
+                value={stu.birthDate}
+                onChange={(e) => setStu((s) => ({ ...s, birthDate: e.target.value }))}
+                disabled={!selectedClassId}
+                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+              />
+              <label className="block text-sm font-medium text-slate-600" htmlFor="stu-gender">
+                Gender
+              </label>
+              <select
+                id="stu-gender"
+                value={stu.gender}
+                onChange={(e) =>
+                  setStu((s) => ({
+                    ...s,
+                    gender: e.target.value as StudentGenderCode,
+                  }))
+                }
+                disabled={!selectedClassId}
+                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+              >
+                <option value="M">Male (M)</option>
+                <option value="F">Female (F)</option>
+                <option value="O">Other (O)</option>
+              </select>
+              <button
+                type="submit"
+                disabled={!selectedClassId}
+                className="w-full rounded-xl border-2 border-secondary bg-teal-50 py-3 font-semibold text-secondary hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Add student
+              </button>
+            </form>
+          </section>
+        </div>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-7 lg:flex lg:min-h-0 lg:max-h-[calc(100svh-10rem)] lg:flex-col lg:self-start">
+          <div className="min-h-0 lg:flex lg:flex-1 lg:flex-col">
             <h2 className="font-semibold text-slate-900">Import from Excel</h2>
             <p className="mt-1 text-xs text-slate-500">
               Row 1 = headers: <strong>firstName</strong>, <strong>middleName</strong>,{' '}
@@ -311,11 +315,11 @@ export function Classes() {
               Use <strong>YYYY-MM-DD</strong> for dates; gender <strong>M</strong>, <strong>F</strong>, or{' '}
               <strong>O</strong> (or Male/Female/Other). Empty middle names are OK. Empty rows are skipped.
             </p>
-            {importError && (
+            {importError ? (
               <p className="mt-2 text-sm font-medium text-accent" role="alert">
                 {importError}
               </p>
-            )}
+            ) : null}
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
               <input
                 ref={fileRef}
@@ -334,27 +338,27 @@ export function Classes() {
                 Download sample (.xlsx)
               </button>
             </div>
-          </div>
 
-          <div className="mt-8 border-t border-slate-100 pt-4">
-            <h2 className="font-semibold text-slate-900">
-              Students ({students.length})
-            </h2>
-            <ul className="mt-3 max-h-64 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-100">
-              {students.map((s) => (
-                <li key={s.id} className="px-3 py-2 text-left text-slate-800">
-                  <span className="font-medium">{formatStudentName(s)}</span>
-                  <span className="mt-0.5 block text-xs text-slate-500">
-                    {s.birthDate} · {s.gender}
-                  </span>
-                </li>
-              ))}
-              {students.length === 0 && (
-                <li className="px-3 py-6 text-center text-sm text-slate-500">
-                  No students yet.
-                </li>
-              )}
-            </ul>
+            <div className="mt-8 flex min-h-0 flex-1 flex-col border-t border-slate-100 pt-4 lg:min-h-[12rem]">
+              <h2 className="shrink-0 font-semibold text-slate-900">
+                Students ({students.length})
+              </h2>
+              <ul className="mt-3 min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-100 lg:max-h-none">
+                {students.map((s) => (
+                  <li key={s.id} className="px-3 py-2 text-left text-slate-800">
+                    <span className="font-medium">{formatStudentName(s)}</span>
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      {s.birthDate} · {s.gender}
+                    </span>
+                  </li>
+                ))}
+                {students.length === 0 && (
+                  <li className="px-3 py-6 text-center text-sm text-slate-500">
+                    No students yet.
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
         </section>
       </div>

@@ -117,7 +117,7 @@ export function MonthlyCalendar({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500 lg:text-sm">
         {WEEKDAYS.map((d) => (
           <div key={d} className="py-2">
             {d}
@@ -125,7 +125,7 @@ export function MonthlyCalendar({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 lg:gap-2">
         {grid.map((cell, i) => {
           if (cell.kind === 'empty') {
             return <div key={`e-${i}`} className="aspect-square" />
@@ -154,7 +154,7 @@ export function MonthlyCalendar({
               onClick={() => onSelectDate(ymd)}
               aria-label={ariaLabel}
               className={[
-                'touch-manipulation flex aspect-square flex-col items-center justify-center gap-0.5 rounded-xl text-sm font-medium transition',
+                'touch-manipulation flex aspect-square flex-col items-center justify-center gap-0.5 rounded-xl text-sm font-medium transition lg:text-base',
                 disabled
                   ? 'cursor-not-allowed bg-slate-50 text-slate-300'
                   : 'cursor-pointer bg-neutral-bg text-slate-800 hover:bg-teal-50 hover:ring-2 hover:ring-secondary/40',

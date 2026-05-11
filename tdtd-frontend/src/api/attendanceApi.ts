@@ -1,12 +1,31 @@
 import type {
   AttendancePeriod,
   AttendanceSessionRow,
+  StudentRow,
 } from '../types/schema'
 import { apiJson } from '../lib/http'
 
 export type AttendanceStateResponse = {
   session: AttendanceSessionRow | null
   presentStudentIds: string[]
+}
+
+export type AttendancePresentRosterResponse = {
+  session: AttendanceSessionRow | null
+  presentStudents: StudentRow[]
+}
+
+export function getAttendancePresentRoster(params: {
+  date: string
+  period: AttendancePeriod
+}): Promise<AttendancePresentRosterResponse> {
+  const q = new URLSearchParams({
+    date: params.date,
+    period: params.period,
+  })
+  return apiJson<AttendancePresentRosterResponse>(
+    `/api/attendance/present-roster?${q.toString()}`,
+  )
 }
 
 export function getAttendanceState(params: {

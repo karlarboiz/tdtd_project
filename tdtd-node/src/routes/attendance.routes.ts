@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import {
+  attendancePresentRosterHandler,
   attendanceSaveHandler,
   attendanceSessionDatesHandler,
   attendanceStateHandler,
@@ -9,6 +10,7 @@ import {
 export function attendanceRouter(db: SqliteDatabase): Router {
   const router = Router()
   router.get('/session-dates', attendanceSessionDatesHandler(db))
+  router.get('/present-roster', attendancePresentRosterHandler(db))
   router.get('/state', attendanceStateHandler(db))
   router.post('/save', attendanceSaveHandler(db))
   return router

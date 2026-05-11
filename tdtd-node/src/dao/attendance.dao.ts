@@ -1,5 +1,10 @@
 import type { SqliteDatabase } from '../db/sqlite-types.js'
-import type { AttendancePeriod, AttendanceSessionRow } from '../schema/types.js'
+import type {
+  AttendancePeriod,
+  AttendanceSessionRow,
+  StudentGenderCode,
+  StudentRow,
+} from '../schema/types.js'
 import { ATTENDANCE_QUERIES } from '../queries/attendance.queries.js'
 
 type SessionDbRow = {
@@ -91,4 +96,34 @@ export function listDistinctSessionDatesInRange(
     .prepare(ATTENDANCE_QUERIES.distinctSessionDatesInRange)
     .all(from, to) as { date: string }[]
   return rows.map((r) => r.date)
+}
+
+type PresentStudentDbRow = {
+  id: string
+  first_name: string
+  middle_name: string | null
+  last_name: string
+  birth_date: string
+  gender: StudentGenderCode
+  class_id: string
+  created_at: number
+}
+
+export function listPresentStudentsForSession(
+  db: SqliteDatabase,
+  sessionId: string,
+): StudentRow[] {
+  const rows = db
+    .prepare(ATTENDANCE_QUERIES.presentStudentsForSession)
+    .all(sessionId) as PresentStudentDbRow[]
+  return rows.map((r) => ({
+    id: r.id,
+    firstName: r.first_name,
+    middleName: r.middle_name ?? undefined,
+    lastName: r.last_name,
+    birthDate: r.birth_date,
+    gender: r.gender,
+    classId: r.class_id,
+    createdAt: r.created_at,
+  }))
 }

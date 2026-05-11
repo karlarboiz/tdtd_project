@@ -2,10 +2,31 @@ import type { Request, Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import {
   getAttendanceState,
+  getPresentAttendanceRoster,
   listAttendanceSessionDatesInRange,
   saveAttendance,
 } from '../services/attendance.service.js'
 import { HttpError } from '../errors/http-error.js'
+
+export function attendancePresentRosterHandler(db: SqliteDatabase) {
+  return (req: Request, res: Response): void => {
+    try {
+      const date =
+        typeof req.query.date === 'string' ? req.query.date : ''
+      const period =
+        typeof req.query.period === 'string' ? req.query.period : ''
+      const roster = getPresentAttendanceRoster(db, date, period)
+      res.json(roster)
+    } catch (e) {
+      if (e instanceof HttpError) {
+        res.status(e.statusCode).json({ error: e.message })
+        return
+      }
+      console.error(e)
+      res.status(500).json({ error: 'internal server error' })
+    }
+  }
+}
 
 export function attendanceStateHandler(db: SqliteDatabase) {
   return (req: Request, res: Response): void => {

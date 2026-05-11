@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom'
 
 export function Home() {
   return (
-    <div className="flex min-h-svh flex-col bg-neutral-bg px-4 py-10">
-      <header className="mx-auto w-full max-w-md text-center">
+    <div className="mx-auto flex w-full max-w-md flex-col py-6 lg:max-w-xl lg:py-10">
+      <header className="w-full text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Teacher&apos;s Dilemma Today
         </h1>
@@ -12,7 +12,7 @@ export function Home() {
         </p>
       </header>
 
-      <main className="mx-auto mt-12 flex w-full max-w-md flex-1 flex-col items-stretch gap-4">
+      <main className="mx-auto mt-10 flex w-full max-w-md flex-1 flex-col items-stretch gap-4 lg:mt-14 lg:max-w-xl">
         <Link
           to="/attendance"
           className="rounded-2xl bg-primary px-5 py-4 text-center text-lg font-semibold text-white shadow-md transition hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"

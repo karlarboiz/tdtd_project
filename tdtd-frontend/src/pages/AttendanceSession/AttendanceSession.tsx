@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { RegisterStudentsModal } from '../../components/RegisterStudentsModal/RegisterStudentsModal'
 import { listClasses } from '../../api/classesApi'
 import {
+  getAttendancePresentRoster,
   getAttendanceState,
   saveAttendance as saveAttendanceRequest,
 } from '../../api/attendanceApi'
@@ -12,7 +13,11 @@ import {
   formatClassShiftLabel,
 } from '../../lib/classShift'
 import { formatStudentName } from '../../lib/studentDisplay'
-import type { ClassRow, StudentRow } from '../../types/schema'
+import type {
+  AttendanceSessionRow,
+  ClassRow,
+  StudentRow,
+} from '../../types/schema'
 import { formatLongDate, parseYMD } from '../../lib/dates'
 import { getCurrentPeriod } from '../../lib/period'
 
@@ -32,6 +37,14 @@ export function AttendanceSession() {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
+  const [rosterLoading, setRosterLoading] = useState(true)
+  const [rosterSession, setRosterSession] = useState<AttendanceSessionRow | null>(
+    null,
+  )
+  const [savedPresentStudents, setSavedPresentStudents] = useState<
+    StudentRow[]
+  >([])
+  const didAutoPickClassRef = useRef(false)
 
   const periodLabel =
     period === 'AM' ? 'Morning Attendance' : 'Afternoon Attendance'
@@ -45,6 +58,34 @@ export function AttendanceSession() {
     void refreshClasses()
   }, [refreshClasses])
 
+  useEffect(() => {
+    didAutoPickClassRef.current = false
+  }, [dateYmd, period])
+
+  const refreshPresentRoster = useCallback(async () => {
+    if (!parseYMD(dateYmd)) {
+      setRosterSession(null)
+      setSavedPresentStudents([])
+      setRosterLoading(false)
+      return
+    }
+    setRosterLoading(true)
+    try {
+      const data = await getAttendancePresentRoster({ date: dateYmd, period })
+      setRosterSession(data.session)
+      setSavedPresentStudents(data.presentStudents)
+    } catch {
+      setRosterSession(null)
+      setSavedPresentStudents([])
+    } finally {
+      setRosterLoading(false)
+    }
+  }, [dateYmd, period])
+
+  useEffect(() => {
+    void refreshPresentRoster()
+  }, [refreshPresentRoster])
+
   const classesForPeriod = useMemo(
     () =>
       allClasses.filter((c) => classShiftMatchesPeriod(c.shift, period)),
@@ -56,6 +97,17 @@ export function AttendanceSession() {
       prev && classesForPeriod.some((c) => c.id === prev) ? prev : '',
     )
   }, [classesForPeriod])
+
+  useEffect(() => {
+    if (didAutoPickClassRef.current || rosterLoading) return
+    if (!rosterSession || savedPresentStudents.length === 0) return
+    const uniq = [...new Set(savedPresentStudents.map((s) => s.classId))]
+    if (uniq.length !== 1) return
+    const onlyClassId = uniq[0]
+    if (!classesForPeriod.some((c) => c.id === onlyClassId)) return
+    setClassId((prev) => (prev ? prev : onlyClassId))
+    didAutoPickClassRef.current = true
+  }, [rosterLoading, rosterSession, savedPresentStudents, classesForPeriod])
 
   const loadClassStudents = useCallback(
     async (cid: string) => {
@@ -126,6 +178,7 @@ export function AttendanceSession() {
         presentStudentIds: presentIds,
       })
       setSaveMsg('Attendance saved.')
+      await refreshPresentRoster()
     } catch {
       setSaveMsg('Could not save. Try again.')
     } finally {
@@ -152,23 +205,22 @@ export function AttendanceSession() {
 
   if (!parsed) {
     return (
-      <div className="min-h-svh bg-neutral-bg px-4 py-8">
-        <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
-          <p className="text-slate-700">Invalid date in URL.</p>
-          <button
-            type="button"
-            className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-            onClick={() => navigate('/attendance')}
-          >
-            Choose a date
-          </button>
-        </div>
+      <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
+        <p className="text-slate-700">Invalid date in URL.</p>
+        <button
+          type="button"
+          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+          onClick={() => navigate('/attendance')}
+        >
+          Choose a date
+        </button>
       </div>
     )
   }
 
   const hasAnyClasses = allClasses.length > 0
   const hasClassesForPeriod = classesForPeriod.length > 0
+  const rosterPanelActive = rosterLoading || Boolean(rosterSession)
   const selectPlaceholder = !hasAnyClasses
     ? 'No class registered yet'
     : !hasClassesForPeriod
@@ -176,7 +228,7 @@ export function AttendanceSession() {
       : 'Select a class…'
 
   return (
-    <div className="min-h-svh bg-neutral-bg px-4 py-8">
+    <div className="w-full">
       <RegisterStudentsModal
         open={registerModalOpen}
         onClose={() => setRegisterModalOpen(false)}
@@ -184,8 +236,8 @@ export function AttendanceSession() {
         existingClasses={allClasses}
       />
 
-      <div className="mx-auto max-w-md">
-        <div className="mb-6 flex items-center gap-3">
+      <div className="mx-auto w-full max-w-md lg:max-w-none">
+        <div className="mb-6 flex items-center gap-3 lg:mb-8">
           <button
             type="button"
             onClick={() => navigate('/attendance')}
@@ -195,120 +247,175 @@ export function AttendanceSession() {
           </button>
         </div>
 
-        <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-secondary">{periodLabel}</p>
-          <h1 className="mt-1 text-xl font-semibold text-slate-900">
-            {formatLongDate(dateYmd)}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Period: <span className="font-semibold text-slate-700">{period}</span>
-          </p>
-        </header>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
+          <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-1 lg:row-start-1">
+            <p className="text-sm font-medium text-secondary">{periodLabel}</p>
+            <h1 className="mt-1 text-xl font-semibold text-slate-900">
+              {formatLongDate(dateYmd)}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Period: <span className="font-semibold text-slate-700">{period}</span>
+            </p>
+          </header>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <label className="block text-sm font-medium text-slate-600" htmlFor="class-select">
-            Class
-          </label>
-          <select
-            id="class-select"
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70"
-            value={hasClassesForPeriod ? classId : ''}
-            onChange={(e) => setClassId(e.target.value)}
-            disabled={!hasClassesForPeriod}
-          >
-            <option value="">{selectPlaceholder}</option>
-            {hasClassesForPeriod &&
-              classesForPeriod.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} · {formatClassShiftLabel(c.shift)}
-                </option>
-              ))}
-          </select>
-
-          <p className="mt-2 text-sm text-slate-500">
-            {!hasAnyClasses
-              ? 'Set up your roster first — register a class (with morning or afternoon schedule) and add students.'
-              : !hasClassesForPeriod
-                ? `Only classes scheduled for ${period === 'AM' ? 'morning (MRNG)' : 'afternoon (AFTNN)'} appear during ${period === 'AM' ? 'morning' : 'afternoon'} attendance. Manage all classes under Classes & students.`
-                : 'Choose a class to load its student list.'}
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setRegisterModalOpen(true)}
-            className="mt-4 w-full rounded-2xl border-2 border-primary bg-indigo-50/80 px-4 py-4 text-center font-semibold text-primary shadow-sm transition hover:bg-indigo-100"
-          >
-            Register Students or import from Excel
-            <span className="mt-1 block text-sm font-normal text-indigo-900/80">
-              Opens a setup window — manual entry or spreadsheet import
-            </span>
-          </button>
-        </section>
-
-        {hasClassesForPeriod && classId && (
-          <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <h2 className="text-lg font-semibold text-slate-900">Students</h2>
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                disabled={students.length === 0 || loadingClass}
-                className="rounded-lg bg-secondary/15 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-secondary/25 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {allChecked ? 'Clear all' : 'Select all'}
-              </button>
+          {rosterPanelActive ? (
+            <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:max-h-[min(28rem,calc(100svh-9rem))] lg:overflow-y-auto">
+              {rosterLoading ? (
+                <p className="text-center text-sm text-slate-500 lg:text-left">
+                  Checking for saved attendance…
+                </p>
+              ) : (
+                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    Students marked present
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Attendance for this date and period is already on file. You can
+                    still change the class below to review or update the roster.
+                  </p>
+                  {savedPresentStudents.length === 0 ? (
+                    <p className="mt-4 text-center text-slate-600">
+                      No students were marked present for this session.
+                    </p>
+                  ) : (
+                    <ul className="mt-4 divide-y divide-slate-100">
+                      {savedPresentStudents.map((s) => {
+                        const cls = allClasses.find((c) => c.id === s.classId)
+                        return (
+                          <li
+                            key={s.id}
+                            className="flex flex-wrap items-baseline justify-between gap-2 py-3"
+                          >
+                            <span className="text-slate-900">
+                              {formatStudentName(s)}
+                            </span>
+                            {cls ? (
+                              <span className="text-sm text-slate-500">
+                                {cls.name} · {formatClassShiftLabel(cls.shift)}
+                              </span>
+                            ) : null}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </section>
+              )}
             </div>
+          ) : null}
 
-            {loadingClass ? (
-              <p className="py-8 text-center text-slate-500">Loading…</p>
-            ) : students.length === 0 ? (
-              <p className="py-8 text-center text-slate-600">
-                No students in this class yet. Use &quot;Register Students or
-                import from Excel&quot; above to add names.
-              </p>
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {students.map((s) => (
-                  <li key={s.id} className="flex items-center gap-3 py-3">
-                    <input
-                      id={`stu-${s.id}`}
-                      type="checkbox"
-                      checked={Boolean(present[s.id])}
-                      onChange={() => toggleOne(s.id)}
-                      className="size-5 touch-manipulation rounded border-slate-300 text-primary focus:ring-primary"
-                    />
-                    <label
-                      htmlFor={`stu-${s.id}`}
-                      className="flex-1 cursor-pointer text-left text-slate-900"
-                    >
-                      {formatStudentName(s)}
-                    </label>
-                  </li>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-1 lg:row-start-2 lg:min-w-0">
+            <label className="block text-sm font-medium text-slate-600" htmlFor="class-select">
+              Class
+            </label>
+            <select
+              id="class-select"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70"
+              value={hasClassesForPeriod ? classId : ''}
+              onChange={(e) => setClassId(e.target.value)}
+              disabled={!hasClassesForPeriod}
+            >
+              <option value="">{selectPlaceholder}</option>
+              {hasClassesForPeriod &&
+                classesForPeriod.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} · {formatClassShiftLabel(c.shift)}
+                  </option>
                 ))}
-              </ul>
-            )}
+            </select>
+
+            <p className="mt-2 text-sm text-slate-500">
+              {!hasAnyClasses
+                ? 'Set up your roster first — register a class (with morning or afternoon schedule) and add students.'
+                : !hasClassesForPeriod
+                  ? `Only classes scheduled for ${period === 'AM' ? 'morning (MRNG)' : 'afternoon (AFTNN)'} appear during ${period === 'AM' ? 'morning' : 'afternoon'} attendance. Manage all classes under Classes & students.`
+                  : 'Choose a class to load its student list.'}
+            </p>
 
             <button
               type="button"
-              onClick={() => void handleSave()}
-              disabled={
-                saving || !classId || students.length === 0 || loadingClass
-              }
-              className="mt-6 w-full rounded-xl bg-primary py-3 text-lg font-semibold text-white shadow-md transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => setRegisterModalOpen(true)}
+              className="mt-4 w-full rounded-2xl border-2 border-primary bg-indigo-50/80 px-4 py-4 text-center font-semibold text-primary shadow-sm transition hover:bg-indigo-100"
             >
-              {saving ? 'Saving…' : 'Save attendance'}
+              Register Students or import from Excel
+              <span className="mt-1 block text-sm font-normal text-indigo-900/80">
+                Opens a setup window — manual entry or spreadsheet import
+              </span>
             </button>
-            {saveMsg && (
-              <p
-                className={`mt-3 text-center text-sm font-medium ${
-                  saveMsg.startsWith('Could') ? 'text-accent' : 'text-secondary'
-                }`}
-              >
-                {saveMsg}
-              </p>
-            )}
           </section>
-        )}
+
+          {hasClassesForPeriod && classId ? (
+            <section
+              className={[
+                'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:min-h-0 lg:min-w-0 lg:max-h-[calc(100svh-9rem)] lg:overflow-y-auto',
+                rosterPanelActive
+                  ? 'lg:col-start-2 lg:row-start-2'
+                  : 'lg:col-start-2 lg:row-start-1 lg:row-span-2',
+              ].join(' ')}
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <h2 className="text-lg font-semibold text-slate-900">Students</h2>
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  disabled={students.length === 0 || loadingClass}
+                  className="rounded-lg bg-secondary/15 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-secondary/25 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {allChecked ? 'Clear all' : 'Select all'}
+                </button>
+              </div>
+
+              {loadingClass ? (
+                <p className="py-8 text-center text-slate-500">Loading…</p>
+              ) : students.length === 0 ? (
+                <p className="py-8 text-center text-slate-600">
+                  No students in this class yet. Use &quot;Register Students or
+                  import from Excel&quot; above to add names.
+                </p>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {students.map((s) => (
+                    <li key={s.id} className="flex items-center gap-3 py-3">
+                      <input
+                        id={`stu-${s.id}`}
+                        type="checkbox"
+                        checked={Boolean(present[s.id])}
+                        onChange={() => toggleOne(s.id)}
+                        className="size-5 touch-manipulation rounded border-slate-300 text-primary focus:ring-primary"
+                      />
+                      <label
+                        htmlFor={`stu-${s.id}`}
+                        className="flex-1 cursor-pointer text-left text-slate-900"
+                      >
+                        {formatStudentName(s)}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={
+                  saving || !classId || students.length === 0 || loadingClass
+                }
+                className="mt-6 w-full rounded-xl bg-primary py-3 text-lg font-semibold text-white shadow-md transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : 'Save attendance'}
+              </button>
+              {saveMsg ? (
+                <p
+                  className={`mt-3 text-center text-sm font-medium ${
+                    saveMsg.startsWith('Could') ? 'text-accent' : 'text-secondary'
+                  }`}
+                >
+                  {saveMsg}
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+        </div>
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import type {
   AttendancePeriod,
   AttendanceSessionRow,
   IsoDateString,
+  StudentRow,
 } from '../schema/types.js'
 import { HttpError } from '../errors/http-error.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
@@ -61,6 +62,27 @@ export function listAttendanceSessionDatesInRange(
     )
   }
   return attendanceDao.listDistinctSessionDatesInRange(db, from, to)
+}
+
+export type PresentAttendanceRosterResult = {
+  session: AttendanceSessionRow | null
+  /** Students with a present record in this session (date + period). */
+  presentStudents: StudentRow[]
+}
+
+export function getPresentAttendanceRoster(
+  db: SqliteDatabase,
+  dateRaw: string,
+  periodRaw: string,
+): PresentAttendanceRosterResult {
+  const date = assertValidDate(dateRaw)
+  const period = assertPeriod(periodRaw)
+  const session = attendanceDao.findSessionByDatePeriod(db, date, period)
+  if (!session) {
+    return { session: null, presentStudents: [] }
+  }
+  const presentStudents = attendanceDao.listPresentStudentsForSession(db, session.id)
+  return { session, presentStudents }
 }
 
 export type AttendanceStateResult = {
