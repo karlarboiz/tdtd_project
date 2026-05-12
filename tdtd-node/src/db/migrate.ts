@@ -175,5 +175,56 @@ export function migrate(db: SqliteDatabase): void {
     );
     CREATE INDEX IF NOT EXISTS idx_records_session ON attendance_records(session_id);
     CREATE INDEX IF NOT EXISTS idx_records_student ON attendance_records(student_id);
+
+    CREATE TABLE IF NOT EXISTS subjects (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      short_code TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS idx_subjects_name ON subjects(name COLLATE NOCASE);
+
+    CREATE TABLE IF NOT EXISTS class_subjects (
+      id TEXT PRIMARY KEY,
+      class_id TEXT NOT NULL,
+      subject_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (class_id) REFERENCES classes(id),
+      FOREIGN KEY (subject_id) REFERENCES subjects(id),
+      UNIQUE(class_id, subject_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_class_subjects_class ON class_subjects(class_id);
+    CREATE INDEX IF NOT EXISTS idx_class_subjects_subject ON class_subjects(subject_id);
+
+    CREATE TABLE IF NOT EXISTS score_events (
+      id TEXT PRIMARY KEY,
+      class_id TEXT NOT NULL,
+      subject_id TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK (kind IN ('QUIZ', 'EXAM', 'PARTICIPATION')),
+      title TEXT NOT NULL,
+      date TEXT,
+      max_score REAL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER,
+      FOREIGN KEY (class_id) REFERENCES classes(id),
+      FOREIGN KEY (subject_id) REFERENCES subjects(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_score_events_class_subject ON score_events(class_id, subject_id);
+    CREATE INDEX IF NOT EXISTS idx_score_events_class_date ON score_events(class_id, date);
+    CREATE INDEX IF NOT EXISTS idx_score_events_subject ON score_events(subject_id);
+
+    CREATE TABLE IF NOT EXISTS score_entries (
+      id TEXT PRIMARY KEY,
+      event_id TEXT NOT NULL,
+      student_id TEXT NOT NULL,
+      score REAL,
+      note TEXT,
+      recorded_at INTEGER NOT NULL,
+      FOREIGN KEY (event_id) REFERENCES score_events(id),
+      FOREIGN KEY (student_id) REFERENCES students(id),
+      UNIQUE(event_id, student_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_score_entries_student ON score_entries(student_id);
   `)
 }

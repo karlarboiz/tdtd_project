@@ -10,6 +10,10 @@ export const TEACHER_APP_TABLES = [
   'students',
   'attendance_sessions',
   'attendance_records',
+  'subjects',
+  'class_subjects',
+  'score_events',
+  'score_entries',
 ] as const
 
 export type TeacherAppTableName = (typeof TEACHER_APP_TABLES)[number]

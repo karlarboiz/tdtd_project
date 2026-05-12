@@ -26,4 +26,7 @@ export const STUDENT_QUERIES = {
     WHERE class_id = ?
     ORDER BY last_name COLLATE NOCASE ASC, first_name COLLATE NOCASE ASC
   `,
+  classIdByStudentId: `
+    SELECT class_id AS class_id FROM students WHERE id = ? LIMIT 1
+  `,
 } as const

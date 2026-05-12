@@ -2,17 +2,15 @@ import * as XLSX from 'xlsx'
 
 /** Column headers teachers should keep in row 1 (order can vary; names are matched flexibly). */
 export const STUDENT_IMPORT_HEADERS = [
-  'firstName',
-  'middleName',
-  'lastName',
-  'birthDate',
-  'gender',
+  'First Name',
+  'Middle Name',
+  'Last Name',
+  'Birth Date',
+  'Gender',
 ] as const
 
 const SAMPLE_ROWS: (string | number)[][] = [
-  ['Maria', 'Santos', 'Reyes', '2012-05-14', 'F'],
-  ['Juan', '', 'Dela Cruz', '2011-08-22', 'M'],
-  ['Alex', 'Lee', 'Garcia', '2012-01-10', 'O'],
+  
 ]
 
 /** Triggers browser download of a sample .xlsx for student roster import. */

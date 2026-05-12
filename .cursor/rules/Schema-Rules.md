@@ -13,6 +13,8 @@ The app is:
 
 DO NOT modify schema structure unless explicitly instructed.
 
+**Scores (quizzes, exams, participation):** see [Score-Function-Schema-Rules.md](./Score-Function-Schema-Rules.md) — extends this document with `subjects`, `class_subjects`, `score_events`, and `score_entries`.
+
 ---
 
 ## ⚙️ Database
@@ -29,6 +31,12 @@ DO NOT modify schema structure unless explicitly instructed.
 2. students
 3. attendance_sessions
 4. attendance_records
+5. subjects *(scores — see [Score-Function-Schema-Rules.md](./Score-Function-Schema-Rules.md))*
+6. class_subjects *(scores)*
+7. score_events *(scores)*
+8. score_entries *(scores)*
+
+Full field definitions and rules for tables 5–8 live in **Score-Function-Schema-Rules.md**; DDL is applied in `tdtd-node/src/db/migrate.ts`.
 
 ---
 
@@ -227,7 +235,7 @@ See `migrate.ts`: primary keys, `UNIQUE(date, period)` on `attendance_sessions`,
   - "absent"
   - "late"
 
-- Add grades module
+- Add weighted grading / term averages (built on score_events + score_entries)
 - Add DepEd report generation
 - Selective client-side caching or sync for specific flows
 

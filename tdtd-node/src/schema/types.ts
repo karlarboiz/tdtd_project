@@ -1,6 +1,6 @@
 /**
  * Teacher Attendance App — API / database row shapes (SQLite in tdtd-node).
- * Source of truth: Schema-Rules.md
+ * Source of truth: Schema-Rules.md; scores: Score-Function-Schema-Rules.md
  */
 
 /** Morning or afternoon attendance slot (session / wall-clock). */
@@ -67,4 +67,44 @@ export interface AttendanceRecordRow {
   studentId: string
   status: AttendanceRecordStatus
   timestamp: number
+}
+
+/** Quiz, long test, or participation recording. */
+export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
+
+export interface SubjectRow {
+  id: string
+  name: string
+  shortCode?: string
+  createdAt: number
+  updatedAt?: number
+}
+
+/** FK → ClassRow.id, SubjectRow.id */
+export interface ClassSubjectRow {
+  id: string
+  classId: string
+  subjectId: string
+  createdAt: number
+}
+
+export interface ScoreEventRow {
+  id: string
+  classId: string
+  subjectId: string
+  kind: ScoreEventKind
+  title: string
+  date?: IsoDateString
+  maxScore?: number
+  createdAt: number
+  updatedAt?: number
+}
+
+export interface ScoreEntryRow {
+  id: string
+  eventId: string
+  studentId: string
+  score: number | null
+  note?: string
+  recordedAt: number
 }

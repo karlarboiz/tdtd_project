@@ -33,6 +33,16 @@ export function insertStudent(db: SqliteDatabase, row: StudentRow): void {
   })
 }
 
+export function getClassIdForStudent(
+  db: SqliteDatabase,
+  studentId: string,
+): string | undefined {
+  const row = db.prepare(STUDENT_QUERIES.classIdByStudentId).get(studentId) as
+    | { class_id: string }
+    | undefined
+  return row?.class_id
+}
+
 export function listStudentsByClass(
   db: SqliteDatabase,
   classId: string,

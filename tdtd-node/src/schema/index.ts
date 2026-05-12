@@ -5,9 +5,14 @@ export type {
   AttendanceSessionRow,
   ClassRow,
   ClassShift,
+  ClassSubjectRow,
   IsoDateString,
+  ScoreEntryRow,
+  ScoreEventKind,
+  ScoreEventRow,
   StudentGenderCode,
   StudentRow,
+  SubjectRow,
 } from './types.js'
 export {
   TEACHER_APP_SQLITE_FILENAME,

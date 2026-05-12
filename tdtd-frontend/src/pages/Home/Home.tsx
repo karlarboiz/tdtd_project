@@ -7,9 +7,6 @@ export function Home() {
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Teacher&apos;s Dilemma Today
         </h1>
-        <p className="mt-2 text-slate-600">
-          Daily attendance — morning and afternoon, built for speed.
-        </p>
       </header>
 
       <main className="mx-auto mt-10 flex w-full max-w-md flex-1 flex-col items-stretch gap-4 lg:mt-14 lg:max-w-xl">

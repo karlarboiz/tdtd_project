@@ -1,4 +1,4 @@
-/** Domain types aligned with tdtd-node / Schema-Rules.md */
+/** Domain types aligned with tdtd-node / Schema-Rules.md and Score-Function-Schema-Rules.md */
 
 export type AttendancePeriod = 'AM' | 'PM'
 
@@ -39,4 +39,44 @@ export interface AttendanceSessionRow {
   date: string
   period: AttendancePeriod
   createdAt: number
+}
+
+export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
+
+export interface SubjectRow {
+  id: string
+  name: string
+  shortCode?: string
+  createdAt: number
+  updatedAt?: number
+}
+
+export interface ClassSubjectRow {
+  id: string
+  classId: string
+  subjectId: string
+  createdAt: number
+  subjectName: string
+  subjectShortCode?: string
+}
+
+export interface ScoreEventRow {
+  id: string
+  classId: string
+  subjectId: string
+  kind: ScoreEventKind
+  title: string
+  date?: string
+  maxScore?: number
+  createdAt: number
+  updatedAt?: number
+}
+
+export interface ScoreEntryRow {
+  id: string
+  eventId: string
+  studentId: string
+  score: number | null
+  note?: string
+  recordedAt: number
 }
