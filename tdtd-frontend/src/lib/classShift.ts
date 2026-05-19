@@ -1,4 +1,4 @@
-import type { AttendancePeriod, ClassShift } from '../types/schema'
+import type { AttendancePeriod, ClassShift } from '@/types/schema'
 
 /** Attendance AM lines up with MRNG classes; PM with AFTNN. */
 export function classShiftMatchesPeriod(

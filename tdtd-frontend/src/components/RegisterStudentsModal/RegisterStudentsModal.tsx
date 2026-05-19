@@ -22,7 +22,7 @@ import type {
   ClassShift,
   StudentGenderCode,
   StudentUpsertPayload,
-} from '../../types/schema'
+} from '@/types/schema'
 
 type View = 'pick' | 'manual' | 'existing' | 'excel'
 

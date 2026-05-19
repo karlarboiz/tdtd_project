@@ -2,7 +2,7 @@ import type {
   AttendancePeriod,
   AttendanceSessionRow,
   StudentRow,
-} from '../types/schema'
+} from '@/types/schema'
 import { apiJson } from '../lib/http'
 
 export type AttendanceStateResponse = {

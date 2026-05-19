@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import type { StudentUpsertPayload } from '../types/schema'
+import type { StudentUpsertPayload } from '@/types/schema'
 
 type ColKey =
   | 'firstName'

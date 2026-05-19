@@ -17,7 +17,7 @@ import type {
   AttendanceSessionRow,
   ClassRow,
   StudentRow,
-} from '../../types/schema'
+} from '@/types/schema'
 import { formatLongDate, parseYMD } from '../../lib/dates'
 import { getCurrentPeriod } from '../../lib/period'
 
@@ -328,7 +328,7 @@ export function AttendanceSession() {
               {!hasAnyClasses
                 ? 'Set up your roster first — register a class (with morning or afternoon schedule) and add students.'
                 : !hasClassesForPeriod
-                  ? `Only classes scheduled for ${period === 'AM' ? 'morning (MRNG)' : 'afternoon (AFTNN)'} appear during ${period === 'AM' ? 'morning' : 'afternoon'} attendance. Manage all classes under Classes & students.`
+                  ? `Only classes scheduled for ${period === 'AM' ? 'morning (MRNG)' : 'afternoon (AFTNN)'} appear during ${period === 'AM' ? 'morning' : 'afternoon'} attendance. Manage all classes under Classes & Students.`
                   : 'Choose a class to load its student list.'}
             </p>
 

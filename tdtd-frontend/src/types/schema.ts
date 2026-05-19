@@ -1,4 +1,4 @@
-/** Domain types aligned with tdtd-node / Schema-Rules.md and Score-Function-Schema-Rules.md */
+/** Domain types aligned with tdtd-node / .cursor/schemas (core, attendance, quiz) */
 
 export type AttendancePeriod = 'AM' | 'PM'
 

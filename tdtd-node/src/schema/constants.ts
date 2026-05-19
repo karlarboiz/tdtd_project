@@ -4,7 +4,7 @@
 
 export const TEACHER_APP_SQLITE_FILENAME = 'teacher_app.sqlite' as const
 
-/** Logical table names (match Schema-Rules.md). */
+/** Logical table names (match .cursor/schemas — see README.md). */
 export const TEACHER_APP_TABLES = [
   'classes',
   'students',

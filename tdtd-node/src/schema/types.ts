@@ -1,6 +1,6 @@
 /**
- * Teacher Attendance App — API / database row shapes (SQLite in tdtd-node).
- * Source of truth: Schema-Rules.md; scores: Score-Function-Schema-Rules.md
+ * Teacher's Dilemma Today — API / database row shapes (SQLite in tdtd-node).
+ * Source of truth: .cursor/schemas/core.md, attendance.md, quiz.md
  */
 
 /** Morning or afternoon attendance slot (session / wall-clock). */

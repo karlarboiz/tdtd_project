@@ -16,7 +16,7 @@ import type {
   ClassShift,
   StudentGenderCode,
   StudentRow,
-} from '../../types/schema'
+} from '@/types/schema'
 
 const emptyDraft = (): {
   firstName: string
@@ -310,8 +310,8 @@ export function Classes() {
           <div className="min-h-0 lg:flex lg:flex-1 lg:flex-col">
             <h2 className="font-semibold text-slate-900">Import from Excel</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Row 1 = headers: <strong>firstName</strong>, <strong>middleName</strong>,{' '}
-              <strong>lastName</strong>, <strong>birthDate</strong>, <strong>gender</strong>.
+              Row 1 = headers: <strong>First Name</strong>, <strong>Middle Name</strong>,{' '}
+              <strong>Last Name</strong>, <strong>Birth Date</strong>, <strong>Gender</strong>.
               Use <strong>YYYY-MM-DD</strong> for dates; gender <strong>M</strong>, <strong>F</strong>, or{' '}
               <strong>O</strong> (or Male/Female/Other). Empty middle names are OK. Empty rows are skipped.
             </p>

@@ -31,7 +31,7 @@ function createStudentsIndexes(db: SqliteDatabase): void {
 }
 
 /**
- * Ensures `classes` matches Schema-Rules: name + shift (MRNG | AFTNN), no subject.
+ * Ensures `classes` matches .cursor/schemas/core.md: name + shift (MRNG | AFTNN), no subject.
  * Upgrades legacy DBs that had subject TEXT.
  */
 export function migrateClassesTable(db: SqliteDatabase): void {
@@ -148,7 +148,7 @@ export function migrateStudentsTable(db: SqliteDatabase): void {
   }
 }
 
-/** SQLite DDL aligned with Schema-Rules.md table shapes. */
+/** SQLite DDL aligned with .cursor/schemas (core, attendance, quiz). */
 export function migrate(db: SqliteDatabase): void {
   migrateClassesTable(db)
   migrateStudentsTable(db)

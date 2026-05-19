@@ -1,4 +1,4 @@
-import type { StudentRow } from '../types/schema'
+import type { StudentRow } from '@/types/schema'
 
 /** Display order: first middle last (omit empty middle). */
 export function formatStudentName(

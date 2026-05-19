@@ -1,4 +1,4 @@
-import type { StudentRow, StudentUpsertPayload } from '../types/schema'
+import type { StudentRow, StudentUpsertPayload } from '@/types/schema'
 import { apiJson } from '../lib/http'
 
 export function listStudentsByClass(classId: string): Promise<StudentRow[]> {
