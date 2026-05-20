@@ -7,6 +7,8 @@ export type {
   ClassShift,
   ClassSubjectRow,
   IsoDateString,
+  SchoolYearRow,
+  SchoolYearSubjectRow,
   ScoreEntryRow,
   ScoreEventKind,
   ScoreEventRow,

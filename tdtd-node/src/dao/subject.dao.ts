@@ -25,6 +25,26 @@ export function listSubjects(db: SqliteDatabase): SubjectRow[] {
   return rows.map(mapSubjectRow)
 }
 
+export function findSubjectByNameInsensitive(
+  db: SqliteDatabase,
+  name: string,
+): SubjectRow | undefined {
+  const row = db.prepare(SUBJECT_QUERIES.getByNameInsensitive).get(name) as
+    | SubjectDbRow
+    | undefined
+  return row ? mapSubjectRow(row) : undefined
+}
+
+export function findSubjectByShortCodeInsensitive(
+  db: SqliteDatabase,
+  shortCode: string,
+): SubjectRow | undefined {
+  const row = db.prepare(SUBJECT_QUERIES.getByShortCodeInsensitive).get(shortCode) as
+    | SubjectDbRow
+    | undefined
+  return row ? mapSubjectRow(row) : undefined
+}
+
 export function insertSubject(db: SqliteDatabase, row: SubjectRow): void {
   db.prepare(SUBJECT_QUERIES.insert).run({
     id: row.id,

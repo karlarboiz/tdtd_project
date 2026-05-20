@@ -13,6 +13,7 @@ import * as classSubjectDao from '../dao/classSubject.dao.js'
 import type { ClassSubjectListRow } from '../dao/classSubject.dao.js'
 import * as scoreEventDao from '../dao/scoreEvent.dao.js'
 import * as scoreEntryDao from '../dao/scoreEntry.dao.js'
+import { assertSubjectRegisteredForActiveYear } from './schoolYear.service.js'
 import { assertClassExists } from './subject.service.js'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
@@ -42,6 +43,7 @@ export function assignSubjectToClass(
   if (!subjectDao.subjectExists(db, sid)) {
     throw new HttpError(404, 'subject not found')
   }
+  assertSubjectRegisteredForActiveYear(db, sid)
   if (classSubjectDao.classSubjectPairExists(db, cid, sid)) {
     throw new HttpError(409, 'subject already assigned to this class')
   }

@@ -4,22 +4,21 @@
 
 Agent index for **quiz**, **exam**, and **participation** scores in **Teacher's Dilemma Today**.
 
-Canonical table definitions: [quiz.md](../schemas/quiz.md). Shared entities (`classes`, `students`): [core.md](../schemas/core.md). Architecture and DB setup: [Schema-Rules.md](./Schema-Rules.md) and [schemas/README.md](../schemas/README.md).
+Score tables: [quiz.md](../schemas/quiz.md). Subjects / class assignment: [subjects.md](../schemas/subjects.md). Shared entities (`classes`, `students`): [core.md](../schemas/core.md). Architecture: [Schema-Rules.md](./Schema-Rules.md) and [schemas/README.md](../schemas/README.md).
 
-Do not embed score data on `students` or `classes` rows. Use the tables in [quiz.md](../schemas/quiz.md).
+Do not embed score data on `students` or `classes` rows.
 
 ---
 
 ## Tables overview
 
-| # | Table | Role |
-|---|--------|------|
-| 1 | `subjects` | Reusable subject catalog |
-| 2 | `class_subjects` | Subjects assigned to a class |
-| 3 | `score_events` | One assessment (QUIZ \| EXAM \| PARTICIPATION) per class + subject |
-| 4 | `score_entries` | One score per student per event |
+| # | Table | Schema doc |
+|---|--------|------------|
+| 1 | `subjects`, `class_subjects`, `school_years`, `school_year_subjects` | [subjects.md](../schemas/subjects.md) |
+| 2 | `score_events` | [quiz.md](../schemas/quiz.md) |
+| 3 | `score_entries` | [quiz.md](../schemas/quiz.md) |
 
-Field-level rules, indexes, and flows: [quiz.md](../schemas/quiz.md). DDL: `tdtd-node/src/db/migrate.ts`.
+Field-level rules: [quiz.md](../schemas/quiz.md), [subjects.md](../schemas/subjects.md). DDL: `tdtd-node/src/db/migrate.ts`.
 
 ---
 
@@ -54,4 +53,4 @@ See [quiz.md](../schemas/quiz.md). In short:
 
 ## Final note
 
-Generated code for scores **must** match [quiz.md](../schemas/quiz.md) and stay consistent with [core.md](../schemas/core.md) for `classes` and `students`.
+Generated code for scores **must** match [quiz.md](../schemas/quiz.md) and [subjects.md](../schemas/subjects.md), and stay consistent with [core.md](../schemas/core.md).

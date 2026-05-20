@@ -4,6 +4,7 @@ import { AttendanceCalendar } from './pages/AttendanceCalendar/AttendanceCalenda
 import { AttendanceSession } from './pages/AttendanceSession/AttendanceSession'
 import { Classes } from './pages/Classes/Classes'
 import { Home } from './pages/Home/Home'
+import { Subjects } from './pages/Subjects/Subjects'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/attendance" element={<AttendanceCalendar />} />
           <Route path="/attendance/session/:date" element={<AttendanceSession />} />
           <Route path="/classes" element={<Classes />} />
+          <Route path="/subjects" element={<Subjects />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

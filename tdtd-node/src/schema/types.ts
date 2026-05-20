@@ -1,6 +1,6 @@
 /**
  * Teacher's Dilemma Today — API / database row shapes (SQLite in tdtd-node).
- * Source of truth: .cursor/schemas/core.md, attendance.md, quiz.md
+ * Source of truth: .cursor/schemas/core.md, attendance.md, subjects.md, quiz.md
  */
 
 /** Morning or afternoon attendance slot (session / wall-clock). */
@@ -72,12 +72,32 @@ export interface AttendanceRecordRow {
 /** Quiz, long test, or participation recording. */
 export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
 
+export interface SchoolYearRow {
+  id: string
+  label: string
+  startDate?: IsoDateString
+  endDate?: IsoDateString
+  isActive: boolean
+  createdAt: number
+  updatedAt?: number
+}
+
 export interface SubjectRow {
   id: string
   name: string
   shortCode?: string
   createdAt: number
   updatedAt?: number
+}
+
+/** FK → SchoolYearRow.id, SubjectRow.id */
+export interface SchoolYearSubjectRow {
+  id: string
+  schoolYearId: string
+  subjectId: string
+  /** e.g. "Grade 5", "6", "Kinder" */
+  gradeLevel: string
+  createdAt: number
 }
 
 /** FK → ClassRow.id, SubjectRow.id */

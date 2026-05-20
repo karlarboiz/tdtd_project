@@ -1,4 +1,4 @@
-/** Domain types aligned with tdtd-node / .cursor/schemas (core, attendance, quiz) */
+/** Domain types aligned with tdtd-node / .cursor/schemas (core, attendance, subjects, quiz) */
 
 export type AttendancePeriod = 'AM' | 'PM'
 
@@ -43,12 +43,32 @@ export interface AttendanceSessionRow {
 
 export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
 
+export interface SchoolYearRow {
+  id: string
+  label: string
+  startDate?: string
+  endDate?: string
+  isActive: boolean
+  createdAt: number
+  updatedAt?: number
+}
+
 export interface SubjectRow {
   id: string
   name: string
   shortCode?: string
   createdAt: number
   updatedAt?: number
+}
+
+export interface SchoolYearSubjectRow {
+  id: string
+  schoolYearId: string
+  subjectId: string
+  gradeLevel: string
+  createdAt: number
+  subjectName: string
+  subjectShortCode?: string
 }
 
 export interface ClassSubjectRow {

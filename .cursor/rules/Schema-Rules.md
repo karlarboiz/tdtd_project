@@ -31,17 +31,19 @@ Full index: [schemas/README.md](../schemas/README.md).
 | 3 | `attendance_sessions` | [attendance.md](../schemas/attendance.md) |
 | 4 | `attendance_records` | [attendance.md](../schemas/attendance.md) |
 
-Score tables (`subjects`, `class_subjects`, `score_events`, `score_entries`) are defined only in [quiz.md](../schemas/quiz.md).
+Subject tables (`school_years`, `subjects`, `school_year_subjects`, `class_subjects`): [subjects.md](../schemas/subjects.md). Score tables (`score_events`, `score_entries`): [quiz.md](../schemas/quiz.md).
 
 ---
 
 ## Expected usage flow
 
-1. Create class ([core.md](../schemas/core.md))
-2. Add students ([core.md](../schemas/core.md))
-3. Select date and period (AM/PM)
-4. Create or reuse attendance session ([attendance.md](../schemas/attendance.md))
-5. Save attendance records ([attendance.md](../schemas/attendance.md))
+1. Set active school year and register subjects ([subjects.md](../schemas/subjects.md))
+2. Create class ([core.md](../schemas/core.md))
+3. Add students ([core.md](../schemas/core.md))
+4. Assign subjects to classes ([subjects.md](../schemas/subjects.md))
+5. Select date and period (AM/PM)
+6. Create or reuse attendance session ([attendance.md](../schemas/attendance.md))
+7. Save attendance records ([attendance.md](../schemas/attendance.md))
 
 ---
 
