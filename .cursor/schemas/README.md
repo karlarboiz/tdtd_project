@@ -11,6 +11,8 @@ Canonical table definitions for **Teacher's Dilemma Today** live in this folder.
 
 Do not change schema structure unless explicitly instructed.
 
+**Feature change history** (what was built, when, why): [`.cursor/documentation/`](../documentation/).
+
 ## Schema files
 
 | File | Tables |

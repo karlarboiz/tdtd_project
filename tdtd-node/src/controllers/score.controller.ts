@@ -4,6 +4,7 @@ import { HttpError } from '../errors/http-error.js'
 import {
   assignSubjectToClass,
   createScoreEvent,
+  getScoreEventOrThrow,
   listClassSubjects,
   listScoreEntries,
   listScoreEvents,
@@ -111,6 +112,21 @@ export function createClassScoreEventHandler(db: SqliteDatabase) {
 
 function eventIdParam(req: Request): string {
   return typeof req.params.eventId === 'string' ? req.params.eventId : ''
+}
+
+export function getScoreEventHandler(db: SqliteDatabase) {
+  return (req: Request, res: Response): void => {
+    try {
+      res.json(getScoreEventOrThrow(db, eventIdParam(req)))
+    } catch (e) {
+      if (e instanceof HttpError) {
+        res.status(e.statusCode).json({ error: e.message })
+        return
+      }
+      console.error(e)
+      res.status(500).json({ error: 'internal server error' })
+    }
+  }
 }
 
 export function listScoreEntriesHandler(db: SqliteDatabase) {

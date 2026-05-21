@@ -30,6 +30,13 @@ export function Home() {
         >
           Subjects
         </Link>
+
+        <Link
+          to="/scores"
+          className="rounded-2xl border-2 border-slate-200 bg-white px-5 py-4 text-center text-lg font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          Scores
+        </Link>
       </main>
     </div>
   )

@@ -13,6 +13,7 @@ import * as classSubjectDao from '../dao/classSubject.dao.js'
 import type { ClassSubjectListRow } from '../dao/classSubject.dao.js'
 import * as scoreEventDao from '../dao/scoreEvent.dao.js'
 import * as scoreEntryDao from '../dao/scoreEntry.dao.js'
+import { SCORE_EVENT_KIND_VALUES } from '../constants/TDTDConstants.js'
 import { assertSubjectRegisteredForActiveYear } from './schoolYear.service.js'
 import { assertClassExists } from './subject.service.js'
 
@@ -78,7 +79,9 @@ export function removeSubjectFromClass(
 
 function parseScoreKind(raw: string): ScoreEventKind {
   const s = raw.trim()
-  if (s === 'QUIZ' || s === 'EXAM' || s === 'PARTICIPATION') return s
+  if ((SCORE_EVENT_KIND_VALUES as readonly string[]).includes(s)) {
+    return s as ScoreEventKind
+  }
   throw new HttpError(400, 'kind must be QUIZ, EXAM, or PARTICIPATION')
 }
 

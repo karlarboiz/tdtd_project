@@ -20,6 +20,8 @@ All generated code must follow those schemas. Do not modify schema structure unl
 
 Full index: [schemas/README.md](../schemas/README.md).
 
+Function change log: [documentation/README.md](../documentation/README.md).
+
 ---
 
 ## Tables in scope (this rule)

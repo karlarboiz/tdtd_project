@@ -8,6 +8,8 @@ Score tables: [quiz.md](../schemas/quiz.md). Subjects / class assignment: [subje
 
 Do not embed score data on `students` or `classes` rows.
 
+Function change log: [Quiz-Function-Doc.md](../documentation/Quiz-Function-Doc.md), [Subject-Function-Doc.md](../documentation/Subject-Function-Doc.md).
+
 ---
 
 ## Tables overview

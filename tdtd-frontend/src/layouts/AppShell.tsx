@@ -34,6 +34,9 @@ export function AppShell() {
             <NavLink to="/subjects" className={navLinkClass}>
               Subjects
             </NavLink>
+            <NavLink to="/scores" className={navLinkClass}>
+              Scores
+            </NavLink>
           </nav>
         </div>
       </header>
