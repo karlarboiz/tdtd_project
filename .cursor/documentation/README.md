@@ -4,6 +4,8 @@ Change history and feature notes for **Teacher's Dilemma Today**, organized by p
 
 Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These files record **what we built, when, why**, and which files/schemas were involved.
 
+**Planning** (not yet shipped): [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md).
+
 ## Documents
 
 | Document | Scope |
@@ -12,6 +14,8 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [Quiz-Function-Doc.md](./Quiz-Function-Doc.md) | Quiz, exam, and participation scores (`score_events`, `score_entries`) |
 | [Subject-Function-Doc.md](./Subject-Function-Doc.md) | Subject catalog, school years, SY registration, class–subject links |
 | [Recents-Function-Doc.md](./Recents-Function-Doc.md) | Teacher activity log (Recents page) |
+| [App-Shell-Function-Doc.md](./App-Shell-Function-Doc.md) | Shared layout, logo, hamburger navigation |
+| [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) | Native app roadmap; offline-on-mobile-only checklist |
 
 ## Entry format
 
@@ -19,4 +23,4 @@ Each change is one **entry** (newest at the top). Use ids like `ATT-001`, `QUIZ-
 
 Required fields: **Date**, **Summary**, **Reason**, **What changed**, **Files involved**, **Schemas involved**.
 
-Use ids like `REC-001` for Recents entries.
+Use ids like `REC-001` for Recents entries and `APP-001` for app shell entries.

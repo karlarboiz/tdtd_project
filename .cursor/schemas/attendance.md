@@ -97,6 +97,11 @@ See `tdtd-node/src/db/migrate.ts`:
 - **AM** attendance → offer only classes with `shift = MRNG`.
 - **PM** attendance → offer only classes with `shift = AFTNN`.
 
+### Frontend session route
+
+- Path: `/attendance/session/:date` with optional query **`?period=AM|PM`**.
+- Calendar opens date without `period`; UI auto-selects the period that has saved data (or current clock period). See ATT-004 in [Attendance-Function-Doc.md](../documentation/Attendance-Function-Doc.md).
+
 ### Data integrity
 
 - Do NOT create multiple sessions for the same date + period (DB enforces uniqueness).

@@ -15,6 +15,27 @@ Subject **catalog**, **school year** setup, per-year **registration** (with grad
 
 ---
 
+## Entry SUB-004 — Filter registered subjects by grade level
+
+**Date:** 2026-05-26
+
+**Summary:** Subjects page adds a grade-level filter on the registered-subjects table (all levels or one grade).
+
+**Reason:** School years can register many subjects across grades; teachers need to narrow the list when reviewing or removing registrations.
+
+**What changed:**
+- **Filter control** on `/subjects`: “All grade levels” or a specific `gradeLevel` from current registrations.
+- **Filtered table** and empty-state copy when a grade has no rows.
+- Filter resets to **all** if the selected grade disappears (e.g. after removing the last subject in that grade).
+
+**Files involved:**
+- `tdtd-frontend/src/pages/Subjects/Subjects.tsx`
+
+**Schemas involved:**
+- [subjects.md](../schemas/subjects.md) — `school_year_subjects.grade_level` (display/filter only)
+
+---
+
 ## Entry SUB-003 — Subject schema doc and registration `grade_level`
 
 **Date:** 2026-05-20

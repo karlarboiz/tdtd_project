@@ -65,6 +65,7 @@ Used for deep links on the Recents page (not enforced FKs).
 - **One row per user-facing action** (not per score line or per import row).
 - Do **not** log GET/read requests.
 - `summary` is pre-rendered at write time (stable display if entities are renamed later).
+- If insert into `activity_logs` fails, `recordActivity` logs an error and **does not** fail the parent mutation (scores, attendance, etc. still commit).
 
 ---
 

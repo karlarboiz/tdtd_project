@@ -13,6 +13,36 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-o
 | GET | `/present-roster?date=&period=` | Session + full present student rows (all classes) |
 | POST | `/save` | Create/reuse session; replace present records for submitted ids |
 
+**Session URL:** `/attendance/session/:date?period=AM|PM` — `period` query selects morning vs afternoon; omit on calendar open to auto-resolve (see ATT-004).
+
+---
+
+## Entry ATT-004 — Session period in URL, AM/PM toggle, calendar auto-resolve
+
+**Date:** 2026-05-26
+
+**Summary:** Fix reopening saved attendance from the calendar by binding the session screen to an explicit AM/PM period (URL + toggle) instead of always using the current time of day.
+
+**Reason:** Calendar dots mark any date with a saved session (AM or PM), but the session page previously loaded only `getCurrentPeriod()`. Opening a past date in the afternoon could show an empty PM session while attendance was saved in the morning.
+
+**What changed:**
+- **URL query `?period=AM|PM`** is the source of truth when set; toggling Morning/Afternoon updates the query with `replace`.
+- **Auto-resolve** when opening `/attendance/session/:date` without `period` (e.g. from calendar): fetches present roster for both periods, prefers current clock period if it has a session, otherwise the other period, then writes `?period=` into the URL.
+- **Morning / Afternoon toggle** on the session header to switch periods without returning to the calendar.
+- **Calendar** navigates to date-only paths so auto-resolve can run.
+- **Helpers:** `lib/period.ts` (`parseAttendancePeriod`, `otherAttendancePeriod`), `lib/attendanceSessionRoute.ts` (`attendanceSessionPath` for stable deep links).
+- **Recents links:** `activityLinks.ts` uses `attendanceSessionPath(date, period)` when `metadata.period` is present (falls back to current period).
+
+**Files involved:**
+- `tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx`
+- `tdtd-frontend/src/pages/AttendanceCalendar/AttendanceCalendar.tsx`
+- `tdtd-frontend/src/lib/period.ts`
+- `tdtd-frontend/src/lib/attendanceSessionRoute.ts`
+- `tdtd-frontend/src/lib/activityLinks.ts`
+
+**Schemas involved:**
+- None (frontend routing/UX only; backend already keys sessions by `date` + `period`)
+
 ---
 
 ## Entry ATT-003 — Attendance schema extracted to `.cursor/schemas`

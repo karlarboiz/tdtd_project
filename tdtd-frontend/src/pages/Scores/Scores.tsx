@@ -64,6 +64,16 @@ export function Scores() {
 
   const selectedSubject = subjectOptions.find((s) => s.subjectId === subjectId)
 
+  const selectedClass = classes.find((c) => c.id === classId)
+
+  const subjectNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const ys of yearSubjects) {
+      if (!map.has(ys.subjectId)) map.set(ys.subjectId, ys.subjectName)
+    }
+    return map
+  }, [yearSubjects])
+
   const refreshClasses = useCallback(async () => {
     const list = await listClasses()
     setClasses(list)
@@ -124,15 +134,11 @@ export function Scores() {
       return
     }
     try {
-      const list = await listScoreEvents(
-        classId,
-        subjectId || undefined,
-      )
-      setEvents(list)
+      setEvents(await listScoreEvents(classId))
     } catch {
       setEvents([])
     }
-  }, [classId, subjectId])
+  }, [classId])
 
   useEffect(() => {
     void refreshEvents()
@@ -191,11 +197,12 @@ export function Scores() {
   const subjectSelectDisabled = !classId || subjectOptions.length === 0
 
   return (
-    <div className="mx-auto w-full max-w-md lg:max-w-2xl">
-      <header className="mb-6">
+    <div className="w-full">
+      <header className="mb-6 lg:mb-8">
         <h1 className="text-2xl font-semibold text-slate-900">Scores</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Record scores by class and subject.
+        <p className="mt-1 max-w-2xl text-sm text-slate-600">
+          Record scores by class and subject. Create an assessment on the left;
+          open recent quizzes, exams, and participation on the right.
         </p>
       </header>
 
@@ -214,7 +221,8 @@ export function Scores() {
           </Link>
         </section>
       ) : (
-        <>
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
+          <div className="flex flex-col gap-6 lg:col-span-5">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <label
               className="block text-sm font-medium text-slate-600"
@@ -328,7 +336,7 @@ export function Scores() {
 
           <form
             onSubmit={(e) => void handleCreate(e)}
-            className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
           >
             <h2 className="text-lg font-semibold text-slate-900">New assessment</h2>
 
@@ -393,40 +401,64 @@ export function Scores() {
               {busy ? 'Creating…' : 'Create & enter scores'}
             </button>
           </form>
+          </div>
 
-          <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-7 lg:flex lg:min-h-0 lg:max-h-[calc(100svh-10rem)] lg:flex-col lg:self-start">
             <h2 className="text-lg font-semibold text-slate-900">
-              Recent for this class
-              {selectedSubject ? ` · ${selectedSubject.subjectName}` : ''}
+              Recent assessments
+              {selectedClass ? (
+                <span className="font-normal text-slate-600">
+                  {' '}
+                  · {selectedClass.name}
+                </span>
+              ) : null}
             </h2>
-            {events.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500">No score events yet.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Quizzes, exams, and participation for the selected class.
+            </p>
+            {!classId ? (
+              <p className="mt-4 text-sm text-slate-500">Select a class to see assessments.</p>
+            ) : events.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">
+                No assessments yet. Create one on the left.
+              </p>
             ) : (
-              <ul className="mt-4 divide-y divide-slate-100">
-                {events.map((ev) => (
-                  <li key={ev.id} className="flex items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-slate-900">
-                        {ev.title}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {formatScoreEventKindLabel(ev.kind)}
-                        {ev.date ? ` · ${ev.date}` : ''}
-                        {ev.maxScore !== undefined ? ` · /${ev.maxScore}` : ''}
-                      </p>
-                    </div>
-                    <Link
-                      to={`/scores/event/${ev.id}`}
-                      className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50"
+              <ul className="mt-4 min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto lg:max-h-[calc(100svh-14rem)]">
+                {events.map((ev) => {
+                  const subjectLabel =
+                    subjectNameById.get(ev.subjectId) ?? 'Subject'
+                  return (
+                    <li
+                      key={ev.id}
+                      className="flex items-center justify-between gap-3 py-3 first:pt-0"
                     >
-                      Open
-                    </Link>
-                  </li>
-                ))}
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-900">
+                          {ev.title}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          <span className="font-medium text-slate-600">
+                            {formatScoreEventKindLabel(ev.kind)}
+                          </span>
+                          {' · '}
+                          {subjectLabel}
+                          {ev.date ? ` · ${ev.date}` : ''}
+                          {ev.maxScore !== undefined ? ` · /${ev.maxScore}` : ''}
+                        </p>
+                      </div>
+                      <Link
+                        to={`/scores/event/${ev.id}`}
+                        className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50"
+                      >
+                        Open
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </section>
-        </>
+        </div>
       )}
     </div>
   )

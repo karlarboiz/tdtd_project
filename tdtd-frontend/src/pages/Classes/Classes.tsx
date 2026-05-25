@@ -3,20 +3,10 @@ import { Link } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { createClass, listClasses } from '../../api/classesApi'
 import {
-  getActiveSchoolYear,
-  listSchoolYearSubjects,
-} from '../../api/schoolYearApi'
-import {
-  assignSubjectToClass,
-  listClassSubjects,
-  removeSubjectFromClass,
-} from '../../api/scoreApi'
-import {
   listStudentsByClass,
   registerStudent,
   registerStudentsBulk,
 } from '../../api/studentsApi'
-import { ApiError } from '../../lib/http'
 import { formatClassShiftLabel } from '../../lib/classShift'
 import { formatStudentName } from '../../lib/studentDisplay'
 import { parseStudentImportWorkbook } from '../../lib/studentImportParse'
@@ -24,8 +14,6 @@ import { downloadStudentImportSample } from '../../lib/studentImportSampleXlsx'
 import type {
   ClassRow,
   ClassShift,
-  ClassSubjectRow,
-  SchoolYearSubjectRow,
   StudentGenderCode,
   StudentRow,
 } from '@/types/schema'
@@ -52,11 +40,6 @@ export function Classes() {
   const [classShift, setClassShift] = useState<ClassShift>('MRNG')
   const [stu, setStu] = useState(emptyDraft)
   const [importError, setImportError] = useState<string | null>(null)
-  const [classSubjects, setClassSubjects] = useState<ClassSubjectRow[]>([])
-  const [yearSubjects, setYearSubjects] = useState<SchoolYearSubjectRow[]>([])
-  const [assignSubjectId, setAssignSubjectId] = useState('')
-  const [subjectBusy, setSubjectBusy] = useState(false)
-  const [subjectError, setSubjectError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const refreshClasses = useCallback(async () => {
@@ -90,77 +73,6 @@ export function Classes() {
       cancelled = true
     }
   }, [selectedClassId])
-
-  const refreshClassSubjects = useCallback(async (classId: string) => {
-    if (!classId) {
-      setClassSubjects([])
-      return
-    }
-    try {
-      setClassSubjects(await listClassSubjects(classId))
-    } catch {
-      setClassSubjects([])
-    }
-  }, [])
-
-  const refreshYearSubjects = useCallback(async () => {
-    try {
-      const year = await getActiveSchoolYear()
-      setYearSubjects(await listSchoolYearSubjects(year.id))
-    } catch {
-      setYearSubjects([])
-    }
-  }, [])
-
-  useEffect(() => {
-    void refreshYearSubjects()
-  }, [refreshYearSubjects])
-
-  useEffect(() => {
-    void refreshClassSubjects(selectedClassId)
-  }, [selectedClassId, refreshClassSubjects])
-
-  const assignableSubjects = yearSubjects.filter(
-    (ys) => !classSubjects.some((cs) => cs.subjectId === ys.subjectId),
-  )
-
-  async function handleAssignSubject(e: FormEvent) {
-    e.preventDefault()
-    if (!selectedClassId || !assignSubjectId) return
-    setSubjectBusy(true)
-    setSubjectError(null)
-    try {
-      await assignSubjectToClass(selectedClassId, assignSubjectId)
-      await refreshClassSubjects(selectedClassId)
-      setAssignSubjectId('')
-    } catch (err) {
-      setSubjectError(
-        err instanceof ApiError
-          ? err.message
-          : 'Could not assign subject to this class.',
-      )
-    } finally {
-      setSubjectBusy(false)
-    }
-  }
-
-  async function handleRemoveSubject(subjectId: string) {
-    if (!selectedClassId) return
-    setSubjectBusy(true)
-    setSubjectError(null)
-    try {
-      await removeSubjectFromClass(selectedClassId, subjectId)
-      await refreshClassSubjects(selectedClassId)
-    } catch (err) {
-      setSubjectError(
-        err instanceof ApiError
-          ? err.message
-          : 'Could not remove subject from this class.',
-      )
-    } finally {
-      setSubjectBusy(false)
-    }
-  }
 
   async function addClass(e: FormEvent) {
     e.preventDefault()
@@ -391,105 +303,6 @@ export function Classes() {
                 Add student
               </button>
             </form>
-
-            <section className="mt-6 border-t border-slate-100 pt-6">
-              <h2 className="font-semibold text-slate-900">Subjects for scores</h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Assign subjects from your active school year so you can record scores.{' '}
-                <Link to="/subjects" className="font-medium text-primary hover:underline">
-                  Manage subjects
-                </Link>
-              </p>
-
-              {!selectedClassId ? (
-                <p className="mt-3 text-sm text-slate-500">Select a class first.</p>
-              ) : yearSubjects.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-600">
-                  No subjects registered for the active school year. Add subjects under
-                  Subjects first.
-                </p>
-              ) : (
-                <>
-                  {classSubjects.length === 0 ? (
-                    <p className="mt-3 text-sm text-slate-500">
-                      No subjects assigned yet.
-                    </p>
-                  ) : (
-                    <ul className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-100">
-                      {classSubjects.map((cs) => (
-                        <li
-                          key={cs.id}
-                          className="flex items-center justify-between gap-2 px-3 py-2"
-                        >
-                          <span className="text-sm text-slate-800">
-                            {cs.subjectName}
-                            {cs.subjectShortCode ? (
-                              <span className="text-slate-500">
-                                {' '}
-                                ({cs.subjectShortCode})
-                              </span>
-                            ) : null}
-                          </span>
-                          <button
-                            type="button"
-                            disabled={subjectBusy}
-                            onClick={() => void handleRemoveSubject(cs.subjectId)}
-                            className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
-                          >
-                            Remove
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {assignableSubjects.length > 0 ? (
-                    <form onSubmit={(e) => void handleAssignSubject(e)} className="mt-4">
-                      <label
-                        className="block text-sm font-medium text-slate-600"
-                        htmlFor="assign-subject"
-                      >
-                        Add subject
-                      </label>
-                      <select
-                        id="assign-subject"
-                        className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2"
-                        value={assignSubjectId}
-                        onChange={(e) => setAssignSubjectId(e.target.value)}
-                        disabled={subjectBusy}
-                      >
-                        <option value="">Choose…</option>
-                        {assignableSubjects.map((ys) => (
-                          <option key={ys.subjectId} value={ys.subjectId}>
-                            {ys.subjectName}
-                            {ys.subjectShortCode ? ` (${ys.subjectShortCode})` : ''}
-                            {' · '}
-                            {ys.gradeLevel}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="submit"
-                        disabled={subjectBusy || !assignSubjectId}
-                        className="mt-3 w-full rounded-xl border-2 border-secondary bg-teal-50 py-2.5 text-sm font-semibold text-secondary hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {subjectBusy ? 'Working…' : 'Assign to class'}
-                      </button>
-                    </form>
-                  ) : classSubjects.length > 0 ? (
-                    <p className="mt-3 text-xs text-slate-500">
-                      All school-year subjects are already assigned to this class.
-                    </p>
-                  ) : null}
-                </>
-              )}
-
-              {subjectError ? (
-                <p className="mt-3 text-sm text-rose-700" role="alert">
-                  {subjectError}
-                </p>
-              ) : null}
-            </section>
           </section>
         </div>
 

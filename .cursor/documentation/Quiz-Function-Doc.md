@@ -17,6 +17,32 @@
 
 ---
 
+## Entry QUIZ-004 — Score grading view/edit modes and recorded timestamps
+
+**Date:** 2026-05-26
+
+**Summary:** Grading sheet uses explicit view vs edit modes, shows when scores were last recorded, and integrates with Recents logging for first save vs re-save.
+
+**Reason:** Teachers need to see saved scores without accidental edits, know when data was last written, and distinguish first entry from later corrections in the activity log.
+
+**What changed:**
+- **View mode** after scores exist: read-only scores with per-student **Recorded:** timestamps; header shows **Scores last recorded:** (max `recordedAt` among graded entries).
+- **Edit mode:** **Edit Changes** copies saved values into inputs; **Save Changes** persists via `PUT /api/score-events/:eventId/entries`.
+- **First visit** with no saved scores starts in edit mode automatically.
+- **Success copy:** “Scores saved. Check Recents for this activity.”
+- **Backend logging:** Re-save detection in `replaceScoreEntries` → Recents summary uses **Updated** vs **Saved** (see [Recents-Function-Doc.md](./Recents-Function-Doc.md) REC-002).
+- **Dates helper:** `formatRecordedAt` in `lib/dates.ts` for consistent display.
+
+**Files involved:**
+- `tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx`
+- `tdtd-frontend/src/lib/dates.ts`
+- `tdtd-node/src/services/score.service.ts` (re-save verb for activity log)
+
+**Schemas involved:**
+- [quiz.md](../schemas/quiz.md) — `score_entries.recordedAt`
+
+---
+
 ## Entry QUIZ-003 — Scores UI: list events, create event, grade roster
 
 **Date:** 2026-05-21
