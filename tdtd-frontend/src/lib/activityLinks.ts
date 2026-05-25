@@ -1,4 +1,6 @@
 import type { ActivityLogMetadata } from '@/types/schema'
+import { attendanceSessionPath } from './attendanceSessionRoute'
+import { getCurrentPeriod } from './period'
 
 export function activityLogHref(
   metadata?: ActivityLogMetadata,
@@ -8,7 +10,10 @@ export function activityLogHref(
     return `/scores/event/${encodeURIComponent(metadata.eventId)}`
   }
   if (metadata.date) {
-    return `/attendance/session/${encodeURIComponent(metadata.date)}`
+    return attendanceSessionPath(
+      metadata.date,
+      metadata.period ?? getCurrentPeriod(),
+    )
   }
   if (metadata.classId) {
     return '/classes'

@@ -41,7 +41,7 @@ export function AttendanceCalendar() {
           sessionDatesWithSavedAttendance={sessionDatesWithSavedAttendance}
           onVisibleMonthChange={loadMonthSessionDates}
           onSelectDate={(ymd) => {
-            navigate(`/attendance/session/${ymd}`)
+            navigate(`/attendance/session/${encodeURIComponent(ymd)}`)
           }}
         />
       </div>

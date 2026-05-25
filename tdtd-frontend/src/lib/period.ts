@@ -4,3 +4,14 @@ import type { AttendancePeriod } from '@/types/schema'
 export function getCurrentPeriod(now = new Date()): AttendancePeriod {
   return now.getHours() < 12 ? 'AM' : 'PM'
 }
+
+export function otherAttendancePeriod(period: AttendancePeriod): AttendancePeriod {
+  return period === 'AM' ? 'PM' : 'AM'
+}
+
+export function parseAttendancePeriod(
+  raw: string | null | undefined,
+): AttendancePeriod | null {
+  if (raw === 'AM' || raw === 'PM') return raw
+  return null
+}

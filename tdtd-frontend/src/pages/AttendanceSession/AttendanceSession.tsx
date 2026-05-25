@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RegisterStudentsModal } from '../../components/RegisterStudentsModal/RegisterStudentsModal'
 import { listClasses } from '../../api/classesApi'
 import {
@@ -14,20 +14,79 @@ import {
 } from '../../lib/classShift'
 import { formatStudentName } from '../../lib/studentDisplay'
 import type {
+  AttendancePeriod,
   AttendanceSessionRow,
   ClassRow,
   StudentRow,
 } from '@/types/schema'
 import { formatLongDate, parseYMD } from '../../lib/dates'
-import { getCurrentPeriod } from '../../lib/period'
+import {
+  getCurrentPeriod,
+  otherAttendancePeriod,
+  parseAttendancePeriod,
+} from '../../lib/period'
 
 export function AttendanceSession() {
   const { date: dateParam } = useParams<{ date: string }>()
   const navigate = useNavigate()
-  const period = useMemo(() => getCurrentPeriod(), [])
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const dateYmd = dateParam ?? ''
   const parsed = parseYMD(dateYmd)
+  const isDateValid = parsed !== null
+  const periodFromUrl = parseAttendancePeriod(searchParams.get('period'))
+  const [resolvedPeriod, setResolvedPeriod] = useState<AttendancePeriod | null>(
+    periodFromUrl,
+  )
+  const [resolvingPeriod, setResolvingPeriod] = useState(
+    () => isDateValid && periodFromUrl === null,
+  )
+
+  const period = periodFromUrl ?? resolvedPeriod ?? getCurrentPeriod()
+
+  useEffect(() => {
+    setResolvedPeriod(periodFromUrl)
+    setResolvingPeriod(isDateValid && periodFromUrl === null)
+  }, [dateYmd, periodFromUrl, isDateValid])
+
+  useEffect(() => {
+    if (!isDateValid || periodFromUrl) return
+
+    let cancelled = false
+    void (async () => {
+      const current = getCurrentPeriod()
+      const other = otherAttendancePeriod(current)
+      try {
+        const [forCurrent, forOther] = await Promise.all([
+          getAttendancePresentRoster({ date: dateYmd, period: current }),
+          getAttendancePresentRoster({ date: dateYmd, period: other }),
+        ])
+        if (cancelled) return
+        const pick = forCurrent.session
+          ? current
+          : forOther.session
+            ? other
+            : current
+        setResolvedPeriod(pick)
+        setSearchParams({ period: pick }, { replace: true })
+      } catch {
+        if (cancelled) return
+        const fallback = getCurrentPeriod()
+        setResolvedPeriod(fallback)
+        setSearchParams({ period: fallback }, { replace: true })
+      } finally {
+        if (!cancelled) setResolvingPeriod(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [dateYmd, isDateValid, periodFromUrl, setSearchParams])
+
+  function setPeriod(next: AttendancePeriod) {
+    setSearchParams({ period: next }, { replace: true })
+  }
 
   const [allClasses, setAllClasses] = useState<ClassRow[]>([])
   const [classId, setClassId] = useState('')
@@ -63,10 +122,12 @@ export function AttendanceSession() {
   }, [dateYmd, period])
 
   const refreshPresentRoster = useCallback(async () => {
-    if (!parseYMD(dateYmd)) {
-      setRosterSession(null)
-      setSavedPresentStudents([])
-      setRosterLoading(false)
+    if (!parseYMD(dateYmd) || resolvingPeriod) {
+      if (!resolvingPeriod) {
+        setRosterSession(null)
+        setSavedPresentStudents([])
+      }
+      setRosterLoading(resolvingPeriod)
       return
     }
     setRosterLoading(true)
@@ -80,7 +141,7 @@ export function AttendanceSession() {
     } finally {
       setRosterLoading(false)
     }
-  }, [dateYmd, period])
+  }, [dateYmd, period, resolvingPeriod])
 
   useEffect(() => {
     void refreshPresentRoster()
@@ -111,6 +172,7 @@ export function AttendanceSession() {
 
   const loadClassStudents = useCallback(
     async (cid: string) => {
+      if (resolvingPeriod) return
       setLoadingClass(true)
       setSaveMsg(null)
       try {
@@ -135,17 +197,17 @@ export function AttendanceSession() {
         setLoadingClass(false)
       }
     },
-    [dateYmd, period],
+    [dateYmd, period, resolvingPeriod],
   )
 
   useEffect(() => {
-    if (!classId) {
+    if (!classId || resolvingPeriod) {
       setStudents([])
       setPresent({})
       return
     }
     void loadClassStudents(classId)
-  }, [classId, loadClassStudents])
+  }, [classId, loadClassStudents, resolvingPeriod])
 
   const allChecked =
     students.length > 0 && students.every((s) => present[s.id])
@@ -253,9 +315,41 @@ export function AttendanceSession() {
             <h1 className="mt-1 text-xl font-semibold text-slate-900">
               {formatLongDate(dateYmd)}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Period: <span className="font-semibold text-slate-700">{period}</span>
-            </p>
+            <div className="mt-4">
+              <p className="text-sm font-medium text-slate-600">Session period</p>
+              <div
+                className="mt-2 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-neutral-bg p-1"
+                role="group"
+                aria-label="Morning or afternoon attendance"
+              >
+                {(['AM', 'PM'] as const).map((p) => {
+                  const active = period === p
+                  const label = p === 'AM' ? 'Morning (AM)' : 'Afternoon (PM)'
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      aria-pressed={active}
+                      disabled={resolvingPeriod}
+                      onClick={() => setPeriod(p)}
+                      className={[
+                        'rounded-lg px-3 py-2.5 text-sm font-semibold transition',
+                        active
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'text-slate-700 hover:bg-white',
+                        resolvingPeriod ? 'cursor-wait opacity-60' : '',
+                      ].join(' ')}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="mt-2 text-sm text-slate-500">
+                Switch between morning and afternoon to view or edit saved attendance
+                for each period.
+              </p>
+            </div>
           </header>
 
           {rosterPanelActive ? (
