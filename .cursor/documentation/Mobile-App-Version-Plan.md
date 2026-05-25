@@ -16,6 +16,43 @@
 | **Offline on mobile only** | Web/browser build stays **online-only** (current REST → server SQLite). Mobile build embeds local storage + sync. |
 | **Secure enough for real devices** | HTTPS, auth, encrypted storage where appropriate, no open API on the public internet. |
 | **Same product features** | Attendance, classes/students, subjects, scores, recents — parity with web where it makes sense. |
+| **Useful notifications (scoped)** | Reminders and sync status — not a duplicate of [Recents](./Recents-Function-Doc.md). |
+
+---
+
+## Notifications (web vs mobile)
+
+TDTD is a **teacher tool opened on purpose**. [Recents](./Recents-Function-Doc.md) already records **what happened** after the fact. Notifications are for **act now** or **status** — not every save event.
+
+### What makes sense
+
+| Use case | Web (browser) | Mobile app |
+|----------|-----------------|------------|
+| **Attendance reminders** — e.g. “Take AM attendance”, “PM not saved today” | In-app banner on Home / Attendance calendar first; Web Push only later (opt-in) | **Local scheduled notifications** (works offline; strong fit for AM/PM flow) |
+| **Sync status** — “Synced”, “Changes waiting to upload”, “Sync failed” | Low priority (web is online-only) | **High value** with offline + sync |
+| **Optional deadlines** — report due, grading reminder | In-app + optional Web Push after auth/hosting | Local + optional push after sync exists |
+| **Admin / backup** (if API is hosted) — backup failed | Email or push for operators | Same |
+
+### What to avoid
+
+- **Push on every mutation** (attendance saved, scores updated) — duplicates Recents and feels noisy.
+- **Web push before auth + HTTPS hosting** — poor permission uptake, weak security story.
+- **Replacing Recents with notifications** — different jobs (history vs prompt).
+
+### Recommended rollout
+
+| Phase | Web | Mobile |
+|-------|-----|--------|
+| **Now** | **In-app only:** e.g. “No AM session saved today” on Home or calendar — no browser push | — |
+| **After auth + hosting** | Revisit **Web Push** only if teachers want desktop reminders (explicit opt-in) | — |
+| **Mobile v1+** | N/A | **Capacitor Local Notifications** for attendance reminders; optional push for sync failures |
+| **Not v1** | Service worker push for all activity types | Notify on every Recents `action` |
+
+### Prerequisites (before store / push)
+
+- [ ] User identity (auth) and notification **opt-in** settings.
+- [ ] Privacy copy: no student names in notification body unless necessary (prefer generic: “Attendance reminder for today”).
+- [ ] Deep links into app routes (attendance session, sync settings).
 
 ---
 
@@ -53,6 +90,8 @@ MOBILE:  App UI → Local SQLite → (when online) Sync ↔ Server SQLite
 - [ ] Excel import via `xlsx` — heavy; needs mobile file UX review
 - [ ] No mobile-only feature flags in frontend
 - [ ] No privacy policy / store listing assets
+- [ ] No in-app reminder UX or notification permissions flow
+- [ ] No Web Push / local notification plugins
 
 ---
 
@@ -67,6 +106,8 @@ Complete before heavy implementation.
 - [ ] **Auth model:** Email/password, magic link, PIN, or device pairing code — required before public API.
 - [ ] **Data at rest:** Encrypt local SQLite on mobile (OS keystore / SQLCipher) if storing student PII.
 - [ ] **Web explicitly online-only:** Document in UI (“Install the mobile app for offline use”) on Home or settings.
+- [ ] **Notification policy:** Which reminders ship in v1 (suggested: AM/PM attendance nudge + mobile sync status only).
+- [ ] **Opt-in defaults:** Notifications off by default; teacher enables in settings.
 
 ---
 
@@ -102,6 +143,9 @@ Mobile offline still needs a **sync endpoint** when online.
 - [ ] Status bar, safe areas (already partial in `AppShell`), Android back button with React Router.
 - [ ] Deep links: `/attendance/session/:date?period=AM`, `/scores/event/:id`.
 - [ ] File picker plugin for Excel import on mobile (if keeping import offline-queued).
+- [ ] **Local Notifications plugin** (e.g. `@capacitor/local-notifications`) — schedule attendance reminders on device.
+- [ ] Notification tap → deep link to `/attendance` or today’s session URL.
+- [ ] Request notification permission on first enable in Settings (not on cold start).
 
 ---
 
@@ -134,7 +178,10 @@ Mobile offline still needs a **sync endpoint** when online.
 ## Phase 6 — Mobile UX and web/mobile divergence
 
 - [ ] Hide or disable offline-only messaging on web.
+- [ ] **Web (in-app reminders):** optional banners on Home / Attendance calendar when today’s AM or PM session is missing (no Web Push in v1).
 - [ ] Mobile settings screen: sync status, last synced time, storage size, “Sync now”, optional “Clear local data”.
+- [ ] Mobile settings: **Notifications** — enable AM/PM reminders, quiet hours, permission status.
+- [ ] Mobile: show in-app sync banner when outbox has pending changes (complements local notification on sync failure).
 - [ ] Excel import: mobile file UX; consider deferring bulk import to online sync only.
 - [ ] Attendance: prioritize offline (main use case) — large touch targets already started.
 - [ ] Score grading: offline draft entries in local DB; sync `score_events` + `score_entries`.
@@ -150,6 +197,8 @@ Mobile offline still needs a **sync endpoint** when online.
 - [ ] Privacy policy + data retention (student PII).
 - [ ] App Store / Play Console assets, screenshots, description mentioning offline for mobile only.
 - [ ] CI: build web + build mobile artifact (AAB/IPA or internal TestFlight/Play internal testing).
+- [ ] Test notifications: scheduled fire offline, tap opens correct screen, disabled when opt-out.
+- [ ] Store listing mentions optional attendance reminders (not student-data alerts).
 
 ---
 
@@ -168,7 +217,7 @@ Mobile offline still needs a **sync endpoint** when online.
 2. Phase 1 hosting + Phase 2 auth (unblocks secure mobile and web)
 3. Phase 3 Capacitor shell (app installs, still online-only) — optional milestone: **mobile app v0**
 4. Phase 4 local DB + Phase 5 sync — **mobile app v1 with offline**
-5. Phase 6–7 polish and store submission
+5. Phase 6–7 polish, **in-app reminders (web)** + **local notifications (mobile)**, store submission
 
 ---
 
@@ -178,6 +227,8 @@ Mobile offline still needs a **sync endpoint** when online.
 - Full peer-to-peer sync between two phones without server
 - Rewriting UI in Swift/Kotlin (unless Capacitor proves insufficient)
 - Real-time multiplayer / live collaboration
+- **Push notification for every Recents activity** (saved attendance, each score edit, etc.)
+- **Mandatory Web Push** on browser build in v1
 
 ---
 
@@ -190,6 +241,8 @@ Mobile offline still needs a **sync endpoint** when online.
 | 3 | Server mandatory for first mobile launch, or weeks of offline-only OK? | |
 | 4 | One teacher per phone — enforce via auth? | |
 | 5 | Delete/student GDPR — export and wipe local + server? | |
+| 6 | Web Push in v1 or only in-app banners + mobile local notifications? | |
+| 7 | Default AM/PM reminder times — fixed or teacher-configurable? | |
 
 ---
 
