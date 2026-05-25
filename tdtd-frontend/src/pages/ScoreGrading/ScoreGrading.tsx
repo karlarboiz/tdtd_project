@@ -1,13 +1,53 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { listClasses } from '../../api/classesApi'
-import { listScoreEntries, saveScoreEntries } from '../../api/scoreApi'
+import {
+  getScoreEvent,
+  listScoreEntries,
+  saveScoreEntries,
+} from '../../api/scoreApi'
 import { listStudentsByClass } from '../../api/studentsApi'
+import { formatRecordedAt } from '../../lib/dates'
 import { formatScoreEventKindLabel } from '../../lib/scoreLabels'
 import { formatStudentName } from '../../lib/studentDisplay'
 import { ApiError } from '../../lib/http'
-import type { ClassRow, ScoreEventRow, StudentRow } from '@/types/schema'
-import { getScoreEvent } from '../../api/scoreApi'
+import type {
+  ClassRow,
+  ScoreEntryRow,
+  ScoreEventRow,
+  StudentRow,
+} from '@/types/schema'
+
+type SavedEntry = {
+  score: number | null
+  recordedAt: number
+}
+
+function hasSavedScore(entries: ScoreEntryRow[]): boolean {
+  return entries.some((e) => e.score !== null && e.score !== undefined)
+}
+
+function applyEntriesToState(
+  entries: ScoreEntryRow[],
+  roster: StudentRow[],
+): {
+  saved: Record<string, SavedEntry>
+  draft: Record<string, string>
+} {
+  const saved: Record<string, SavedEntry> = {}
+  const draft: Record<string, string> = {}
+  for (const s of roster) {
+    const ent = entries.find((e) => e.studentId === s.id)
+    if (ent) {
+      saved[s.id] = { score: ent.score, recordedAt: ent.recordedAt }
+      draft[s.id] =
+        ent.score !== null && ent.score !== undefined ? String(ent.score) : ''
+    } else {
+      draft[s.id] = ''
+    }
+  }
+  return { saved, draft }
+}
 
 export function ScoreGrading() {
   const { eventId = '' } = useParams<{ eventId: string }>()
@@ -16,11 +56,37 @@ export function ScoreGrading() {
   const [event, setEvent] = useState<ScoreEventRow | null>(null)
   const [classRow, setClassRow] = useState<ClassRow | null>(null)
   const [students, setStudents] = useState<StudentRow[]>([])
+  const [savedEntries, setSavedEntries] = useState<Record<string, SavedEntry>>(
+    {},
+  )
   const [scores, setScores] = useState<Record<string, string>>({})
+  const [isEditing, setIsEditing] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const lastRecordedAt = useMemo(() => {
+    const times = Object.values(savedEntries)
+      .filter((e) => e.score !== null && e.score !== undefined)
+      .map((e) => e.recordedAt)
+    if (times.length === 0) return null
+    return Math.max(...times)
+  }, [savedEntries])
+
+  const syncFromEntries = useCallback(
+    (entries: ScoreEntryRow[], roster: StudentRow[], editing?: boolean) => {
+      const { saved, draft } = applyEntriesToState(entries, roster)
+      setSavedEntries(saved)
+      setScores(draft)
+      if (editing !== undefined) {
+        setIsEditing(editing)
+      } else {
+        setIsEditing(!hasSavedScore(entries))
+      }
+    },
+    [],
+  )
 
   const loadPage = useCallback(async () => {
     if (!eventId) {
@@ -42,16 +108,7 @@ export function ScoreGrading() {
         listScoreEntries(eventId),
       ])
       setStudents(roster)
-
-      const initial: Record<string, string> = {}
-      for (const s of roster) {
-        const ent = entries.find((e) => e.studentId === s.id)
-        initial[s.id] =
-          ent?.score !== null && ent?.score !== undefined
-            ? String(ent.score)
-            : ''
-      }
-      setScores(initial)
+      syncFromEntries(entries, roster)
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : 'Could not load score session.',
@@ -59,11 +116,26 @@ export function ScoreGrading() {
     } finally {
       setLoading(false)
     }
-  }, [eventId])
+  }, [eventId, syncFromEntries])
 
   useEffect(() => {
     void loadPage()
   }, [loadPage])
+
+  function startEditing() {
+    const draft: Record<string, string> = {}
+    for (const s of students) {
+      const ent = savedEntries[s.id]
+      draft[s.id] =
+        ent?.score !== null && ent?.score !== undefined
+          ? String(ent.score)
+          : ''
+    }
+    setScores(draft)
+    setIsEditing(true)
+    setMessage(null)
+    setError(null)
+  }
 
   async function handleSave() {
     if (!event) return
@@ -71,7 +143,7 @@ export function ScoreGrading() {
     setMessage(null)
     setError(null)
     try {
-      const entries = students.map((s) => {
+      const payload = students.map((s) => {
         const raw = scores[s.id]?.trim() ?? ''
         let score: number | null = null
         if (raw !== '') {
@@ -83,7 +155,8 @@ export function ScoreGrading() {
         }
         return { studentId: s.id, score }
       })
-      await saveScoreEntries(event.id, entries)
+      const updated = await saveScoreEntries(event.id, payload)
+      syncFromEntries(updated, students, false)
       setMessage('Scores saved.')
     } catch (err) {
       setError(
@@ -154,6 +227,11 @@ export function ScoreGrading() {
           {event.date ? `Date: ${event.date}` : 'No date set'}
           {event.maxScore !== undefined ? ` · Max: ${event.maxScore}` : ''}
         </p>
+        <p className="mt-1 text-sm text-slate-500">
+          {lastRecordedAt !== null
+            ? `Scores last recorded: ${formatRecordedAt(lastRecordedAt)}`
+            : 'Scores not recorded yet'}
+        </p>
       </header>
 
       {students.length === 0 ? (
@@ -162,34 +240,62 @@ export function ScoreGrading() {
         </p>
       ) : (
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Enter scores</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Leave blank for not yet graded.
-          </p>
+          <h2 className="text-lg font-semibold text-slate-900">
+            {isEditing ? 'Enter scores' : 'Scores'}
+          </h2>
+          {isEditing ? (
+            <p className="mt-1 text-sm text-slate-500">
+              Leave blank for not yet graded.
+            </p>
+          ) : null}
+
           <ul className="mt-4 divide-y divide-slate-100">
-            {students.map((s) => (
-              <li
-                key={s.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3"
-              >
-                <span className="min-w-0 flex-1 font-medium text-slate-900">
-                  {formatStudentName(s)}
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  max={event.maxScore}
-                  step="any"
-                  aria-label={`Score for ${formatStudentName(s)}`}
-                  className="w-24 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 text-right text-slate-900 outline-none ring-secondary focus:ring-2"
-                  value={scores[s.id] ?? ''}
-                  onChange={(e) =>
-                    setScores((prev) => ({ ...prev, [s.id]: e.target.value }))
-                  }
-                  placeholder="—"
-                />
-              </li>
-            ))}
+            {students.map((s) => {
+              const saved = savedEntries[s.id]
+              const hasScore =
+                saved?.score !== null && saved?.score !== undefined
+
+              return (
+                <li
+                  key={s.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3"
+                >
+                  <span className="min-w-0 flex-1 font-medium text-slate-900">
+                    {formatStudentName(s)}
+                  </span>
+
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      min={0}
+                      max={event.maxScore}
+                      step="any"
+                      aria-label={`Score for ${formatStudentName(s)}`}
+                      className="w-24 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 text-right text-slate-900 outline-none ring-secondary focus:ring-2"
+                      value={scores[s.id] ?? ''}
+                      onChange={(e) =>
+                        setScores((prev) => ({
+                          ...prev,
+                          [s.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="—"
+                    />
+                  ) : (
+                    <div className="text-right">
+                      <p className="text-lg font-semibold tabular-nums text-slate-900">
+                        {hasScore ? String(saved.score) : '—'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {hasScore
+                          ? `Recorded: ${formatRecordedAt(saved.recordedAt)}`
+                          : 'Not recorded'}
+                      </p>
+                    </div>
+                  )}
+                </li>
+              )
+            })}
           </ul>
 
           {error ? (
@@ -206,10 +312,16 @@ export function ScoreGrading() {
           <button
             type="button"
             disabled={saving}
-            onClick={() => void handleSave()}
+            onClick={() =>
+              isEditing ? void handleSave() : startEditing()
+            }
             className="mt-6 w-full rounded-2xl bg-primary px-4 py-4 font-semibold text-white shadow-md transition hover:bg-indigo-600 disabled:opacity-60"
           >
-            {saving ? 'Saving…' : 'Save scores'}
+            {saving
+              ? 'Saving…'
+              : isEditing
+                ? 'Save Changes'
+                : 'Edit Changes'}
           </button>
         </section>
       )}

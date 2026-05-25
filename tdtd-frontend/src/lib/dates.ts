@@ -31,3 +31,14 @@ export function formatLongDate(ymd: string): string {
     day: 'numeric',
   })
 }
+
+/** Locale date + time for score entry recorded_at (ms epoch). */
+export function formatRecordedAt(ms: number): string {
+  return new Date(ms).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}

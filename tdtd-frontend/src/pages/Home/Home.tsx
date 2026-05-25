@@ -3,11 +3,7 @@ import { Link } from 'react-router-dom'
 export function Home() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col py-6 lg:max-w-xl lg:py-10">
-      <header className="w-full text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Teacher&apos;s Dilemma Today
-        </h1>
-      </header>
+
 
       <main className="mx-auto mt-10 flex w-full max-w-md flex-1 flex-col items-stretch gap-4 lg:mt-14 lg:max-w-xl">
         <Link

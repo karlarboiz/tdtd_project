@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { AddSubjectModal } from '../../components/AddSubjectModal/AddSubjectModal'
@@ -25,7 +25,26 @@ export function Subjects() {
   const [importBusy, setImportBusy] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [gradeFilter, setGradeFilter] = useState<'all' | string>('all')
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const gradeLevels = useMemo(() => {
+    const levels = [...new Set(subjects.map((s) => s.gradeLevel))]
+    return levels.sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
+    )
+  }, [subjects])
+
+  const filteredSubjects = useMemo(() => {
+    if (gradeFilter === 'all') return subjects
+    return subjects.filter((s) => s.gradeLevel === gradeFilter)
+  }, [subjects, gradeFilter])
+
+  useEffect(() => {
+    if (gradeFilter !== 'all' && !gradeLevels.includes(gradeFilter)) {
+      setGradeFilter('all')
+    }
+  }, [gradeFilter, gradeLevels])
 
   const refreshSubjects = useCallback(async (yearId: string) => {
     const list = await listSchoolYearSubjects(yearId)
@@ -157,6 +176,8 @@ export function Subjects() {
   }
 
   const hasSubjects = subjects.length > 0
+  const hasGradeFilter = gradeFilter !== 'all'
+  const showGradeFilter = hasSubjects && gradeLevels.length > 0
 
   return (
     <div className="w-full">
@@ -259,13 +280,38 @@ export function Subjects() {
           </div>
 
           <section className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-5 py-4">
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="font-semibold text-slate-900">
-                Registered subjects ({subjects.length})
+                Registered Subjects (
+                {hasGradeFilter
+                  ? `${filteredSubjects.length} of ${subjects.length}`
+                  : subjects.length}
+                )
               </h2>
+              {showGradeFilter ? (
+                <label className="flex min-w-0 flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+                  <span className="shrink-0 font-medium text-slate-600">
+                    Grade level
+                  </span>
+                  <select
+                    value={gradeFilter}
+                    onChange={(e) => setGradeFilter(e.target.value)}
+                    className="min-h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 text-slate-900 outline-none ring-secondary focus:ring-2 sm:w-auto sm:min-w-[12rem]"
+                    aria-label="Filter registered subjects by grade level"
+                  >
+                    <option value="all">All grade levels</option>
+                    {gradeLevels.map((level) => (
+                      <option key={level} value={level}>
+                        {level}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
             </div>
 
             {hasSubjects ? (
+              filteredSubjects.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[32rem] text-left text-sm">
                   <thead>
@@ -285,7 +331,7 @@ export function Subjects() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {subjects.map((s) => (
+                    {filteredSubjects.map((s) => (
                       <tr key={s.id} className="text-slate-800">
                         <td className="px-5 py-3 font-medium">{s.subjectName}</td>
                         <td className="px-5 py-3 text-slate-700">{s.gradeLevel}</td>
@@ -309,6 +355,12 @@ export function Subjects() {
                   </tbody>
                 </table>
               </div>
+              ) : (
+                <p className="px-5 py-10 text-center text-sm text-slate-500">
+                  No subjects for <strong>{gradeFilter}</strong>. Choose{' '}
+                  <strong>All grade levels</strong> to see every registration.
+                </p>
+              )
             ) : (
               <p className="px-5 py-10 text-center text-sm text-slate-500">
                 No subjects registered yet. Add one manually or import from Excel.

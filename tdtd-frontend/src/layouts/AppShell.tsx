@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { AppBrand } from '@/components/AppBrand/AppBrand'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -10,16 +12,83 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
       : 'text-slate-700 active:bg-slate-100 sm:hover:bg-slate-100',
   ].join(' ')
 
+function NavMenuIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        className="h-6 w-6"
+        aria-hidden
+      >
+        <path d="M6 6l12 12M18 6 6 18" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      className="h-6 w-6"
+      aria-hidden
+    >
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  )
+}
+
 export function AppShell() {
+  const [navOpen, setNavOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    setNavOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!navOpen) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNavOpen(false)
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [navOpen])
+
   return (
     <div className="flex min-h-svh flex-col bg-neutral-bg lg:h-svh lg:overflow-hidden">
       <header className="shrink-0 border-b border-slate-200 bg-white pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 pb-3 sm:pb-4 lg:px-6 lg:pb-4">
-          <p className="text-lg font-semibold leading-snug tracking-tight text-slate-900 sm:text-base">
-            Teacher&apos;s Dilemma Today
-          </p>
+        <div className="mx-auto w-full max-w-7xl px-4 pb-3 sm:pb-4 lg:px-6 lg:pb-4">
+          <div className="flex items-center justify-between gap-3">
+            <AppBrand />
+            <button
+              type="button"
+              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100"
+              aria-expanded={navOpen}
+              aria-controls="main-nav"
+              aria-label={navOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setNavOpen((open) => !open)}
+            >
+              <NavMenuIcon open={navOpen} />
+            </button>
+          </div>
+
           <nav
-            className="flex flex-col gap-1 border-t border-slate-100 pt-3 sm:flex-row sm:flex-wrap sm:gap-2 sm:border-t-0 sm:pt-0"
+            id="main-nav"
+            className={[
+              'flex flex-col gap-1 border-t border-slate-100 pt-3 sm:flex-row sm:flex-wrap sm:gap-2',
+              navOpen ? 'mt-3' : 'hidden',
+            ].join(' ')}
             aria-label="Main"
           >
             <NavLink to="/" end className={navLinkClass}>
