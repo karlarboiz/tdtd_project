@@ -1,4 +1,6 @@
 export type {
+  ActivityLogMetadata,
+  ActivityLogRow,
   AttendancePeriod,
   AttendanceRecordRow,
   AttendanceRecordStatus,

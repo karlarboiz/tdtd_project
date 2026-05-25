@@ -12,6 +12,15 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
       : 'text-slate-700 active:bg-slate-100 sm:hover:bg-slate-100',
   ].join(' ')
 
+const recentsLinkClass = ({ isActive }: { isActive: boolean }) =>
+  [
+    'touch-manipulation rounded-lg text-sm font-semibold transition',
+    'inline-flex min-h-11 shrink-0 items-center justify-center px-3 py-2',
+    isActive
+      ? 'bg-primary/10 text-primary'
+      : 'text-slate-700 active:bg-slate-100 hover:bg-slate-100',
+  ].join(' ')
+
 function NavMenuIcon({ open }: { open: boolean }) {
   if (open) {
     return (
@@ -71,16 +80,21 @@ export function AppShell() {
         <div className="mx-auto w-full max-w-7xl px-4 pb-3 sm:pb-4 lg:px-6 lg:pb-4">
           <div className="flex items-center justify-between gap-3">
             <AppBrand />
-            <button
-              type="button"
-              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100"
-              aria-expanded={navOpen}
-              aria-controls="main-nav"
-              aria-label={navOpen ? 'Close menu' : 'Open menu'}
-              onClick={() => setNavOpen((open) => !open)}
-            >
-              <NavMenuIcon open={navOpen} />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              <NavLink to="/recents" className={recentsLinkClass}>
+                Recents
+              </NavLink>
+              <button
+                type="button"
+                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100"
+                aria-expanded={navOpen}
+                aria-controls="main-nav"
+                aria-label={navOpen ? 'Close menu' : 'Open menu'}
+                onClick={() => setNavOpen((open) => !open)}
+              >
+                <NavMenuIcon open={navOpen} />
+              </button>
+            </div>
           </div>
 
           <nav

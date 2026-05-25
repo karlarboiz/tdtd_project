@@ -100,3 +100,21 @@ export interface ScoreEntryRow {
   note?: string
   recordedAt: number
 }
+
+export type ActivityLogMetadata = {
+  classId?: string
+  studentId?: string
+  eventId?: string
+  schoolYearId?: string
+  date?: string
+  period?: 'AM' | 'PM'
+  count?: number
+}
+
+export interface ActivityLogRow {
+  id: string
+  action: string
+  summary: string
+  metadata?: ActivityLogMetadata
+  createdAt: number
+}

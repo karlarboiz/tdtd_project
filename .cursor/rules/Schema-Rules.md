@@ -33,7 +33,7 @@ Function change log: [documentation/README.md](../documentation/README.md).
 | 3 | `attendance_sessions` | [attendance.md](../schemas/attendance.md) |
 | 4 | `attendance_records` | [attendance.md](../schemas/attendance.md) |
 
-Subject tables (`school_years`, `subjects`, `school_year_subjects`, `class_subjects`): [subjects.md](../schemas/subjects.md). Score tables (`score_events`, `score_entries`): [quiz.md](../schemas/quiz.md).
+Subject tables (`school_years`, `subjects`, `school_year_subjects`, `class_subjects`): [subjects.md](../schemas/subjects.md). Score tables (`score_events`, `score_entries`): [quiz.md](../schemas/quiz.md). Activity log (`activity_logs`): [recents.md](../schemas/recents.md).
 
 ---
 

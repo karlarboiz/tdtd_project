@@ -157,7 +157,7 @@ export function ScoreGrading() {
       })
       const updated = await saveScoreEntries(event.id, payload)
       syncFromEntries(updated, students, false)
-      setMessage('Scores saved.')
+      setMessage('Scores saved. Check Recents for this activity.')
     } catch (err) {
       setError(
         err instanceof ApiError

@@ -7,6 +7,7 @@ import { Home } from './pages/Home/Home'
 import { ScoreGrading } from './pages/ScoreGrading/ScoreGrading'
 import { Scores } from './pages/Scores/Scores'
 import { Subjects } from './pages/Subjects/Subjects'
+import { Recents } from './pages/Recents/Recents'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/subjects" element={<Subjects />} />
           <Route path="/scores" element={<Scores />} />
           <Route path="/scores/event/:eventId" element={<ScoreGrading />} />
+          <Route path="/recents" element={<Recents />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

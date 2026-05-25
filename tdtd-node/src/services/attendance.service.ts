@@ -9,6 +9,7 @@ import type {
 import { HttpError } from '../errors/http-error.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
 import * as studentDao from '../dao/student.dao.js'
+import { ACTIVITY_ACTION, recordActivity } from './activityLog.service.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -166,6 +167,16 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
     }
   })
   run()
+
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.ATTENDANCE_SAVED,
+    summary: `Saved ${period} attendance for ${date} (${presentFiltered.length} present)`,
+    metadata: {
+      date,
+      period,
+      count: presentFiltered.length,
+    },
+  })
 
   return session
 }

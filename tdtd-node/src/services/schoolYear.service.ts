@@ -9,6 +9,7 @@ import {
   normalizeSubjectShortCode,
   resolveSubjectIdForRegistration,
 } from './subject.service.js'
+import { ACTIVITY_ACTION, recordActivity } from './activityLog.service.js'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 const SY_LABEL = /^\d{4}-\d{4}$/
@@ -78,7 +79,20 @@ export function createSchoolYear(
     schoolYearDao.setActiveSchoolYear(db, row.id, now)
   }
 
-  return schoolYearDao.getSchoolYearById(db, row.id) ?? row
+  const saved = schoolYearDao.getSchoolYearById(db, row.id) ?? row
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SCHOOL_YEAR_CREATED,
+    summary: `Created school year ${saved.label}`,
+    metadata: { schoolYearId: saved.id },
+  })
+  if (saved.isActive) {
+    recordActivity(db, {
+      action: ACTIVITY_ACTION.SCHOOL_YEAR_ACTIVATED,
+      summary: `Set active school year to ${saved.label}`,
+      metadata: { schoolYearId: saved.id },
+    })
+  }
+  return saved
 }
 
 export function activateSchoolYear(
@@ -92,7 +106,13 @@ export function activateSchoolYear(
 
   const now = Date.now()
   schoolYearDao.setActiveSchoolYear(db, id, now)
-  return schoolYearDao.getSchoolYearById(db, id) ?? existing
+  const updated = schoolYearDao.getSchoolYearById(db, id) ?? existing
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SCHOOL_YEAR_ACTIVATED,
+    summary: `Set active school year to ${updated.label}`,
+    metadata: { schoolYearId: updated.id },
+  })
+  return updated
 }
 
 export function getSchoolYearOrThrow(
@@ -168,6 +188,11 @@ export function registerSubjectForSchoolYear(
   const list = schoolYearDao.listSchoolYearSubjects(db, schoolYearId)
   const found = list.find((x) => x.id === regId)
   if (!found) throw new HttpError(500, 'failed to load school year subject')
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SUBJECT_REGISTERED,
+    summary: `Registered ${found.subjectName} for ${gradeLevel}`,
+    metadata: { schoolYearId },
+  })
   return found
 }
 
@@ -185,6 +210,13 @@ export function unregisterSubjectFromSchoolYear(
     throw new HttpError(404, 'subject registration not found for this school year')
   }
 
+  const listed = schoolYearDao
+    .listSchoolYearSubjects(db, schoolYearId)
+    .find((x) => x.id === rid)
+  if (!listed) {
+    throw new HttpError(404, 'subject registration not found for this school year')
+  }
+
   if (schoolYearDao.subjectUsedInClassOrScores(db, reg.subjectId)) {
     throw new HttpError(
       409,
@@ -196,6 +228,12 @@ export function unregisterSubjectFromSchoolYear(
   if (changes === 0) {
     throw new HttpError(404, 'subject registration not found for this school year')
   }
+
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SUBJECT_UNREGISTERED,
+    summary: `Removed ${listed.subjectName} (${listed.gradeLevel}) from school year`,
+    metadata: { schoolYearId },
+  })
 }
 
 /** Used when assigning a subject to a class. */

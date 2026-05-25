@@ -350,6 +350,22 @@ export function migrate(db: SqliteDatabase): void {
   migrateSchoolYearTables(db)
   migrateSchoolYearSubjectsGradeLevel(db)
   migrateSubjectUniqueConstraints(db)
+  migrateActivityLogsTable(db)
+}
+
+/** Teacher activity recents — see .cursor/schemas/recents.md */
+export function migrateActivityLogsTable(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS activity_logs (
+      id TEXT PRIMARY KEY,
+      action TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      metadata TEXT,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at
+      ON activity_logs(created_at DESC);
+  `)
 }
 
 /** Unique indexes on subject name / short code when no legacy duplicates exist. */

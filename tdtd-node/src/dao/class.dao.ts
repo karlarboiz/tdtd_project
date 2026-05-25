@@ -25,6 +25,14 @@ export function listClasses(db: SqliteDatabase): ClassRow[] {
   return rows.map(mapClassRow)
 }
 
+export function getClassById(
+  db: SqliteDatabase,
+  id: string,
+): ClassRow | undefined {
+  const row = db.prepare(CLASS_QUERIES.getById).get(id) as ClassDbRow | undefined
+  return row ? mapClassRow(row) : undefined
+}
+
 export function insertClass(db: SqliteDatabase, row: ClassRow): void {
   db.prepare(CLASS_QUERIES.insert).run({
     id: row.id,

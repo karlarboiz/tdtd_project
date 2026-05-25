@@ -21,6 +21,7 @@ Do not change schema structure unless explicitly instructed.
 | [attendance.md](./attendance.md) | `attendance_sessions`, `attendance_records` |
 | [subjects.md](./subjects.md) | `school_years`, `subjects`, `school_year_subjects`, `class_subjects` |
 | [quiz.md](./quiz.md) | `score_events`, `score_entries` |
+| [recents.md](./recents.md) | `activity_logs` |
 
 ## Naming convention
 

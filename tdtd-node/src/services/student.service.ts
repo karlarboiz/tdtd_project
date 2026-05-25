@@ -7,6 +7,12 @@ import type {
 } from '../schema/types.js'
 import { HttpError } from '../errors/http-error.js'
 import * as studentDao from '../dao/student.dao.js'
+import * as classDao from '../dao/class.dao.js'
+import {
+  ACTIVITY_ACTION,
+  formatStudentDisplayName,
+  recordActivity,
+} from './activityLog.service.js'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -121,6 +127,13 @@ export function registerStudent(db: SqliteDatabase, input: RegisterStudentInput)
     ts,
   )
   studentDao.insertStudent(db, row)
+  const classRow = classDao.getClassById(db, classId)
+  const classLabel = classRow?.name ?? 'class'
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.STUDENT_REGISTERED,
+    summary: `Added student ${formatStudentDisplayName(row)} to ${classLabel}`,
+    metadata: { classId, studentId: row.id },
+  })
   return row
 }
 
@@ -149,5 +162,12 @@ export function registerStudentsBulk(
     }
   })
   run(list)
+  const classRow = classDao.getClassById(db, classId)
+  const classLabel = classRow?.name ?? 'class'
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.STUDENTS_IMPORTED,
+    summary: `Imported ${created.length} students into ${classLabel}`,
+    metadata: { classId, count: created.length },
+  })
   return created
 }

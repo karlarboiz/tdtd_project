@@ -128,3 +128,26 @@ export interface ScoreEntryRow {
   note?: string
   recordedAt: number
 }
+
+/** Optional JSON payload for deep links and context (see .cursor/schemas/recents.md). */
+export type ActivityLogMetadata = {
+  classId?: string
+  studentId?: string
+  eventId?: string
+  schoolYearId?: string
+  date?: IsoDateString
+  period?: AttendancePeriod
+  count?: number
+}
+
+/**
+ * activity_logs — teacher activity recents (append-only).
+ * No FKs; metadata may reference entities that are later deleted.
+ */
+export interface ActivityLogRow {
+  id: string
+  action: string
+  summary: string
+  metadata?: ActivityLogMetadata
+  createdAt: number
+}

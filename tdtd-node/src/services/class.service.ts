@@ -3,6 +3,7 @@ import type { SqliteDatabase } from '../db/sqlite-types.js'
 import type { ClassRow, ClassShift } from '../schema/types.js'
 import { HttpError } from '../errors/http-error.js'
 import * as classDao from '../dao/class.dao.js'
+import { ACTIVITY_ACTION, recordActivity } from './activityLog.service.js'
 
 export type CreateClassInput = {
   name: string
@@ -32,5 +33,11 @@ export function createClass(db: SqliteDatabase, input: CreateClassInput): ClassR
     createdAt: Date.now(),
   }
   classDao.insertClass(db, row)
+  const shiftLabel = shift === 'MRNG' ? 'morning' : 'afternoon'
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.CLASS_CREATED,
+    summary: `Created class ${name} (${shiftLabel})`,
+    metadata: { classId: row.id },
+  })
   return row
 }

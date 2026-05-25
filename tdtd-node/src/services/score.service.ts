@@ -16,6 +16,12 @@ import * as scoreEntryDao from '../dao/scoreEntry.dao.js'
 import { SCORE_EVENT_KIND_VALUES } from '../constants/TDTDConstants.js'
 import { assertSubjectRegisteredForActiveYear } from './schoolYear.service.js'
 import { assertClassExists } from './subject.service.js'
+import * as classDao from '../dao/class.dao.js'
+import {
+  ACTIVITY_ACTION,
+  recordActivity,
+  scoreKindLabel,
+} from './activityLog.service.js'
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -58,6 +64,12 @@ export function assignSubjectToClass(
   const list = classSubjectDao.listClassSubjects(db, cid)
   const found = list.find((x) => x.subjectId === sid)
   if (!found) throw new HttpError(500, 'failed to load class subject')
+  const classRow = classDao.getClassById(db, cid)
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SUBJECT_ASSIGNED_TO_CLASS,
+    summary: `Assigned ${found.subjectName} to ${classRow?.name ?? 'class'}`,
+    metadata: { classId: cid },
+  })
   return found
 }
 
@@ -71,10 +83,18 @@ export function removeSubjectFromClass(
   if (!cid) throw new HttpError(400, 'classId is required')
   if (!sid) throw new HttpError(400, 'subjectId is required')
   assertClassExists(db, cid)
+  const list = classSubjectDao.listClassSubjects(db, cid)
+  const existing = list.find((x) => x.subjectId === sid)
   const { changes } = classSubjectDao.deleteClassSubject(db, cid, sid)
   if (changes === 0) {
     throw new HttpError(404, 'class subject assignment not found')
   }
+  const classRow = classDao.getClassById(db, cid)
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SUBJECT_UNASSIGNED_FROM_CLASS,
+    summary: `Unassigned ${existing?.subjectName ?? 'subject'} from ${classRow?.name ?? 'class'}`,
+    metadata: { classId: cid },
+  })
 }
 
 function parseScoreKind(raw: string): ScoreEventKind {
@@ -164,6 +184,11 @@ export function createScoreEvent(
     createdAt: now,
   }
   scoreEventDao.insertScoreEvent(db, row)
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SCORE_EVENT_CREATED,
+    summary: `Created ${scoreKindLabel(kind)}: ${title}`,
+    metadata: { classId: cid, eventId: row.id },
+  })
   return row
 }
 
@@ -195,6 +220,8 @@ export function replaceScoreEntries(
   const ev = getScoreEventOrThrow(db, eventId)
   const eid = eventId.trim()
   const now = Date.now()
+  const hadPriorEntries =
+    scoreEntryDao.listScoreEntriesByEvent(db, eid).length > 0
 
   const run = db.transaction(() => {
     for (const raw of entries) {
@@ -238,5 +265,15 @@ export function replaceScoreEntries(
   })
 
   run()
-  return scoreEntryDao.listScoreEntriesByEvent(db, eid)
+  const saved = scoreEntryDao.listScoreEntriesByEvent(db, eid)
+  const gradedCount = saved.filter(
+    (e) => e.score !== null && e.score !== undefined,
+  ).length
+  const verb = hadPriorEntries ? 'Updated' : 'Saved'
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SCORES_SAVED,
+    summary: `${verb} scores for ${ev.title} (${gradedCount} graded)`,
+    metadata: { classId: ev.classId, eventId: eid, count: gradedCount },
+  })
+  return saved
 }
