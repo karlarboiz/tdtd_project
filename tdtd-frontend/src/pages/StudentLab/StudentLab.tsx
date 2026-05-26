@@ -12,6 +12,7 @@ import {
   lastNDaysRange,
 } from '../../lib/studentLabDates'
 import { ApiError } from '../../lib/http'
+import { errorAlertClass, formLabelInlineClass } from '@/lib/uiClasses'
 import type {
   SchoolYearRow,
   StudentLabPayload,
@@ -282,7 +283,7 @@ export function StudentLab() {
               </div>
               <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
                 <p className="text-xs font-medium text-slate-500">Absent</p>
-                <p className="text-xl font-bold text-accent">
+                <p className="text-xl font-bold text-slate-800">
                   {attendance.summary.absentCount}
                 </p>
               </div>
@@ -315,7 +316,7 @@ export function StudentLab() {
                         'text-sm font-semibold',
                         sess.status === 'present'
                           ? 'text-secondary'
-                          : 'text-accent',
+                          : 'text-slate-700',
                       ].join(' ')}
                     >
                       {sess.status === 'present' ? 'Present' : 'Absent'}
@@ -338,7 +339,7 @@ export function StudentLab() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-slate-900">Recent scores</h2>
           <label className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-slate-600">Range</span>
+            <span className={formLabelInlineClass}>Range</span>
             <select
               value={scorePreset}
               onChange={(e) =>
@@ -381,7 +382,7 @@ export function StudentLab() {
         <p className="text-center text-xs text-slate-400">Refreshing…</p>
       ) : null}
       {error && data ? (
-        <p className="text-center text-sm text-accent" role="alert">
+        <p className={`text-center ${errorAlertClass}`} role="alert">
           {error}
         </p>
       ) : null}

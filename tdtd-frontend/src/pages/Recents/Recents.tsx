@@ -4,6 +4,7 @@ import { listRecents } from '../../api/recentsApi'
 import { activityLogHref } from '../../lib/activityLinks'
 import { formatRecordedAt, toYMD } from '../../lib/dates'
 import { ApiError } from '../../lib/http'
+import { errorAlertClass, secondaryButtonClass } from '@/lib/uiClasses'
 import type { ActivityLogRow } from '@/types/schema'
 
 type DayGroup = {
@@ -96,14 +97,14 @@ export function Recents() {
           type="button"
           disabled={loading || refreshing}
           onClick={() => void load({ silent: true })}
-          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+          className={`shrink-0 px-3 py-2 text-sm ${secondaryButtonClass}`}
         >
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
 
       {error ? (
-        <p className="mt-4 text-sm font-medium text-accent" role="alert">
+        <p className={`mt-4 ${errorAlertClass}`} role="alert">
           {error}
         </p>
       ) : null}

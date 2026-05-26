@@ -13,6 +13,13 @@ import { ApiError } from '../../lib/http'
 import { defaultSchoolYearLabel } from '../../lib/schoolYearLabel'
 import { parseSubjectImportWorkbook } from '../../lib/subjectImportParse'
 import { downloadSubjectImportSample } from '../../lib/subjectImportSampleXlsx'
+import {
+  errorAlertClass,
+  formInputClasses,
+  formLabelInlineClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '@/lib/uiClasses'
 import type { SchoolYearRow, SchoolYearSubjectRow } from '@/types/schema'
 
 export function Subjects() {
@@ -184,7 +191,7 @@ export function Subjects() {
       <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
         <Link
           to="/"
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          className={`rounded-lg border border-secondary bg-white px-3 py-2 text-sm font-medium text-secondary shadow-sm transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary`}
         >
           ← Home
         </Link>
@@ -203,7 +210,7 @@ export function Subjects() {
       ) : null}
 
       {pageError ? (
-        <p className="mt-4 text-sm font-medium text-accent" role="alert">
+        <p className={`mt-4 ${errorAlertClass}`} role="alert">
           {pageError}
         </p>
       ) : null}
@@ -221,7 +228,7 @@ export function Subjects() {
             type="button"
             disabled={setupBusy}
             onClick={() => void setupSchoolYear()}
-            className="mt-4 w-full rounded-xl bg-primary py-3 font-semibold text-white hover:bg-indigo-600 disabled:opacity-50 sm:w-auto sm:px-6"
+            className={`mt-4 w-full py-3 sm:w-auto sm:px-6 ${primaryButtonClass}`}
           >
             {setupBusy ? 'Creating…' : 'Create active school year'}
           </button>
@@ -237,7 +244,7 @@ export function Subjects() {
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
-                className="mt-4 w-full rounded-xl bg-primary py-3 font-semibold text-white hover:bg-indigo-600"
+                className={`mt-4 w-full py-3 ${primaryButtonClass}`}
               >
                 Add subject manually
               </button>
@@ -251,7 +258,7 @@ export function Subjects() {
                 skipped.
               </p>
               {importError ? (
-                <p className="mt-2 text-sm font-medium text-accent" role="alert">
+                <p className={`mt-2 ${errorAlertClass}`} role="alert">
                   {importError}
                 </p>
               ) : null}
@@ -262,13 +269,14 @@ export function Subjects() {
                   accept=".xlsx,.xls"
                   disabled={importBusy}
                   onChange={(e) => void onExcel(e.target.files)}
-                  className="block w-full min-w-0 flex-1 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white disabled:opacity-50"
+                  className={`block w-full min-w-0 flex-1 text-sm text-neutral-label file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white disabled:opacity-50 ${importError ? 'rounded-xl border-2 border-primary' : ''}`}
+                  aria-invalid={Boolean(importError)}
                 />
                 <button
                   type="button"
                   disabled={importBusy}
                   onClick={() => downloadSubjectImportSample()}
-                  className="shrink-0 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+                  className={`shrink-0 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
                 >
                   Download sample (.xlsx)
                 </button>
@@ -290,13 +298,13 @@ export function Subjects() {
               </h2>
               {showGradeFilter ? (
                 <label className="flex min-w-0 flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
-                  <span className="shrink-0 font-medium text-slate-600">
+                  <span className={`shrink-0 ${formLabelInlineClass}`}>
                     Grade level
                   </span>
                   <select
                     value={gradeFilter}
                     onChange={(e) => setGradeFilter(e.target.value)}
-                    className="min-h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 text-slate-900 outline-none ring-secondary focus:ring-2 sm:w-auto sm:min-w-[12rem]"
+                    className={`min-h-10 w-full min-w-0 py-2 sm:w-auto sm:min-w-[12rem] ${formInputClasses()}`}
                     aria-label="Filter registered subjects by grade level"
                   >
                     <option value="all">All grade levels</option>
@@ -345,7 +353,7 @@ export function Subjects() {
                             onClick={() =>
                               void removeSubject(s.id, s.subjectName, s.gradeLevel)
                             }
-                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                            className="rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50"
                           >
                             {removingId === s.id ? 'Removing…' : 'Remove'}
                           </button>

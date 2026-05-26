@@ -6,11 +6,32 @@
   --color-secondary: #14b8a6;
   --color-accent: #fb7185;
   --color-neutral-bg: #f1f5f9;
+  /* Readable label text on white (Cool Gray family) */
+  --color-neutral-label: #64748b;
 }
 
 @layer base {
   html {
     @apply font-sans antialiased;
+  }
+
+  a[href],
+  button:not(:disabled),
+  summary,
+  label[for],
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  select:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
   }
 }
 

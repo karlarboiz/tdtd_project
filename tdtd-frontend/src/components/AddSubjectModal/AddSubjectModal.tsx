@@ -1,6 +1,13 @@
 import { type FormEvent, useEffect, useId, useState } from 'react'
 import { registerSchoolYearSubject } from '../../api/schoolYearApi'
 import { ApiError } from '../../lib/http'
+import {
+  errorAlertClass,
+  formInputClasses,
+  formLabelClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '@/lib/uiClasses'
 
 type AddSubjectModalProps = {
   open: boolean
@@ -64,6 +71,8 @@ export function AddSubjectModal({
     }
   }
 
+  const inputError = Boolean(error)
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
@@ -85,17 +94,14 @@ export function AddSubjectModal({
         </p>
 
         {error ? (
-          <p className="mt-3 text-sm font-medium text-accent" role="alert">
+          <p className={`mt-3 ${errorAlertClass}`} role="alert">
             {error}
           </p>
         ) : null}
 
         <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-3">
           <div>
-            <label
-              htmlFor="subject-name"
-              className="block text-sm font-medium text-slate-600"
-            >
+            <label htmlFor="subject-name" className={formLabelClass}>
               Name
             </label>
             <input
@@ -103,16 +109,14 @@ export function AddSubjectModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={busy}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+              className={`mt-1 py-2 ${formInputClasses({ error: inputError })}`}
               placeholder="e.g. Mathematics"
               autoFocus
+              aria-invalid={inputError}
             />
           </div>
           <div>
-            <label
-              htmlFor="subject-grade"
-              className="block text-sm font-medium text-slate-600"
-            >
+            <label htmlFor="subject-grade" className={formLabelClass}>
               Grade level
             </label>
             <input
@@ -120,15 +124,13 @@ export function AddSubjectModal({
               value={gradeLevel}
               onChange={(e) => setGradeLevel(e.target.value)}
               disabled={busy}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+              className={`mt-1 py-2 ${formInputClasses({ error: inputError })}`}
               placeholder="e.g. Grade 5"
+              aria-invalid={inputError}
             />
           </div>
           <div>
-            <label
-              htmlFor="subject-code"
-              className="block text-sm font-medium text-slate-600"
-            >
+            <label htmlFor="subject-code" className={formLabelClass}>
               Short code (optional)
             </label>
             <input
@@ -136,7 +138,7 @@ export function AddSubjectModal({
               value={shortCode}
               onChange={(e) => setShortCode(e.target.value)}
               disabled={busy}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+              className={`mt-1 py-2 ${formInputClasses()}`}
               placeholder="e.g. MATH"
             />
           </div>
@@ -145,14 +147,14 @@ export function AddSubjectModal({
               type="button"
               disabled={busy}
               onClick={onClose}
-              className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className={`px-4 py-2.5 text-sm ${secondaryButtonClass}`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={busy}
-              className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-50"
+              className={`px-4 py-2.5 text-sm ${primaryButtonClass}`}
             >
               {busy ? 'Saving…' : 'Add subject'}
             </button>
