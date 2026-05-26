@@ -22,6 +22,12 @@ import {
   formatScoreEventKindLabel,
   subtypeOptionsForKind,
 } from '../../lib/scoreLabels'
+import {
+  errorAlertClass,
+  formInputClasses,
+  formLabelClass,
+  primaryButtonClass,
+} from '@/lib/uiClasses'
 import type { ClassRow, SchoolYearSubjectRow, ScoreEventRow } from '@/types/schema'
 
 function todayYmd(): string {
@@ -224,15 +230,12 @@ export function Scores() {
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
           <div className="flex flex-col gap-6 lg:col-span-5">
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <label
-              className="block text-sm font-medium text-slate-600"
-              htmlFor="scores-class"
-            >
+            <label className={formLabelClass} htmlFor="scores-class">
               Class
             </label>
             <select
               id="scores-class"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2"
+              className={`mt-2 py-3 ${formInputClasses()}`}
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
             >
@@ -243,15 +246,12 @@ export function Scores() {
               ))}
             </select>
 
-            <label
-              className="mt-4 block text-sm font-medium text-slate-600"
-              htmlFor="scores-kind"
-            >
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-kind">
               Type
             </label>
             <select
               id="scores-kind"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2"
+              className={`mt-2 py-3 ${formInputClasses()}`}
               value={kind}
               onChange={(e) =>
                 setKind(e.target.value as ScoreEventKindValue)
@@ -268,15 +268,12 @@ export function Scores() {
 
             {subtypeOptions.length > 0 ? (
               <>
-                <label
-                  className="mt-4 block text-sm font-medium text-slate-600"
-                  htmlFor="scores-subtype"
-                >
+                <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-subtype">
                   {kind === SCORE_EVENT_KIND.QUIZ ? 'Quiz type' : 'Exam type'}
                 </label>
                 <select
                   id="scores-subtype"
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2"
+                  className={`mt-2 py-3 ${formInputClasses()}`}
                   value={subtypeCode}
                   onChange={(e) => setSubtypeCode(e.target.value)}
                 >
@@ -289,15 +286,12 @@ export function Scores() {
               </>
             ) : null}
 
-            <label
-              className="mt-4 block text-sm font-medium text-slate-600"
-              htmlFor="scores-subject"
-            >
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-subject">
               Subject
             </label>
             <select
               id="scores-subject"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70"
+              className={`mt-2 py-3 ${formInputClasses()}`}
               value={subjectId}
               onChange={(e) => setSubjectId(e.target.value)}
               disabled={subjectSelectDisabled}
@@ -340,40 +334,32 @@ export function Scores() {
           >
             <h2 className="text-lg font-semibold text-slate-900">New assessment</h2>
 
-            <label
-              className="mt-4 block text-sm font-medium text-slate-600"
-              htmlFor="scores-title"
-            >
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-title">
               Title
             </label>
             <input
               id="scores-title"
               type="text"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2"
+              className={`mt-2 py-3 ${formInputClasses({ error: Boolean(error) })}`}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={!subjectId}
+              aria-invalid={Boolean(error)}
             />
 
-            <label
-              className="mt-4 block text-sm font-medium text-slate-600"
-              htmlFor="scores-date"
-            >
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-date">
               Date
             </label>
             <input
               id="scores-date"
               type="date"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2"
+              className={`mt-2 py-3 ${formInputClasses()}`}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               disabled={!subjectId}
             />
 
-            <label
-              className="mt-4 block text-sm font-medium text-slate-600"
-              htmlFor="scores-max"
-            >
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-max">
               Max score (optional)
             </label>
             <input
@@ -381,14 +367,14 @@ export function Scores() {
               type="number"
               min={0}
               step="any"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2"
+              className={`mt-2 py-3 ${formInputClasses()}`}
               value={maxScore}
               onChange={(e) => setMaxScore(e.target.value)}
               disabled={!subjectId}
             />
 
             {error ? (
-              <p className="mt-4 text-sm text-rose-700" role="alert">
+              <p className={`mt-4 ${errorAlertClass}`} role="alert">
                 {error}
               </p>
             ) : null}
@@ -396,7 +382,7 @@ export function Scores() {
             <button
               type="submit"
               disabled={busy || !classId || !subjectId}
-              className="mt-6 w-full rounded-2xl bg-primary px-4 py-4 font-semibold text-white shadow-md transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`mt-6 w-full rounded-2xl px-4 py-4 ${primaryButtonClass}`}
             >
               {busy ? 'Creating…' : 'Create & enter scores'}
             </button>

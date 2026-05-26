@@ -39,8 +39,14 @@ We will follow these accessibility guidelines:
 Color Contrast: Ensure sufficient color contrast between UI elements and their backgrounds.
 Font Size and Line Height: Ensure all text is legible, with sufficient line height and font size.
 
+Form labels and shared classes
+Use the `neutral-label` theme token for form labels (`text-neutral-label`). Reuse helpers in `tdtd-frontend/src/lib/uiClasses.ts` for inputs, buttons, and error text so pages stay consistent.
+
 Layout (desktop)
-The app uses a shared shell (`AppShell` in `tdtd-frontend`) with a persistent **top** bar: logo (`AppBrand`), **Recents** link, and a hamburger that toggles primary routes (Home, Attendance, Classes & students, Subjects, Scores). See [App-Shell-Function-Doc.md](../documentation/App-Shell-Function-Doc.md). Individual screens may still use inline back links where helpful. Page content lives in the shell main region, capped at a comfortable reading width (`max-w-7xl` with horizontal padding), not a phone-width root. Heavier pages use `lg:` two-column grids (e.g. attendance session, classes); mobile remains a single column unless a specific breakpoint is documented otherwise.
+The app uses a shared shell (`AppShell` in `tdtd-frontend`) with a persistent **top** bar: logo (`AppBrand`), **Recents** link, and a hamburger that toggles primary routes (Home, Attendance, Classes & students, Subjects, Scores, Student Lab). See [App-Shell-Function-Doc.md](../documentation/App-Shell-Function-Doc.md). Individual screens may still use inline back links where helpful. Page content lives in the shell main region, capped at a comfortable reading width (`max-w-7xl` with horizontal padding), not a phone-width root. Heavier pages use `lg:` two-column grids (e.g. attendance session, classes); mobile remains a single column unless a specific breakpoint is documented otherwise.
+
+Compliance
+Track implementation status in [UI-Compliance-Checklist.md](../documentation/UI-Compliance-Checklist.md).
 
 By following these rules and design principles, we can create a consistent and user-friendly UI that enhances the overall application experience.
 

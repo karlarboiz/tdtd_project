@@ -17,6 +17,14 @@ import {
   tryBuildStudentDraft,
 } from '../../lib/studentImportParse'
 import { downloadStudentImportSample } from '../../lib/studentImportSampleXlsx'
+import {
+  errorAlertClass,
+  formInputClasses,
+  formLabelClass,
+  formLabelInlineClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '@/lib/uiClasses'
 import type {
   ClassRow,
   ClassShift,
@@ -387,7 +395,7 @@ export function RegisterStudentsModal({
                 <>
                   <div>
                     <label
-                      className="block text-sm font-medium text-slate-600"
+                      className={formLabelClass}
                       htmlFor="modal-class-name"
                     >
                       Class Name
@@ -403,7 +411,7 @@ export function RegisterStudentsModal({
                   </div>
                   <div>
                     <label
-                      className="block text-sm font-medium text-slate-600"
+                      className={formLabelClass}
                       htmlFor="modal-class-shift"
                     >
                       Schedule
@@ -425,7 +433,7 @@ export function RegisterStudentsModal({
               {view === 'existing' && (
                 <div>
                   <label
-                    className="block text-sm font-medium text-slate-600"
+                    className={formLabelClass}
                     htmlFor="modal-existing-class"
                   >
                     Class
@@ -447,7 +455,7 @@ export function RegisterStudentsModal({
               )}
 
               <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
-                <p className="text-xs font-medium text-slate-600">
+                <p className={`text-xs font-medium ${formLabelInlineClass}`}>
                   Student (then Add to list)
                 </p>
                 <input
@@ -455,7 +463,7 @@ export function RegisterStudentsModal({
                   onChange={(e) =>
                     setStu((s) => ({ ...s, firstName: e.target.value }))
                   }
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-secondary focus:ring-2"
+                  className={`mt-2 py-2 text-sm ${formInputClasses({ error: Boolean(error) })}`}
                   placeholder="First name"
                   autoComplete="off"
                 />
@@ -464,7 +472,7 @@ export function RegisterStudentsModal({
                   onChange={(e) =>
                     setStu((s) => ({ ...s, middleName: e.target.value }))
                   }
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-secondary focus:ring-2"
+                  className={`mt-2 py-2 text-sm ${formInputClasses({ error: Boolean(error) })}`}
                   placeholder="Middle name (optional)"
                   autoComplete="off"
                 />
@@ -473,7 +481,7 @@ export function RegisterStudentsModal({
                   onChange={(e) =>
                     setStu((s) => ({ ...s, lastName: e.target.value }))
                   }
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-secondary focus:ring-2"
+                  className={`mt-2 py-2 text-sm ${formInputClasses({ error: Boolean(error) })}`}
                   placeholder="Last name"
                   autoComplete="off"
                 />
@@ -483,7 +491,7 @@ export function RegisterStudentsModal({
                   onChange={(e) =>
                     setStu((s) => ({ ...s, birthDate: e.target.value }))
                   }
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-secondary focus:ring-2"
+                  className={`mt-2 py-2 text-sm ${formInputClasses({ error: Boolean(error) })}`}
                 />
                 <select
                   value={stu.gender}
@@ -493,7 +501,7 @@ export function RegisterStudentsModal({
                       gender: e.target.value as StudentGenderCode,
                     }))
                   }
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-secondary focus:ring-2"
+                  className={`mt-2 py-2 text-sm ${formInputClasses({ error: Boolean(error) })}`}
                 >
                   <option value="M">Male (M)</option>
                   <option value="F">Female (F)</option>
@@ -519,14 +527,14 @@ export function RegisterStudentsModal({
               )}
 
               {error && (
-                <p className="text-sm font-medium text-accent" role="alert">
+                <p className={errorAlertClass} role="alert">
                   {error}
                 </p>
               )}
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full rounded-xl bg-primary py-3 font-semibold text-white hover:bg-indigo-600 disabled:opacity-50"
+                className={`w-full py-3 ${primaryButtonClass}`}
               >
                 {busy
                   ? 'Saving…'
@@ -542,7 +550,7 @@ export function RegisterStudentsModal({
               {existingClasses.length > 0 && (
                 <div>
                   <label
-                    className="block text-sm font-medium text-slate-600"
+                    className={formLabelClass}
                     htmlFor="excel-target"
                   >
                     Import into
@@ -571,7 +579,7 @@ export function RegisterStudentsModal({
                 <div className="space-y-4">
                   <div>
                     <label
-                      className="block text-sm font-medium text-slate-600"
+                      className={formLabelClass}
                       htmlFor="excel-class-name"
                     >
                       Class Name
@@ -586,7 +594,7 @@ export function RegisterStudentsModal({
                   </div>
                   <div>
                     <label
-                      className="block text-sm font-medium text-slate-600"
+                      className={formLabelClass}
                       htmlFor="excel-class-shift"
                     >
                       Schedule
@@ -607,7 +615,7 @@ export function RegisterStudentsModal({
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-600">
+                <label className={formLabelClass}>
                   Excel file
                 </label>
                 <p className="mt-1 text-xs text-slate-500">
@@ -625,13 +633,13 @@ export function RegisterStudentsModal({
                     accept=".xlsx,.xls"
                     disabled={busy}
                     onChange={(e) => void saveExcel(e.target.files)}
-                    className="block w-full min-w-0 flex-1 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+                    className={`block w-full min-w-0 flex-1 text-sm text-neutral-label file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white ${error ? 'rounded-xl border-2 border-primary' : ''}`}
                   />
                   <button
                     type="button"
                     disabled={busy}
                     onClick={() => downloadStudentImportSample()}
-                    className="shrink-0 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`shrink-0 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
                   >
                     Download sample (.xlsx)
                   </button>
@@ -639,7 +647,7 @@ export function RegisterStudentsModal({
               </div>
 
               {error && (
-                <p className="text-sm font-medium text-accent" role="alert">
+                <p className={errorAlertClass} role="alert">
                   {error}
                 </p>
               )}

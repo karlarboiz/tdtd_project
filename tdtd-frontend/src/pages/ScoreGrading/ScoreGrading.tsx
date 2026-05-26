@@ -11,6 +11,12 @@ import { formatRecordedAt } from '../../lib/dates'
 import { formatScoreEventKindLabel } from '../../lib/scoreLabels'
 import { formatStudentName } from '../../lib/studentDisplay'
 import { ApiError } from '../../lib/http'
+import {
+  errorAlertClass,
+  formInputClasses,
+  formLabelClass,
+  primaryButtonClass,
+} from '@/lib/uiClasses'
 import type {
   ClassRow,
   ScoreEntryRow,
@@ -299,7 +305,7 @@ export function ScoreGrading() {
           </ul>
 
           {error ? (
-            <p className="mt-4 text-sm text-rose-700" role="alert">
+            <p className={`mt-4 ${errorAlertClass}`} role="alert">
               {error}
             </p>
           ) : null}
@@ -315,7 +321,7 @@ export function ScoreGrading() {
             onClick={() =>
               isEditing ? void handleSave() : startEditing()
             }
-            className="mt-6 w-full rounded-2xl bg-primary px-4 py-4 font-semibold text-white shadow-md transition hover:bg-indigo-600 disabled:opacity-60"
+            className={`mt-6 w-full rounded-2xl px-4 py-4 ${primaryButtonClass}`}
           >
             {saving
               ? 'Saving…'

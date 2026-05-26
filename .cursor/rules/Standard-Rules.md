@@ -1,39 +1,34 @@
-Standard Rules for Cursors
+# Standard rules (TDTD frontend)
 
-These are the standard rules that we follow when working on cursor-related issues.
+Project-wide conventions for `tdtd-frontend`. UI palette and layout live in [UI-Rules.md](./UI-Rules.md).
 
-Rule 1: Use Cursor Types Correctly
-When using a custom cursor, make sure to define it in the correct location (usually src/cursor.scss or src/components/Cursor.js) and not override any existing cursors.
-Always use the .cursor-primary class for standard cursors and .cursor-secondary for hover cursors.
-Rule 2: Provide Visual Feedback
-For mouse-over events, provide a visual feedback (e.g., change color or size) on the cursor to indicate that it's being hovered over.
-If an element is disabled, display a cursor with a visual indication of disablement (e.g., red 'not allowed' icon).
-Rule 3: Respect Cursor State
-When switching between different states of an element (e.g., hover, focus, active), update the cursor accordingly to avoid any inconsistencies.
-Ensure that the cursor state is reset when the element returns to its default state.
-Rule 4: Avoid Customizing Standard Cursors
-Do not customize or override standard cursors (e.g., url('cursor-pointer.png')) unless absolutely necessary and for a valid reason.
-Instead, create custom cursors using the .cursor-primary or .cursor-secondary classes to maintain consistency.
-Rule 5: Document Cursor Behavior
-When introducing a new cursor behavior, document it thoroughly and provide examples where possible.
-Make sure that all relevant stakeholders are aware of the cursor behavior changes.
-Rule 6: Consistency Across Platforms
-Ensure that cursor behavior is consistent across different platforms (e.g., desktop, mobile) to avoid confusion for users.
-Test cursors on various devices and browsers to catch any inconsistencies.
-Rules 7:
- [Front-End Component/Page] naming convention
+## Pointer & interactive feedback
 
-All front-end components and pages should be written following this structure:
+Use the **browser’s standard cursors**, not custom image cursors (`url(...)`).
 
-*   **Components:** `components/<Component Name>/<Component Name>.tsx`
-*   **Pages:** `pages/<Page Name>/<Page Name>.tsx`
+- **Interactive** links, buttons, and enabled controls: `cursor: pointer` (set globally in `tdtd-frontend/src/index.css`).
+- **Disabled** controls: `cursor: not-allowed` plus reduced opacity or `disabled:` styles.
+- **Hover / focus**: pair pointer feedback with visible hover or focus styles (color, ring, background)—do not rely on the cursor alone.
+- **State**: when an element leaves hover, focus, or active, reset styles to the default variant.
 
-### Example Use Cases:
-```markdown
-# Components
+Document new interaction patterns in `.cursor/documentation/` when behavior is non-obvious.
 
-*   Instead of: `import React from 'react'; function ClassForm(props) { // Component code here } export default ClassForm;`
-  Use: `components/ClassForm/ClassForm.tsx`
+## Front-end file naming
 
-*   Instead of: `import React from 'react'; function Home() { // Page code here } export default Home;`
-  Use: `pages/Home/Home.tsx`
+All front-end components and pages use this structure:
+
+- **Components:** `components/<Component Name>/<Component Name>.tsx`
+- **Pages:** `pages/<Page Name>/<Page Name>.tsx`
+
+### Examples
+
+```text
+components/ClassForm/ClassForm.tsx
+pages/Home/Home.tsx
+```
+
+Router entry (`App.tsx`), bootstrap (`main.tsx`), layouts (`layouts/`), and shared libs (`lib/`, `api/`) are exempt from the folder-per-name rule.
+
+## Compliance checklist
+
+See [UI-Compliance-Checklist.md](../documentation/UI-Compliance-Checklist.md).

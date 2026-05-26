@@ -21,6 +21,12 @@ import type {
 } from '@/types/schema'
 import { formatLongDate, parseYMD } from '../../lib/dates'
 import {
+  formInputClasses,
+  formLabelClass,
+  formLabelInlineClass,
+  primaryButtonClass,
+} from '@/lib/uiClasses'
+import {
   getCurrentPeriod,
   otherAttendancePeriod,
   parseAttendancePeriod,
@@ -316,7 +322,7 @@ export function AttendanceSession() {
               {formatLongDate(dateYmd)}
             </h1>
             <div className="mt-4">
-              <p className="text-sm font-medium text-slate-600">Session period</p>
+              <p className={formLabelInlineClass}>Session period</p>
               <div
                 className="mt-2 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-neutral-bg p-1"
                 role="group"
@@ -399,12 +405,12 @@ export function AttendanceSession() {
           ) : null}
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-start-1 lg:row-start-2 lg:min-w-0">
-            <label className="block text-sm font-medium text-slate-600" htmlFor="class-select">
+            <label className={formLabelClass} htmlFor="class-select">
               Class
             </label>
             <select
               id="class-select"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 text-slate-900 outline-none ring-secondary focus:ring-2 disabled:cursor-not-allowed disabled:opacity-70"
+              className={`mt-2 py-3 ${formInputClasses()}`}
               value={hasClassesForPeriod ? classId : ''}
               onChange={(e) => setClassId(e.target.value)}
               disabled={!hasClassesForPeriod}
@@ -494,7 +500,7 @@ export function AttendanceSession() {
                 disabled={
                   saving || !classId || students.length === 0 || loadingClass
                 }
-                className="mt-6 w-full rounded-xl bg-primary py-3 text-lg font-semibold text-white shadow-md transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`mt-6 w-full rounded-xl py-3 text-lg ${primaryButtonClass}`}
               >
                 {saving ? 'Saving…' : 'Save attendance'}
               </button>

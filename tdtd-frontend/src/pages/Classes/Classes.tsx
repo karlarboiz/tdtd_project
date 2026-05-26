@@ -12,6 +12,13 @@ import { formatStudentName } from '../../lib/studentDisplay'
 import { studentLabPath } from '../../lib/studentLabRoute'
 import { parseStudentImportWorkbook } from '../../lib/studentImportParse'
 import { downloadStudentImportSample } from '../../lib/studentImportSampleXlsx'
+import {
+  errorAlertClass,
+  formInputClasses,
+  formLabelClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '@/lib/uiClasses'
 import type {
   ClassRow,
   ClassShift,
@@ -196,43 +203,43 @@ export function Classes() {
             className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
           >
           <h2 className="font-semibold text-slate-900">New class</h2>
-          <label className="mt-4 block text-sm font-medium text-slate-600" htmlFor="cname">
+          <label className={`mt-4 ${formLabelClass}`} htmlFor="cname">
             Name
           </label>
           <input
             id="cname"
             value={className}
             onChange={(e) => setClassName(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2"
+            className={`mt-1 py-2 ${formInputClasses()}`}
             placeholder="e.g. Grade 5"
           />
-          <label className="mt-3 block text-sm font-medium text-slate-600" htmlFor="class-shift">
+          <label className={`mt-3 ${formLabelClass}`} htmlFor="class-shift">
             Schedule
           </label>
           <select
             id="class-shift"
             value={classShift}
             onChange={(e) => setClassShift(e.target.value as ClassShift)}
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 outline-none ring-secondary focus:ring-2"
+            className={`mt-1 py-3 ${formInputClasses()}`}
           >
             <option value="MRNG">Morning (MRNG)</option>
             <option value="AFTNN">Afternoon (AFTNN)</option>
           </select>
           <button
             type="submit"
-            className="mt-4 w-full rounded-xl bg-primary py-3 font-semibold text-white hover:bg-indigo-600"
+            className={`mt-4 w-full py-3 ${primaryButtonClass}`}
           >
             Add class
           </button>
           </form>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <label className="block text-sm font-medium text-slate-600" htmlFor="pick-class">
+            <label className={formLabelClass} htmlFor="pick-class">
               Active class
             </label>
             <select
               id="pick-class"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 outline-none ring-secondary focus:ring-2"
+              className={`mt-2 py-3 ${formInputClasses()}`}
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
             >
@@ -253,21 +260,21 @@ export function Classes() {
                 value={stu.firstName}
                 onChange={(e) => setStu((s) => ({ ...s, firstName: e.target.value }))}
                 disabled={!selectedClassId}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                className={`mt-1 py-2 ${formInputClasses()}`}
                 placeholder="First name"
               />
               <input
                 value={stu.middleName}
                 onChange={(e) => setStu((s) => ({ ...s, middleName: e.target.value }))}
                 disabled={!selectedClassId}
-                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                className={`py-2 ${formInputClasses()}`}
                 placeholder="Middle name (optional)"
               />
               <input
                 value={stu.lastName}
                 onChange={(e) => setStu((s) => ({ ...s, lastName: e.target.value }))}
                 disabled={!selectedClassId}
-                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                className={`py-2 ${formInputClasses()}`}
                 placeholder="Last name"
               />
               <input
@@ -275,9 +282,9 @@ export function Classes() {
                 value={stu.birthDate}
                 onChange={(e) => setStu((s) => ({ ...s, birthDate: e.target.value }))}
                 disabled={!selectedClassId}
-                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                className={`py-2 ${formInputClasses()}`}
               />
-              <label className="block text-sm font-medium text-slate-600" htmlFor="stu-gender">
+              <label className={formLabelClass} htmlFor="stu-gender">
                 Gender
               </label>
               <select
@@ -290,7 +297,7 @@ export function Classes() {
                   }))
                 }
                 disabled={!selectedClassId}
-                className="w-full rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3 outline-none ring-secondary focus:ring-2 disabled:opacity-50"
+                className={`py-3 ${formInputClasses()}`}
               >
                 <option value="M">Male (M)</option>
                 <option value="F">Female (F)</option>
@@ -317,7 +324,7 @@ export function Classes() {
               <strong>O</strong> (or Male/Female/Other). Empty middle names are OK. Empty rows are skipped.
             </p>
             {importError ? (
-              <p className="mt-2 text-sm font-medium text-accent" role="alert">
+              <p className={`mt-2 ${errorAlertClass}`} role="alert">
                 {importError}
               </p>
             ) : null}
@@ -328,13 +335,14 @@ export function Classes() {
                 accept=".xlsx,.xls"
                 disabled={!selectedClassId}
                 onChange={(e) => void onExcel(e.target.files)}
-                className="block w-full min-w-0 flex-1 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+                className={`block w-full min-w-0 flex-1 text-sm text-neutral-label file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white ${importError ? 'rounded-xl border-2 border-primary' : ''}`}
+                aria-invalid={Boolean(importError)}
               />
               <button
                 type="button"
                 disabled={!selectedClassId}
                 onClick={() => downloadStudentImportSample()}
-                className="shrink-0 rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`shrink-0 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
               >
                 Download sample (.xlsx)
               </button>
