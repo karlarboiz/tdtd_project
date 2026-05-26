@@ -43,12 +43,8 @@ export function getClassIdForStudent(
   return row?.class_id
 }
 
-export function listStudentsByClass(
-  db: SqliteDatabase,
-  classId: string,
-): StudentRow[] {
-  const rows = db.prepare(STUDENT_QUERIES.listByClass).all(classId) as StudentDbRow[]
-  return rows.map((r) => ({
+function mapStudentDbRow(r: StudentDbRow): StudentRow {
+  return {
     id: r.id,
     firstName: r.first_name,
     middleName: r.middle_name ?? undefined,
@@ -57,5 +53,23 @@ export function listStudentsByClass(
     gender: r.gender,
     classId: r.class_id,
     createdAt: r.created_at,
-  }))
+  }
+}
+
+export function getStudentById(
+  db: SqliteDatabase,
+  studentId: string,
+): StudentRow | undefined {
+  const row = db.prepare(STUDENT_QUERIES.getById).get(studentId) as
+    | StudentDbRow
+    | undefined
+  return row ? mapStudentDbRow(row) : undefined
+}
+
+export function listStudentsByClass(
+  db: SqliteDatabase,
+  classId: string,
+): StudentRow[] {
+  const rows = db.prepare(STUDENT_QUERIES.listByClass).all(classId) as StudentDbRow[]
+  return rows.map(mapStudentDbRow)
 }

@@ -15,6 +15,11 @@ export type {
   ScoreEventKind,
   ScoreEventRow,
   StudentGenderCode,
+  StudentLabAttendanceSessionRow,
+  StudentLabAttendanceSummary,
+  StudentLabPayload,
+  StudentLabProfile,
+  StudentLabScoreRow,
   StudentRow,
   SubjectRow,
 } from './types.js'

@@ -120,6 +120,9 @@ export function AppShell() {
             <NavLink to="/scores" className={navLinkClass}>
               Scores
             </NavLink>
+            <NavLink to="/student-lab" className={navLinkClass}>
+              Student Lab
+            </NavLink>
           </nav>
         </div>
       </header>

@@ -9,6 +9,7 @@ import {
 } from '../../api/studentsApi'
 import { formatClassShiftLabel } from '../../lib/classShift'
 import { formatStudentName } from '../../lib/studentDisplay'
+import { studentLabPath } from '../../lib/studentLabRoute'
 import { parseStudentImportWorkbook } from '../../lib/studentImportParse'
 import { downloadStudentImportSample } from '../../lib/studentImportSampleXlsx'
 import type {
@@ -345,11 +346,21 @@ export function Classes() {
               </h2>
               <ul className="mt-3 min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-100 lg:max-h-none">
                 {students.map((s) => (
-                  <li key={s.id} className="px-3 py-2 text-left text-slate-800">
-                    <span className="font-medium">{formatStudentName(s)}</span>
-                    <span className="mt-0.5 block text-xs text-slate-500">
-                      {s.birthDate} · {s.gender}
-                    </span>
+                  <li key={s.id}>
+                    <Link
+                      to={studentLabPath(s.id)}
+                      className="flex min-h-11 items-center justify-between gap-2 px-3 py-2 text-left text-slate-800 transition hover:bg-slate-50 active:bg-slate-100"
+                    >
+                      <span>
+                        <span className="font-medium">{formatStudentName(s)}</span>
+                        <span className="mt-0.5 block text-xs text-slate-500">
+                          {s.birthDate} · {s.gender}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-slate-400" aria-hidden>
+                        ›
+                      </span>
+                    </Link>
                   </li>
                 ))}
                 {students.length === 0 && (
