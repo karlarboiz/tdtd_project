@@ -242,7 +242,7 @@ export function ScoreGrading() {
 
       {students.length === 0 ? (
         <p className="mt-6 text-center text-slate-600">
-          No students in this class. Add students under Classes &amp; students.
+          No students in this class. Add students under Classes &amp; Students.
         </p>
       ) : (
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

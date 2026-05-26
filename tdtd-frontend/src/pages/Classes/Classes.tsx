@@ -191,7 +191,7 @@ export function Classes() {
         </Link>
       </div>
 
-      <h1 className="text-xl font-semibold text-slate-900">Classes &amp; students</h1>
+      <h1 className="text-xl font-semibold text-slate-900">Classes &amp; Students</h1>
       <p className="mt-1 max-w-2xl text-sm text-slate-600">
         Create a section, then add students with full details or import from Excel (see sample).
       </p>
