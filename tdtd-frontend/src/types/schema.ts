@@ -118,3 +118,47 @@ export interface ActivityLogRow {
   metadata?: ActivityLogMetadata
   createdAt: number
 }
+
+export type StudentLabAttendanceStatus = 'present' | 'absent'
+
+export interface StudentLabAttendanceSessionRow {
+  date: string
+  period: AttendancePeriod
+  status: StudentLabAttendanceStatus
+}
+
+export interface StudentLabAttendanceSummary {
+  totalSessions: number
+  presentCount: number
+  absentCount: number
+  presentRate: number
+}
+
+export interface StudentLabScoreRow {
+  eventId: string
+  kind: ScoreEventKind
+  title: string
+  subjectName: string
+  date?: string
+  score: number
+  maxScore?: number
+  recordedAt: number
+}
+
+export interface StudentLabProfile {
+  student: StudentRow
+  class: ClassRow
+}
+
+export interface StudentLabPayload {
+  profile: StudentLabProfile
+  attendance: {
+    summary: StudentLabAttendanceSummary
+    sessions: StudentLabAttendanceSessionRow[]
+  }
+  scores: {
+    recentQuizzes: StudentLabScoreRow[]
+    recentExams: StudentLabScoreRow[]
+    recentParticipation: StudentLabScoreRow[]
+  }
+}

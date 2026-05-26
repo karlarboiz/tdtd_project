@@ -29,4 +29,18 @@ export const STUDENT_QUERIES = {
   classIdByStudentId: `
     SELECT class_id AS class_id FROM students WHERE id = ? LIMIT 1
   `,
+  getById: `
+    SELECT
+      id,
+      first_name,
+      middle_name,
+      last_name,
+      birth_date,
+      gender,
+      class_id,
+      created_at
+    FROM students
+    WHERE id = ?
+    LIMIT 1
+  `,
 } as const

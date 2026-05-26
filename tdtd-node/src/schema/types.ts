@@ -151,3 +151,48 @@ export interface ActivityLogRow {
   metadata?: ActivityLogMetadata
   createdAt: number
 }
+
+/** Student Lab — attendance row in session list. */
+export type StudentLabAttendanceStatus = 'present' | 'absent'
+
+export interface StudentLabAttendanceSessionRow {
+  date: IsoDateString
+  period: AttendancePeriod
+  status: StudentLabAttendanceStatus
+}
+
+export interface StudentLabAttendanceSummary {
+  totalSessions: number
+  presentCount: number
+  absentCount: number
+  presentRate: number
+}
+
+export interface StudentLabScoreRow {
+  eventId: string
+  kind: ScoreEventKind
+  title: string
+  subjectName: string
+  date?: IsoDateString
+  score: number
+  maxScore?: number
+  recordedAt: number
+}
+
+export interface StudentLabProfile {
+  student: StudentRow
+  class: ClassRow
+}
+
+export interface StudentLabPayload {
+  profile: StudentLabProfile
+  attendance: {
+    summary: StudentLabAttendanceSummary
+    sessions: StudentLabAttendanceSessionRow[]
+  }
+  scores: {
+    recentQuizzes: StudentLabScoreRow[]
+    recentExams: StudentLabScoreRow[]
+    recentParticipation: StudentLabScoreRow[]
+  }
+}

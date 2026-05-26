@@ -120,3 +120,5 @@ Do not implement yet:
 
 - DepEd report generation (depends on stable core roster).
 - Selective client-side caching or sync for roster data.
+
+**Student Lab** (shipped separately): read-only aggregation of roster + attendance + scores — see [student-lab.md](./student-lab.md). No columns added to `students` or `classes`.
