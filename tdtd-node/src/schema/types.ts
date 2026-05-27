@@ -184,6 +184,22 @@ export interface StudentLabProfile {
   class: ClassRow
 }
 
+/** Prompt types written by tdtd-batch or API (not Recents history). */
+export type TeacherReminderType = 'ATTENDANCE_DUE'
+
+export type TeacherReminderStatus = 'open' | 'dismissed' | 'resolved'
+
+export interface TeacherReminderRow {
+  id: string
+  type: TeacherReminderType
+  date: IsoDateString
+  period: AttendancePeriod
+  status: TeacherReminderStatus
+  message: string
+  createdAt: number
+  resolvedAt?: number
+}
+
 export interface StudentLabPayload {
   profile: StudentLabProfile
   attendance: {

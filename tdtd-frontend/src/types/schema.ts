@@ -150,6 +150,21 @@ export interface StudentLabProfile {
   class: ClassRow
 }
 
+export type TeacherReminderType = 'ATTENDANCE_DUE'
+
+export type TeacherReminderStatus = 'open' | 'dismissed' | 'resolved'
+
+export interface TeacherReminderRow {
+  id: string
+  type: TeacherReminderType
+  date: string
+  period: AttendancePeriod
+  status: TeacherReminderStatus
+  message: string
+  createdAt: number
+  resolvedAt?: number
+}
+
 export interface StudentLabPayload {
   profile: StudentLabProfile
   attendance: {

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAttendanceSessionDatesRange } from '../../api/attendanceApi'
+import { ReminderBanners } from '../../components/ReminderBanners/ReminderBanners'
 import { MonthlyCalendar } from '../../components/MonthlyCalendar/MonthlyCalendar'
 import { toYMD } from '../../lib/dates'
 
@@ -26,6 +27,10 @@ export function AttendanceCalendar() {
   return (
     <div className="w-full">
       <div className="mx-auto w-full max-w-md lg:max-w-2xl">
+        <div className="mb-4">
+          <ReminderBanners />
+        </div>
+
         <div className="mb-6 flex items-center gap-3">
           <button
             type="button"

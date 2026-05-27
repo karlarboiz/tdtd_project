@@ -206,7 +206,7 @@ export function migrateSchoolYearTables(db: SqliteDatabase): void {
   const subjectIds = db
     .prepare(
       `
-      SELECT subject_id AS id FROM subjects
+      SELECT id FROM subjects
       UNION
       SELECT subject_id AS id FROM class_subjects
       UNION
@@ -351,6 +351,28 @@ export function migrate(db: SqliteDatabase): void {
   migrateSchoolYearSubjectsGradeLevel(db)
   migrateSubjectUniqueConstraints(db)
   migrateActivityLogsTable(db)
+  migrateTeacherRemindersTable(db)
+}
+
+/** Scheduled / batch prompts — see .cursor/schemas/reminders.md */
+export function migrateTeacherRemindersTable(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS teacher_reminders (
+      id TEXT PRIMARY KEY,
+      type TEXT NOT NULL CHECK (type IN ('ATTENDANCE_DUE')),
+      date TEXT NOT NULL,
+      period TEXT NOT NULL CHECK (period IN ('AM', 'PM')),
+      status TEXT NOT NULL CHECK (status IN ('open', 'dismissed', 'resolved')),
+      message TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      resolved_at INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS idx_teacher_reminders_status_date
+      ON teacher_reminders(status, date);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_teacher_reminders_open_unique
+      ON teacher_reminders(type, date, period)
+      WHERE status = 'open';
+  `)
 }
 
 /** Teacher activity recents — see .cursor/schemas/recents.md */

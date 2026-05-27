@@ -8,6 +8,7 @@ import { studentRouter } from './routes/student.routes.js'
 import { schoolYearRouter } from './routes/schoolYear.routes.js'
 import { subjectRouter } from './routes/subject.routes.js'
 import { recentsRouter } from './routes/recents.routes.js'
+import { remindersRouter } from './routes/reminders.routes.js'
 
 export function createApp(db: SqliteDatabase): express.Express {
   const app = express()
@@ -20,5 +21,6 @@ export function createApp(db: SqliteDatabase): express.Express {
   app.use('/api/subjects', subjectRouter(db))
   app.use('/api/score-events', scoreEventRouter(db))
   app.use('/api/recents', recentsRouter(db))
+  app.use('/api/reminders', remindersRouter(db))
   return app
 }
