@@ -112,7 +112,7 @@ export function AppShell() {
               Attendance
             </NavLink>
             <NavLink to="/classes" className={navLinkClass}>
-              Classes &amp; students
+              Classes &amp; Students
             </NavLink>
             <NavLink to="/subjects" className={navLinkClass}>
               Subjects

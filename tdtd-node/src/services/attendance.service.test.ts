@@ -1,0 +1,139 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { HttpError } from '../errors/http-error.js'
+import type { SqliteDatabase } from '../db/sqlite-types.js'
+import * as attendanceDao from '../dao/attendance.dao.js'
+import * as studentDao from '../dao/student.dao.js'
+import { recordActivity } from './activityLog.service.js'
+import {
+  getAttendanceState,
+  listAttendanceSessionDatesInRange,
+  saveAttendance,
+} from './attendance.service.js'
+
+vi.mock('../dao/attendance.dao.js', () => ({
+  listDistinctSessionDatesInRange: vi.fn(),
+  findSessionByDatePeriod: vi.fn(),
+  selectPresentStudentIds: vi.fn(),
+  insertSession: vi.fn(),
+  deleteRecordsForStudentsInSession: vi.fn(),
+  insertAttendanceRecord: vi.fn(),
+}))
+
+vi.mock('../dao/student.dao.js', () => ({
+  classExists: vi.fn(),
+  listStudentsByClass: vi.fn(),
+}))
+
+vi.mock('./activityLog.service.js', () => ({
+  ACTIVITY_ACTION: {
+    ATTENDANCE_SAVED: 'ATTENDANCE_SAVED',
+  },
+  recordActivity: vi.fn(),
+}))
+
+function makeDb(): SqliteDatabase {
+  return {
+    transaction: (fn: () => void) => fn,
+  } as unknown as SqliteDatabase
+}
+
+describe('attendance.service', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('listAttendanceSessionDatesInRange', () => {
+    it('rejects date ranges longer than 366 days', () => {
+      const db = makeDb()
+      expect(() =>
+        listAttendanceSessionDatesInRange(db, '2026-01-01', '2027-01-02'),
+      ).toThrowError(new HttpError(400, 'date range cannot exceed 366 days'))
+    })
+
+    it('returns dates from attendance DAO for valid range', () => {
+      const db = makeDb()
+      vi.mocked(attendanceDao.listDistinctSessionDatesInRange).mockReturnValue([
+        '2026-05-26',
+        '2026-05-27',
+      ])
+
+      const result = listAttendanceSessionDatesInRange(
+        db,
+        '2026-05-01',
+        '2026-05-31',
+      )
+
+      expect(result).toEqual(['2026-05-26', '2026-05-27'])
+      expect(attendanceDao.listDistinctSessionDatesInRange).toHaveBeenCalledWith(
+        db,
+        '2026-05-01',
+        '2026-05-31',
+      )
+    })
+  })
+
+  describe('getAttendanceState', () => {
+    it('throws 404 when class does not exist', () => {
+      const db = makeDb()
+      vi.mocked(studentDao.classExists).mockReturnValue(false)
+
+      expect(() => getAttendanceState(db, '2026-05-27', 'AM', 'class-1')).toThrowError(
+        new HttpError(404, 'class not found'),
+      )
+    })
+
+    it('returns empty present ids when session is missing', () => {
+      const db = makeDb()
+      vi.mocked(studentDao.classExists).mockReturnValue(true)
+      vi.mocked(studentDao.listStudentsByClass).mockReturnValue([
+        {
+          id: 's-1',
+          firstName: 'A',
+          lastName: 'B',
+          birthDate: '2014-01-01',
+          gender: 'M',
+          classId: 'class-1',
+          createdAt: 1,
+        },
+      ])
+      vi.mocked(attendanceDao.findSessionByDatePeriod).mockReturnValue(undefined)
+
+      const state = getAttendanceState(db, '2026-05-27', 'AM', 'class-1')
+      expect(state).toEqual({ session: null, presentStudentIds: [] })
+    })
+  })
+
+  describe('saveAttendance', () => {
+    it('filters present ids by class list and records activity', () => {
+      const db = makeDb()
+      vi.mocked(attendanceDao.findSessionByDatePeriod).mockReturnValue({
+        id: 'sess-1',
+        date: '2026-05-27',
+        period: 'AM',
+        createdAt: 1,
+      })
+
+      const session = saveAttendance(db, {
+        date: '2026-05-27',
+        period: 'AM',
+        classStudentIds: ['s-1', 's-2'],
+        presentStudentIds: ['s-1', 'outsider', 's-1'],
+      })
+
+      expect(session.id).toBe('sess-1')
+      expect(attendanceDao.deleteRecordsForStudentsInSession).toHaveBeenCalledWith(
+        db,
+        'sess-1',
+        ['s-1', 's-2'],
+      )
+      expect(attendanceDao.insertAttendanceRecord).toHaveBeenCalledTimes(1)
+      expect(recordActivity).toHaveBeenCalledWith(
+        db,
+        expect.objectContaining({
+          summary: 'Saved AM attendance for 2026-05-27 (1 present)',
+          metadata: expect.objectContaining({ count: 1 }),
+        }),
+      )
+    })
+  })
+})

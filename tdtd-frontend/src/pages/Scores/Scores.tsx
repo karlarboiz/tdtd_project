@@ -223,7 +223,7 @@ export function Scores() {
             to="/classes"
             className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
           >
-            Classes &amp; students
+            Classes &amp; Students
           </Link>
         </section>
       ) : (

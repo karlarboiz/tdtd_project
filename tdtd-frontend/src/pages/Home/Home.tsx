@@ -25,7 +25,7 @@ export function Home() {
           to="/classes"
           className={secondaryLinkTileClass}
         >
-          Classes &amp; students
+          Classes &amp; Students
         </Link>
 
         <Link to="/subjects" className={tertiaryLinkClass}>
