@@ -24,6 +24,8 @@
 
 TDTD is a **teacher tool opened on purpose**. [Recents](./Recents-Function-Doc.md) already records **what happened** after the fact. Notifications are for **act now** or **status** — not every save event.
 
+**Shipped (web + server):** [TDTD-Batch-Function.md](./TDTD-Batch-Function.md) — `teacher_reminders`, `tdtd-batch` AM/PM jobs, in-app banners. Mobile local notifications remain Phase D in that doc.
+
 ### What makes sense
 
 | Use case | Web (browser) | Mobile app |

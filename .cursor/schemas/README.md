@@ -22,6 +22,7 @@ Do not change schema structure unless explicitly instructed.
 | [subjects.md](./subjects.md) | `school_years`, `subjects`, `school_year_subjects`, `class_subjects` |
 | [quiz.md](./quiz.md) | `score_events`, `score_entries` |
 | [recents.md](./recents.md) | `activity_logs` |
+| [reminders.md](./reminders.md) | `teacher_reminders` (batch prompts; not Recents) |
 | [student-lab.md](./student-lab.md) | Student Lab read model and API (no new tables) |
 
 ## Naming convention

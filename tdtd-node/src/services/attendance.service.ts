@@ -10,6 +10,7 @@ import { HttpError } from '../errors/http-error.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
 import * as studentDao from '../dao/student.dao.js'
 import { ACTIVITY_ACTION, recordActivity } from './activityLog.service.js'
+import { resolveAttendanceReminder } from './teacherReminder.service.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -177,6 +178,8 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
       count: presentFiltered.length,
     },
   })
+
+  resolveAttendanceReminder(db, date, period)
 
   return session
 }

@@ -31,6 +31,10 @@ vi.mock('./activityLog.service.js', () => ({
   recordActivity: vi.fn(),
 }))
 
+vi.mock('./teacherReminder.service.js', () => ({
+  resolveAttendanceReminder: vi.fn(),
+}))
+
 function makeDb(): SqliteDatabase {
   return {
     transaction: (fn: () => void) => fn,
