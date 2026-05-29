@@ -10,6 +10,7 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 
 | Document | Scope |
 |----------|--------|
+| [Classes-Function-Doc.md](./Classes-Function-Doc.md) | Classes, student registration, shift/section roster rules |
 | [Attendance-Function-Doc.md](./Attendance-Function-Doc.md) | Daily AM/PM attendance calendar, session save, roster |
 | [Quiz-Function-Doc.md](./Quiz-Function-Doc.md) | Quiz, exam, and participation scores (`score_events`, `score_entries`) |
 | [Subject-Function-Doc.md](./Subject-Function-Doc.md) | Subject catalog, school years, SY registration, class–subject links |
