@@ -97,6 +97,8 @@ See `tdtd-node/src/db/migrate.ts`:
 - **AM** attendance → offer only classes with `shift = MRNG`.
 - **PM** attendance → offer only classes with `shift = AFTNN`.
 
+Roster setup rules (do not duplicate the same children under both shifts): [core.md](./core.md) **Class shift and roster rules**, [Classes-Function-Doc.md](../documentation/Classes-Function-Doc.md).
+
 ### Frontend session route
 
 - Path: `/attendance/session/:date` with optional query **`?period=AM|PM`**.

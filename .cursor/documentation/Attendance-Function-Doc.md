@@ -103,7 +103,7 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-o
 **What changed:**
 - **Data:** `attendance_sessions` (unique `date` + `period`), `attendance_records` (present per student per session).
 - **Backend:** DAO, queries, service (session reuse, class-scoped save, date range validation), controller, routes under `/api/attendance`.
-- **Business rules:** One session per calendar date + AM/PM; only `present` status stored; AM sessions filter `classes` with `shift = MRNG`, PM with `AFTNN`.
+- **Business rules:** One session per calendar date + AM/PM; only `present` status stored; AM sessions filter `classes` with `shift = MRNG`, PM with `AFTNN`. Roster must not duplicate the same children under both shifts — see [Classes-Function-Doc.md](./Classes-Function-Doc.md) and [core.md](../schemas/core.md) **Class shift and roster rules**.
 - **Frontend:** `AttendanceCalendar` loads session dates per month; `AttendanceSession` loads state per class and saves via `attendanceApi`.
 - **Client API:** `getAttendanceSessionDatesRange`, `getAttendanceState`, `getAttendancePresentRoster`, `saveAttendance`.
 

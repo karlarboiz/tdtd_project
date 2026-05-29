@@ -40,7 +40,7 @@ Subject tables (`school_years`, `subjects`, `school_year_subjects`, `class_subje
 ## Expected usage flow
 
 1. Set active school year and register subjects ([subjects.md](../schemas/subjects.md))
-2. Create class ([core.md](../schemas/core.md))
+2. Create class ([core.md](../schemas/core.md)) — one **section** per row: set `shift` to `MRNG` or `AFTNN`; do not mirror the same roster under both (see **Class shift and roster rules** in core.md and [Classes-Function-Doc.md](../documentation/Classes-Function-Doc.md))
 3. Add students ([core.md](../schemas/core.md))
 4. Assign subjects to classes ([subjects.md](../schemas/subjects.md))
 5. Select date and period (AM/PM)
