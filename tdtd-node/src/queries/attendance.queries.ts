@@ -30,6 +30,11 @@ export const ATTENDANCE_QUERIES = {
     WHERE date >= ? AND date <= ?
     ORDER BY date
   `,
+  sessionsInRange: `
+    SELECT date, period
+    FROM attendance_sessions
+    WHERE date >= ? AND date <= ?
+  `,
   presentStudentsForSession: `
     SELECT
       s.id,

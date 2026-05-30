@@ -165,6 +165,19 @@ export interface TeacherReminderRow {
   resolvedAt?: number
 }
 
+export type DueItemKind = 'ATTENDANCE_DUE'
+
+export interface DueItem {
+  id: string
+  kind: DueItemKind
+  title: string
+  message: string
+  date: string
+  period?: AttendancePeriod
+  actionPath: string
+  createdAt: number
+}
+
 export interface StudentLabPayload {
   profile: StudentLabProfile
   attendance: {

@@ -19,6 +19,7 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [Student-Lab-Function-Doc.md](./Student-Lab-Function-Doc.md) | Per-student profile, attendance, and recent scores (view-only) |
 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) | Native app roadmap; offline-on-mobile-only checklist |
 | [TDTD-Batch-Function.md](./TDTD-Batch-Function.md) | Scheduled batch jobs (`tdtd-batch`), attendance reminders, deployment |
+| [Due-List-Function-Doc.md](./Due-List-Function-Doc.md) | DueList — teacher “what’s still due” (attendance v1; extends reminders) |
 
 ## Entry format
 

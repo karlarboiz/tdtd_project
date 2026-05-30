@@ -4,7 +4,7 @@
 
 **DDL:** [`tdtd-node/src/db/migrate.ts`](../../tdtd-node/src/db/migrate.ts) — `migrateTeacherRemindersTable`
 
-**API:** `GET /api/reminders/active`, `POST /api/reminders/:id/dismiss`
+**API:** `GET /api/reminders/active`, `GET /api/due-list` (DueList UI), `POST /api/reminders/:id/dismiss`
 
 ---
 
@@ -40,7 +40,7 @@
 
 1. **Batch** (07:00 AM / 12:30 PM local): no `attendance_sessions` for `(date, period)` → insert open row (or skip if unique index blocks duplicate).
 2. **Batch** (same run): session exists → `UPDATE` open row to `resolved`.
-3. **Web** loads banners from `GET /api/reminders/active`.
+3. **Web** loads DueList from `GET /api/due-list` (syncs AM/PM on read; maps to `DueItem`). Legacy: `GET /api/reminders/active`.
 4. **Teacher dismisses** → `POST .../dismiss` → `status = dismissed`.
 5. **Teacher saves attendance** → matching open row → `resolved`.
 

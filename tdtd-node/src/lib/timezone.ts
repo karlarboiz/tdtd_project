@@ -25,3 +25,33 @@ export function getTodayYmdInTimezone(
   }
   return `${y}-${m}-${d}`
 }
+
+/** True when the calendar day in `timeZone` is Saturday or Sunday. */
+export function isWeekendInTimezone(timeZone: string, now = new Date()): boolean {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    weekday: 'short',
+  }).format(now)
+  return weekday === 'Sat' || weekday === 'Sun'
+}
+
+/** True when `ymd` falls on Saturday or Sunday in `timeZone`. */
+export function isWeekendYmd(ymd: string, timeZone: string): boolean {
+  const [y, m, d] = ymd.split('-').map(Number)
+  if (!y || !m || !d) return false
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    weekday: 'short',
+  }).format(new Date(Date.UTC(y, m - 1, d, 12, 0, 0)))
+  return weekday === 'Sat' || weekday === 'Sun'
+}
+
+/** Add calendar days to an ISO YYYY-MM-DD string. */
+export function addDaysYmd(ymd: string, days: number): string {
+  const [y, m, d] = ymd.split('-').map(Number) as [number, number, number]
+  const dt = new Date(Date.UTC(y, m - 1, d + days))
+  const yy = dt.getUTCFullYear()
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(dt.getUTCDate()).padStart(2, '0')
+  return `${yy}-${mm}-${dd}`
+}

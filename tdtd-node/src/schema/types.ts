@@ -200,6 +200,20 @@ export interface TeacherReminderRow {
   resolvedAt?: number
 }
 
+/** DueList row shown to teachers (maps from teacher_reminders in v1). */
+export type DueItemKind = 'ATTENDANCE_DUE'
+
+export interface DueItem {
+  id: string
+  kind: DueItemKind
+  title: string
+  message: string
+  date: IsoDateString
+  period?: AttendancePeriod
+  actionPath: string
+  createdAt: number
+}
+
 export interface StudentLabPayload {
   profile: StudentLabProfile
   attendance: {
