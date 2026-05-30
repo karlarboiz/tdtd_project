@@ -1,0 +1,60 @@
+name: Deploy staging
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-artifacts.yml
+
+  deploy-staging:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tdtd-node-dist
+          path: tdtd-node/dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tdtd-frontend-dist
+          path: tdtd-frontend/dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tdtd-batch-jar
+          path: tdtd-batch/tdtd-batch-app/target
+
+      - uses: chrnorm/deployment-action@v2
+        id: deployment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: staging
+
+      - name: Deploy (placeholder — Docker later)
+        run: |
+          echo "Staging deploy placeholder for commit ${{ github.sha }}"
+          ls -la tdtd-node/dist tdtd-frontend/dist
+          ls -la tdtd-batch/tdtd-batch-app/target/*.jar
+          echo "Later: docker build/push, SSH, or PaaS deploy here."
+
+      - uses: chrnorm/deployment-status@v2
+        if: always() && steps.deployment.outputs.deployment_id != ''
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+          state: ${{ job.status == 'success' && 'success' || 'failure' }}
