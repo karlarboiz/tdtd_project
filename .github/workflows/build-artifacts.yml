@@ -1,0 +1,63 @@
+name: Build artifacts
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build tdtd-node
+        working-directory: tdtd-node
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Build tdtd-frontend
+        working-directory: tdtd-frontend
+        env:
+          VITE_API_URL: ""
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build tdtd-batch
+        working-directory: tdtd-batch
+        run: mvn -B package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tdtd-node-dist
+          path: tdtd-node/dist
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tdtd-frontend-dist
+          path: tdtd-frontend/dist
+          retention-days: 7
+
+      - name: Stage batch jar
+        run: |
+          JAR=$(ls tdtd-batch/tdtd-batch-app/target/tdtd-batch-app-*.jar \
+            | grep -v original | grep -v shaded | head -1)
+          cp "$JAR" tdtd-batch/tdtd-batch-app/target/tdtd-batch-app.jar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tdtd-batch-jar
+          path: tdtd-batch/tdtd-batch-app/target/tdtd-batch-app.jar
+          retention-days: 7
