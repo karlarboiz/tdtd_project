@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AppBrand } from '@/components/AppBrand/AppBrand'
-import { ReminderBanners } from '@/components/ReminderBanners/ReminderBanners'
+import { DueList } from '@/components/DueList/DueList'
 import {
   primaryButtonClass,
   secondaryLinkTileClass,
@@ -15,13 +15,17 @@ export function Home() {
       <AppBrand variant="hero" />
 
       <main className="mx-auto mt-10 flex w-full flex-1 flex-col items-stretch gap-4 lg:mt-14">
-        <ReminderBanners />
+        <DueList />
 
         <Link
           to="/attendance"
           className={`rounded-2xl px-5 py-4 text-center text-lg ${primaryButtonClass}`}
         >
           Start Attendance
+        </Link>
+
+        <Link to="/due-list" className={secondaryLinkTileClass}>
+          DueList
         </Link>
 
         <Link

@@ -111,6 +111,9 @@ export function AppShell() {
             <NavLink to="/attendance" className={navLinkClass}>
               Attendance
             </NavLink>
+            <NavLink to="/due-list" className={navLinkClass}>
+              DueList
+            </NavLink>
             <NavLink to="/classes" className={navLinkClass}>
               Classes &amp; Students
             </NavLink>

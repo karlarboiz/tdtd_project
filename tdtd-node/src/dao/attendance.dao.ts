@@ -98,6 +98,17 @@ export function listDistinctSessionDatesInRange(
   return rows.map((r) => r.date)
 }
 
+export function listSessionsInRange(
+  db: SqliteDatabase,
+  from: string,
+  to: string,
+): { date: string; period: AttendancePeriod }[] {
+  const rows = db
+    .prepare(ATTENDANCE_QUERIES.sessionsInRange)
+    .all(from, to) as { date: string; period: AttendancePeriod }[]
+  return rows
+}
+
 type PresentStudentDbRow = {
   id: string
   first_name: string

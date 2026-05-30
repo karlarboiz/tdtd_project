@@ -9,6 +9,7 @@ import { schoolYearRouter } from './routes/schoolYear.routes.js'
 import { subjectRouter } from './routes/subject.routes.js'
 import { recentsRouter } from './routes/recents.routes.js'
 import { remindersRouter } from './routes/reminders.routes.js'
+import { dueListRouter } from './routes/dueList.routes.js'
 
 export function createApp(db: SqliteDatabase): express.Express {
   const app = express()
@@ -22,5 +23,6 @@ export function createApp(db: SqliteDatabase): express.Express {
   app.use('/api/score-events', scoreEventRouter(db))
   app.use('/api/recents', recentsRouter(db))
   app.use('/api/reminders', remindersRouter(db))
+  app.use('/api/due-list', dueListRouter(db))
   return app
 }

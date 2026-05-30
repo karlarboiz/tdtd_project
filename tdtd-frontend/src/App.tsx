@@ -10,6 +10,7 @@ import { Subjects } from './pages/Subjects/Subjects'
 import { Recents } from './pages/Recents/Recents'
 import { StudentLab } from './pages/StudentLab/StudentLab'
 import { StudentLabPicker } from './pages/StudentLabPicker/StudentLabPicker'
+import { DueListPage } from './pages/DueList/DueListPage'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/" element={<Home />} />
+          <Route path="/due-list" element={<DueListPage />} />
           <Route path="/attendance" element={<AttendanceCalendar />} />
           <Route path="/attendance/session/:date" element={<AttendanceSession />} />
           <Route path="/classes" element={<Classes />} />

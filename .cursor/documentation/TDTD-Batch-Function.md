@@ -23,15 +23,15 @@ Batch must **not** insert Recents rows for daily nudges.
 ```text
 tdtd-batch (Java, Quartz) ──JDBC──► teacher_app.sqlite ◄── better-sqlite3 ── tdtd-node (Express)
                                               ▲
-tdtd-frontend ◄──────── REST /api/reminders ──┘
+tdtd-frontend ◄──────── REST /api/due-list, /api/reminders ──┘
 ```
 
 | Layer | Responsibility |
 |-------|----------------|
 | **`teacher_reminders`** | Durable prompt state: `open` \| `dismissed` \| `resolved` |
-| **`tdtd-node`** | `GET /api/reminders/active`, `POST /api/reminders/:id/dismiss`, resolve on `POST /api/attendance/save` |
+| **`tdtd-node`** | `GET /api/due-list` (sync on read), `GET /api/reminders/active`, `POST /api/reminders/:id/dismiss`, resolve on `POST /api/attendance/save` |
 | **`tdtd-batch`** | Cron: if no `attendance_sessions` row for (today, period) → open reminder; else resolve open |
-| **`tdtd-frontend`** | Banners on Home + Attendance calendar; deep link to session |
+| **`tdtd-frontend`** | [DueList](./Due-List-Function-Doc.md) on Home + Attendance calendar; deep link to session |
 | **Mobile (later)** | Capacitor **local** notifications at device time; sync pulls `teacher_reminders` when online |
 
 **Timezone:** `TDTD_TIMEZONE` (default `Asia/Manila`) for “today” in batch and API default date.
@@ -81,7 +81,7 @@ tdtd-frontend ◄──────── REST /api/reminders ──┘
 
 ### tdtd-frontend
 
-- `remindersApi.ts`, `ReminderBanners.tsx` on Home and Attendance calendar
+- `dueListApi.ts`, `DueList.tsx` on Home and Attendance calendar (see [Due-List-Function-Doc.md](./Due-List-Function-Doc.md))
 - Link → `attendanceSessionPath(today, period)`
 - `reminderSchedule.ts` — stub for future Capacitor local notifications (web no-op)
 
@@ -93,7 +93,7 @@ tdtd-frontend ◄──────── REST /api/reminders ──┘
 **Files involved**
 
 - `tdtd-node/src/db/migrate.ts`, `queries/teacherReminder.queries.ts`, `dao/teacherReminder.dao.ts`, `services/teacherReminder.service.ts`, `services/attendance.service.ts`, `routes/reminders.routes.ts`, `controllers/reminders.controller.ts`, `app.ts`, `lib/timezone.ts`
-- `tdtd-frontend/src/api/remindersApi.ts`, `components/ReminderBanners/ReminderBanners.tsx`, `pages/Home/Home.tsx`, `pages/AttendanceCalendar/AttendanceCalendar.tsx`, `lib/reminderSchedule.ts`, `types/schema.ts`
+- `tdtd-frontend/src/api/dueListApi.ts`, `api/remindersApi.ts`, `components/DueList/DueList.tsx`, `pages/Home/Home.tsx`, `pages/AttendanceCalendar/AttendanceCalendar.tsx`, `lib/reminderSchedule.ts`, `types/schema.ts`
 - `tdtd-batch/pom.xml`, `tdtd-batch-*/pom.xml`, `com.tdtd.batch.*` sources
 - `.cursor/schemas/reminders.md`, `.cursor/documentation/README.md`
 
