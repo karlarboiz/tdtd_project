@@ -416,10 +416,10 @@ export function Scores() {
                   return (
                     <li
                       key={ev.id}
-                      className="flex items-center justify-between gap-3 py-3 first:pt-0"
+                      className="flex flex-col gap-3 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-slate-900">
+                        <p className="font-medium text-slate-900 sm:truncate">
                           {ev.title}
                         </p>
                         <p className="text-sm text-slate-500">
@@ -434,7 +434,7 @@ export function Scores() {
                       </div>
                       <Link
                         to={`/scores/event/${ev.id}`}
-                        className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50"
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50 sm:self-auto"
                       >
                         Open
                       </Link>

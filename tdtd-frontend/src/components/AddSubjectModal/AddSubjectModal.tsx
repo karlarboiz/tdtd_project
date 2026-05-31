@@ -75,7 +75,7 @@ export function AddSubjectModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
       role="presentation"
       onClick={onClose}
     >
@@ -83,7 +83,7 @@ export function AddSubjectModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"
+        className="max-h-[min(90svh,640px)] w-full max-w-md overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] shadow-xl sm:rounded-2xl sm:pb-5"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId} className="text-lg font-semibold text-slate-900">
@@ -147,14 +147,14 @@ export function AddSubjectModal({
               type="button"
               disabled={busy}
               onClick={onClose}
-              className={`px-4 py-2.5 text-sm ${secondaryButtonClass}`}
+              className={`min-h-11 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={busy}
-              className={`px-4 py-2.5 text-sm ${primaryButtonClass}`}
+              className={`min-h-11 px-4 py-2.5 text-sm ${primaryButtonClass}`}
             >
               {busy ? 'Saving…' : 'Add subject'}
             </button>

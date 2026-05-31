@@ -277,7 +277,7 @@ export function ScoreGrading() {
                       max={event.maxScore}
                       step="any"
                       aria-label={`Score for ${formatStudentName(s)}`}
-                      className="w-24 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 text-right text-slate-900 outline-none ring-secondary focus:ring-2"
+                      className="w-full min-w-0 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-2 text-right text-slate-900 outline-none ring-secondary focus:ring-2 sm:w-24"
                       value={scores[s.id] ?? ''}
                       onChange={(e) =>
                         setScores((prev) => ({

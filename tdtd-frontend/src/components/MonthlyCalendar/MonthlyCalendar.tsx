@@ -101,16 +101,16 @@ export function MonthlyCalendar({
         <button
           type="button"
           onClick={goPrev}
-          className="rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
           aria-label="Previous month"
         >
           ←
         </button>
-        <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-center text-base font-semibold text-slate-800 sm:text-lg">{title}</h2>
         <button
           type="button"
           onClick={goNext}
-          className="rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
           aria-label="Next month"
         >
           →

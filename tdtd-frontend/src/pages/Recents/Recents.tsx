@@ -97,7 +97,7 @@ export function Recents() {
           type="button"
           disabled={loading || refreshing}
           onClick={() => void load({ silent: true })}
-          className={`shrink-0 px-3 py-2 text-sm ${secondaryButtonClass}`}
+          className={`inline-flex min-h-11 shrink-0 items-center justify-center px-4 py-2 text-sm ${secondaryButtonClass}`}
         >
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
