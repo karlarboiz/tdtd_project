@@ -16,6 +16,7 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [Subject-Function-Doc.md](./Subject-Function-Doc.md) | Subject catalog, school years, SY registration, class–subject links |
 | [Recents-Function-Doc.md](./Recents-Function-Doc.md) | Teacher activity log (Recents page) |
 | [App-Shell-Function-Doc.md](./App-Shell-Function-Doc.md) | Shared layout, logo, hamburger navigation |
+| [Home-Page-Doc.md](./Home-Page-Doc.md) | Today dashboard (`/`) — due items, attendance CTA, missed work, Student Lab |
 | [Student-Lab-Function-Doc.md](./Student-Lab-Function-Doc.md) | Per-student profile, attendance, and recent scores (view-only) |
 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) | Native app roadmap; offline-on-mobile-only checklist |
 | [TDTD-Batch-Function.md](./TDTD-Batch-Function.md) | Scheduled batch jobs (`tdtd-batch`), attendance reminders, deployment |

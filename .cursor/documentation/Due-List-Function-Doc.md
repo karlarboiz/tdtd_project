@@ -37,7 +37,7 @@ tdtd-frontend ◄──── GET /api/due-list ────┘
 
 - Show a **single list** of incomplete obligations, not scattered banners.
 - Each row has a **primary action** (e.g. open attendance session) and optional **Dismiss**.
-- When nothing is due, the section is **hidden** (no empty-state noise on Home).
+- When nothing is due, the section is **hidden** on the Attendance calendar. On **Home**, with `showEmptyState`, a positive empty card is shown instead (see [Home-Page-Doc.md](./Home-Page-Doc.md)).
 
 ### v1 scope — attendance only
 
