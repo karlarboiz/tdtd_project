@@ -12,7 +12,7 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 
 - [x] `AppShell`: top bar (brand, Recents, hamburger), `max-w-7xl` main region
 - [x] Heavier pages use `lg:` multi-column grids (attendance, classes, subjects, scores)
-- [x] Home shows `AppBrand` hero and uses shell-appropriate width
+- [x] Home is a today dashboard (greeting, due items, attendance CTA, missed-work summary, Student Lab shortcut) at `max-w-lg lg:max-w-4xl` — see [Home-Page-Doc.md](../documentation/Home-Page-Doc.md)
 
 ## Buttons
 

@@ -1,52 +1,50 @@
-import { Link } from 'react-router-dom'
-import { AppBrand } from '@/components/AppBrand/AppBrand'
 import { DueList } from '@/components/DueList/DueList'
-import {
-  primaryButtonClass,
-  secondaryLinkTileClass,
-} from '@/lib/uiClasses'
+import { MissedWorkSummary } from '@/components/MissedWorkSummary/MissedWorkSummary'
+import { StudentLabShortcut } from '@/components/StudentLabShortcut/StudentLabShortcut'
+import { TodayAttendanceCTA } from '@/components/TodayAttendanceCTA/TodayAttendanceCTA'
+import { useDueItems } from '@/hooks/useDueItems'
 
-const tertiaryLinkClass =
-  'rounded-2xl border-2 border-secondary bg-white px-5 py-4 text-center text-lg font-semibold text-secondary shadow-sm transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary'
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function formatTodayDate(): string {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
 
 export function Home() {
+  const { items, loading, dismiss } = useDueItems()
+
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col py-6 lg:max-w-2xl lg:py-10">
-      <AppBrand variant="hero" />
+    <div className="mx-auto w-full max-w-lg lg:max-w-4xl">
+      <header>
+        <h1 className="text-2xl font-semibold text-slate-900">{getGreeting()}</h1>
+        <p className="mt-1 text-sm text-slate-600">{formatTodayDate()}</p>
+      </header>
 
-      <main className="mx-auto mt-10 flex w-full flex-1 flex-col items-stretch gap-4 lg:mt-14">
-        <DueList />
-
-        <Link
-          to="/attendance"
-          className={`rounded-2xl px-5 py-4 text-center text-lg ${primaryButtonClass}`}
-        >
-          Start Attendance
-        </Link>
-
-        <Link to="/due-list" className={secondaryLinkTileClass}>
-          DueList
-        </Link>
-
-        <Link
-          to="/classes"
-          className={secondaryLinkTileClass}
-        >
-          Classes &amp; Students
-        </Link>
-
-        <Link to="/subjects" className={tertiaryLinkClass}>
-          Subjects
-        </Link>
-
-        <Link to="/scores" className={tertiaryLinkClass}>
-          Scores
-        </Link>
-
-        <Link to="/student-lab" className={tertiaryLinkClass}>
-          Student Lab
-        </Link>
-      </main>
+      <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="flex flex-col gap-6">
+          <DueList
+            showEmptyState
+            items={items}
+            loading={loading}
+            onDismiss={dismiss}
+          />
+          <TodayAttendanceCTA dueItems={items} loading={loading} />
+        </div>
+        <div className="flex flex-col gap-6">
+          <MissedWorkSummary />
+          <StudentLabShortcut />
+        </div>
+      </div>
     </div>
   )
 }

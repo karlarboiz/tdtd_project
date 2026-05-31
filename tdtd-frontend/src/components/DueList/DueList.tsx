@@ -1,52 +1,33 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { listDueItems } from '@/api/dueListApi'
-import { dismissReminder } from '@/api/remindersApi'
+import { Link } from 'react-router-dom'
+import { useDueItems } from '@/hooks/useDueItems'
 import type { DueItem } from '@/types/schema'
+
+function isWeekend(date = new Date()): boolean {
+  const day = date.getDay()
+  return day === 0 || day === 6
+}
 
 type DueListProps = {
   variant?: 'default' | 'compact'
+  showEmptyState?: boolean
+  items?: DueItem[]
+  loading?: boolean
+  onDismiss?: (id: string) => void
 }
 
-export function DueList({ variant = 'default' }: DueListProps) {
-  const location = useLocation()
-  const [items, setItems] = useState<DueItem[]>([])
-  const [loading, setLoading] = useState(true)
+export function DueList({
+  variant = 'default',
+  showEmptyState = false,
+  items: itemsProp,
+  loading: loadingProp,
+  onDismiss: onDismissProp,
+}: DueListProps) {
+  const internal = useDueItems()
+  const items = itemsProp ?? internal.items
+  const loading = loadingProp ?? internal.loading
+  const onDismiss = onDismissProp ?? internal.dismiss
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const rows = await listDueItems()
-      setItems(rows)
-    } catch {
-      setItems([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    void load()
-  }, [load, location.pathname])
-
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') void load()
-    }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [load])
-
-  const onDismiss = async (id: string) => {
-    try {
-      await dismissReminder(id)
-      setItems((prev) => prev.filter((i) => i.id !== id))
-    } catch {
-      void load()
-    }
-  }
-
-  if (loading || items.length === 0) {
+  if (loading) {
     return null
   }
 
@@ -54,6 +35,32 @@ export function DueList({ variant = 'default' }: DueListProps) {
     variant === 'compact'
       ? 'text-sm font-semibold text-amber-950'
       : 'text-base font-semibold text-amber-950'
+
+  if (items.length === 0) {
+    if (!showEmptyState) {
+      return null
+    }
+
+    const weekend = isWeekend()
+
+    return (
+      <section
+        className="flex w-full flex-col gap-3"
+        aria-labelledby="due-list-heading"
+      >
+        <h2 id="due-list-heading" className={headingClass}>
+          Due
+        </h2>
+        <div className="rounded-2xl border border-secondary/40 bg-white px-5 py-4 shadow-sm">
+          <p className="text-sm font-medium text-secondary">
+            {weekend
+              ? 'No attendance due on weekends.'
+              : "You're all caught up for today."}
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section
