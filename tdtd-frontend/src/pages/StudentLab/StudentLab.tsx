@@ -238,17 +238,17 @@ export function StudentLab() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Attendance</h2>
           <div
-            className="inline-flex rounded-xl border border-slate-200 p-0.5"
+            className="inline-flex w-full rounded-xl border border-slate-200 p-0.5 sm:w-auto"
             role="group"
             aria-label="Attendance date range"
           >
             <button
               type="button"
               className={[
-                'touch-manipulation rounded-lg px-3 py-2 text-sm font-semibold transition',
+                'touch-manipulation flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition sm:flex-none',
                 attendanceMode === '30'
                   ? 'bg-primary text-white'
                   : 'text-slate-700 hover:bg-slate-50',
@@ -260,7 +260,7 @@ export function StudentLab() {
             <button
               type="button"
               className={[
-                'touch-manipulation rounded-lg px-3 py-2 text-sm font-semibold transition',
+                'touch-manipulation flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition sm:flex-none',
                 attendanceMode === 'all'
                   ? 'bg-primary text-white'
                   : 'text-slate-700 hover:bg-slate-50',
@@ -336,16 +336,16 @@ export function StudentLab() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Recent scores</h2>
-          <label className="flex items-center gap-2 text-sm">
-            <span className={formLabelInlineClass}>Range</span>
+          <label className="flex w-full min-w-0 flex-col gap-1 text-sm sm:w-auto sm:flex-row sm:items-center sm:gap-2">
+            <span className={`shrink-0 ${formLabelInlineClass}`}>Range</span>
             <select
               value={scorePreset}
               onChange={(e) =>
                 setScorePreset(e.target.value as ScoreRangePreset)
               }
-              className="rounded-lg border border-slate-200 bg-neutral-bg px-2 py-2 outline-none ring-secondary focus:ring-2"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-neutral-bg px-2 py-2 outline-none ring-secondary focus:ring-2 sm:w-auto"
               aria-label="Score date range"
             >
               <option value="30">Last 30 days</option>

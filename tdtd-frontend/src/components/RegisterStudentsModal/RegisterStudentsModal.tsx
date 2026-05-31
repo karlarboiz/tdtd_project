@@ -295,7 +295,7 @@ export function RegisterStudentsModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[min(90vh,640px)] w-full max-w-md flex-col rounded-t-3xl bg-white shadow-xl sm:rounded-3xl"
+        className="relative z-10 flex max-h-[min(90svh,640px)] w-full max-w-md flex-col rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-xl sm:rounded-3xl sm:pb-0"
       >
         <div className="border-b border-slate-100 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
@@ -327,7 +327,7 @@ export function RegisterStudentsModal({
           )}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:pb-4">
           {view === 'pick' && (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-slate-600">

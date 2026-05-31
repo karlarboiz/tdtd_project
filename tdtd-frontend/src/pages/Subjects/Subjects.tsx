@@ -320,7 +320,35 @@ export function Subjects() {
 
             {hasSubjects ? (
               filteredSubjects.length > 0 ? (
-              <div className="overflow-x-auto">
+              <>
+              <ul className="divide-y divide-slate-100 sm:hidden" role="list">
+                {filteredSubjects.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex flex-col gap-3 px-4 py-4"
+                    role="listitem"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-900">{s.subjectName}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {s.gradeLevel}
+                        {s.subjectShortCode ? ` · ${s.subjectShortCode}` : ''}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={removingId === s.id}
+                      onClick={() =>
+                        void removeSubject(s.id, s.subjectName, s.gradeLevel)
+                      }
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-secondary px-3 py-2 text-sm font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50 sm:w-auto"
+                    >
+                      {removingId === s.id ? 'Removing…' : 'Remove'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden overflow-x-auto sm:block">
                 <table className="w-full min-w-[32rem] text-left text-sm">
                   <thead>
                     <tr className="border-b border-slate-100 bg-neutral-bg/80 text-slate-600">
@@ -363,6 +391,7 @@ export function Subjects() {
                   </tbody>
                 </table>
               </div>
+              </>
               ) : (
                 <p className="px-5 py-10 text-center text-sm text-slate-500">
                   No subjects for <strong>{gradeFilter}</strong>. Choose{' '}

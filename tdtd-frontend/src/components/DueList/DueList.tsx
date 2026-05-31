@@ -88,14 +88,14 @@ export function DueList({
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               <Link
                 to={item.actionPath}
-                className="rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700"
               >
                 Do it
               </Link>
               <button
                 type="button"
                 onClick={() => void onDismiss(item.id)}
-                className="rounded-lg border border-amber-400 bg-white px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-amber-400 bg-white px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
               >
                 Dismiss
               </button>
