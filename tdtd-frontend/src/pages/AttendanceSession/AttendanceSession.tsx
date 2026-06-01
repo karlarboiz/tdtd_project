@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { RegisterStudentsModal } from '../../components/RegisterStudentsModal/RegisterStudentsModal'
 import { listClasses } from '../../api/classesApi'
 import {
@@ -296,7 +297,7 @@ export function AttendanceSession() {
       : 'Select a class…'
 
   return (
-    <div className="w-full">
+    <PageContainer variant="wide">
       <RegisterStudentsModal
         open={registerModalOpen}
         onClose={() => setRegisterModalOpen(false)}
@@ -304,7 +305,6 @@ export function AttendanceSession() {
         existingClasses={allClasses}
       />
 
-      <div className="mx-auto w-full max-w-md lg:max-w-none">
         <div className="mb-6 flex items-center gap-3 lg:mb-8">
           <button
             type="button"
@@ -516,7 +516,6 @@ export function AttendanceSession() {
             </section>
           ) : null}
         </div>
-      </div>
-    </div>
+    </PageContainer>
   )
 }

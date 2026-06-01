@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { getActiveSchoolYear } from '../../api/schoolYearApi'
 import { getStudentLab, type StudentLabQuery } from '../../api/studentLabApi'
 import { attendanceSessionPath } from '../../lib/attendanceSessionRoute'
@@ -196,7 +197,7 @@ export function StudentLab() {
   const { student, class: classRow } = profile
 
   return (
-    <div className="space-y-6">
+    <PageContainer variant="wide" className="space-y-6">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Link
           to="/student-lab"
@@ -386,6 +387,6 @@ export function StudentLab() {
           {error}
         </p>
       ) : null}
-    </div>
+    </PageContainer>
   )
 }

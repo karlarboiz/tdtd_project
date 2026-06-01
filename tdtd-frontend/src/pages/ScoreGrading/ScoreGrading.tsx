@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { listClasses } from '../../api/classesApi'
 import {
   getScoreEvent,
@@ -212,7 +213,7 @@ export function ScoreGrading() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md lg:max-w-2xl">
+    <PageContainer>
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"
@@ -331,6 +332,6 @@ export function ScoreGrading() {
           </button>
         </section>
       )}
-    </div>
+    </PageContainer>
   )
 }

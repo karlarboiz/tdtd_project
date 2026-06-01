@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import * as XLSX from 'xlsx'
 import { createClass, listClasses } from '../../api/classesApi'
 import {
@@ -181,7 +182,7 @@ export function Classes() {
   }
 
   return (
-    <div className="w-full">
+    <PageContainer variant="wide">
       <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
         <Link
           to="/"
@@ -381,6 +382,6 @@ export function Classes() {
           </div>
         </section>
       </div>
-    </div>
+    </PageContainer>
   )
 }

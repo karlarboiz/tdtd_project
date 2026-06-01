@@ -1,3 +1,4 @@
+import { PageContainer } from '@/layouts/PageContainer'
 import { DueList } from '@/components/DueList/DueList'
 import { MissedWorkSummary } from '@/components/MissedWorkSummary/MissedWorkSummary'
 import { StudentLabShortcut } from '@/components/StudentLabShortcut/StudentLabShortcut'
@@ -24,7 +25,7 @@ export function Home() {
   const { items, loading, dismiss } = useDueItems()
 
   return (
-    <div className="mx-auto w-full max-w-lg lg:max-w-4xl">
+    <PageContainer>
       <header>
         <h1 className="text-2xl font-semibold text-slate-900">{getGreeting()}</h1>
         <p className="mt-1 text-sm text-slate-600">{formatTodayDate()}</p>
@@ -45,6 +46,6 @@ export function Home() {
           <StudentLabShortcut />
         </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }

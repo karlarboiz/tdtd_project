@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { listClasses } from '../../api/classesApi'
 import {
   getActiveSchoolYear,
@@ -203,7 +204,7 @@ export function Scores() {
   const subjectSelectDisabled = !classId || subjectOptions.length === 0
 
   return (
-    <div className="w-full">
+    <PageContainer variant="wide">
       <header className="mb-6 lg:mb-8">
         <h1 className="text-2xl font-semibold text-slate-900">Scores</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-600">
@@ -446,6 +447,6 @@ export function Scores() {
           </section>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

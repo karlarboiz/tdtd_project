@@ -5,8 +5,8 @@ import { AppBrand } from '@/components/AppBrand/AppBrand'
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'touch-manipulation rounded-lg text-sm font-semibold transition',
-    'inline-flex min-h-11 w-full items-center justify-center px-4 py-2.5',
-    'sm:min-h-10 sm:w-auto sm:justify-start sm:px-3 sm:py-2',
+    'inline-flex min-h-11 w-full items-center justify-start px-4 py-2.5',
+    'sm:min-h-10 sm:w-auto sm:px-3 sm:py-2',
     isActive
       ? 'bg-primary/10 text-primary'
       : 'text-slate-700 active:bg-slate-100 sm:hover:bg-slate-100',
