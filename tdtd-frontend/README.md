@@ -37,9 +37,9 @@ Copy [`.env.example`](./.env.example) to `.env.local` when you need custom API r
 
 ## Share a demo with ngrok
 
-To expose your **local** app on the internet (phones, remote viewers), use **Option B** (two tunnels: API + UI):
+To expose your **local** app on the internet (phones, remote viewers), use **Option A** on free ngrok (one tunnel + `VITE_API_URL=`):
 
-**[Ngrok demo guide](../.cursor/documentation/Ngrok-Demo.md)** — use [`ngrok.tdtd.example.yml`](../ngrok.tdtd.example.yml) for both tunnels in one ngrok process (avoids free-tier `ERR_NGROK_334`).
+**[Ngrok demo guide](../.cursor/documentation/Ngrok-Demo.md)** — Option B ([`ngrok.tdtd.example.yml`](../ngrok.tdtd.example.yml)) only if ngrok gives you two different public URLs.
 
 ## Scripts
 

@@ -2,7 +2,9 @@
 
 Use [ngrok](https://ngrok.com/) to expose a **running local** copy of Teacher's Dilemma Today to phones or colleagues. This is a **temporary tunnel**, not production hosting. Your PC must stay on with the API and frontend running.
 
-**Recommended for this repo:** **Option B** (two tunnels) — UI and API each get an HTTPS URL; the browser calls the API through the API tunnel via `VITE_API_URL`.
+**Recommended on ngrok free tier:** **Option A** (one tunnel to Vite) — one public URL; Vite proxies `/api` to localhost:3000.
+
+**Option B** (separate API + UI URLs) only works when ngrok gives you **two different** forwarding hostnames (often requires a paid plan). If both tunnels show the **same** URL, use Option A below.
 
 ---
 
@@ -20,7 +22,79 @@ npm run build
 
 ---
 
-## Option B — two tunnels (recommended)
+## Option A — one tunnel (recommended on free ngrok)
+
+```mermaid
+flowchart LR
+  Browser["Browser"]
+  Ngrok["one ngrok HTTPS URL"]
+  Vite["Vite :5173"]
+  API["tdtd-node :3000"]
+  Browser --> Ngrok --> Vite
+  Vite -->|"/api proxy"| API
+```
+
+One public URL is enough: the browser only talks to Vite; Vite forwards `/api/*` to the API on your machine ([`vite.config.js`](../../tdtd-frontend/vite.config.js)).
+
+### Steps
+
+1. Start the API:
+
+   ```bash
+   cd tdtd-node
+   npm start
+   ```
+
+2. Configure the frontend for the proxy (required for ngrok — do **not** leave the dev default `127.0.0.1:3000`):
+
+   ```bash
+   cd tdtd-frontend
+   cp .env.example .env.local
+   ```
+
+   In `.env.local`:
+
+   ```env
+   VITE_API_URL=
+   ```
+
+   (Empty value — same as Option A in [`.env.example`](../../tdtd-frontend/.env.example).)
+
+3. Start Vite:
+
+   ```bash
+   npm run dev
+   ```
+
+4. One ngrok tunnel to the **UI** port only:
+
+   ```bash
+   ngrok http 5173
+   ```
+
+5. Open the **single** HTTPS URL ngrok prints. Share that link only.
+
+### Verify
+
+- Home loads; Network tab shows requests to `/api/...` on the **same** ngrok host (not `127.0.0.1`).
+- Saving attendance or creating a class works.
+
+### Terminals (Windows)
+
+```powershell
+# 1 — API
+cd tdtd-node; npm start
+
+# 2 — UI
+cd tdtd-frontend; npm run dev
+
+# 3 — ngrok (repo not required)
+ngrok http 5173
+```
+
+---
+
+## Option B — two tunnels (only if you get two different URLs)
 
 ```mermaid
 flowchart LR
@@ -42,9 +116,16 @@ npm start
 
 Listens on **http://localhost:3000**. SQLite database: `tdtd-node/data/teacher_app.sqlite` (created on first run).
 
-### 2. Start both tunnels in **one** ngrok process (recommended)
+### Why two terminals often fail on free ngrok
 
-On the **free** plan, running `ngrok http 3000` and `ngrok http 5173` in **two terminals** often fails with `ERR_NGROK_334` (“endpoint is already online”) because both try to use the same dev domain. Use **one** agent and two named tunnels instead.
+The free plan includes **one** dev domain (e.g. `something.ngrok-free.dev`). Two tunnels may:
+
+- Reuse the **same** forwarding URL (only one port wins — you see `GET / 404` if that URL points at the API), or
+- Fail with `ERR_NGROK_334` if you start two separate `ngrok http` processes.
+
+You need **two distinct HTTPS hostnames** for Option B. If ngrok shows the same URL for `tdtd-api` and `tdtd-web`, **use Option A** instead.
+
+### 2. Start both tunnels in one ngrok process (paid / multi-endpoint plans)
 
 1. Stop any running ngrok (`Ctrl+C` or `taskkill /IM ngrok.exe /F` on Windows).
 2. From the **repo root**, with API and Vite already running:
@@ -139,24 +220,16 @@ ngrok start --config "$env:LOCALAPPDATA\ngrok\ngrok.yml" --config ngrok.tdtd.exa
 
 ---
 
-## Alternatives — Option A (single tunnel)
+## Option A vs B
 
 **Do not mix** Option A and Option B in the same session.
 
-| | Option A | Option B |
-|---|----------|----------|
-| ngrok tunnels | 1 → Vite `:5173` | 2 → API `:3000` + Vite `:5173` |
-| `VITE_API_URL` | Empty (`VITE_API_URL=`) so browser uses relative `/api` | Set to API ngrok HTTPS URL |
-| API path | Vite dev server proxies `/api` → `localhost:3000` | Browser calls API ngrok URL directly |
-
-Option A steps:
-
-1. Start API (`cd tdtd-node && npm start`).
-2. Start Vite with proxy only: `cd tdtd-frontend`, set `VITE_API_URL=` in `.env.local` (or omit), then `npm run dev`.
-3. Run **one** tunnel: `ngrok http 5173`.
-4. Share that URL only.
-
-Use Option A when you want fewer terminals; use Option B when you prefer explicit API/UI URLs or proxy behavior is unclear.
+| | Option A (free tier) | Option B |
+|---|----------------------|----------|
+| ngrok | 1 tunnel → Vite `:5173` | 2 tunnels → `:3000` + `:5173` |
+| Public URLs | **One** | **Two different hostnames** required |
+| `VITE_API_URL` | Empty: `VITE_API_URL=` | API tunnel HTTPS URL |
+| API traffic | Vite proxy `/api` → `localhost:3000` | Browser → API ngrok host |
 
 ---
 
@@ -179,7 +252,9 @@ Use Option A when you want fewer terminals; use Option B when you prefer explici
 | UI loads but all requests fail | API tunnel down or wrong `VITE_API_URL` | Match `.env.local` to current API ngrok HTTPS URL |
 | Changes to `.env.local` ignored | Vite caches env at startup | Stop and restart `npm run dev` |
 | `Blocked request. This host … is not allowed` | Vite host check | Restart dev server; [`vite.config.js`](../../tdtd-frontend/vite.config.js) allows `*.ngrok-free.*` / `*.ngrok.io` |
-| `ERR_NGROK_334` endpoint already online | Two `ngrok http` on free tier | `taskkill /IM ngrok.exe /F`, then one agent: [`ngrok.tdtd.example.yml`](../../ngrok.tdtd.example.yml) + `ngrok start … tdtd-api tdtd-web` |
+| `ERR_NGROK_334` endpoint already online | Two `ngrok http` on free tier | Use **Option A**: one `ngrok http 5173` + `VITE_API_URL=` |
+| Same forwarding URL for api and web | Free tier single dev domain | Use **Option A** (one URL + Vite proxy) |
+| `GET / 404` in ngrok log | Browser hit **API** tunnel or API-only URL | Open the **web** URL (Option A: the only URL; Option B: `tdtd-web` host) |
 
 ---
 
