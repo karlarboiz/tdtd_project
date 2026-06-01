@@ -15,6 +15,8 @@ export default defineConfig({
     },
   },
   server: {
+    // Required when opening the dev server via ngrok (Option A or B UI tunnel).
+    allowedHosts: ['.ngrok-free.app', '.ngrok-free.dev', '.ngrok.io'],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
