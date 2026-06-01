@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { getAttendanceSessionDatesRange } from '../../api/attendanceApi'
 import { DueList } from '../../components/DueList/DueList'
 import { MonthlyCalendar } from '../../components/MonthlyCalendar/MonthlyCalendar'
@@ -25,8 +26,7 @@ export function AttendanceCalendar() {
   )
 
   return (
-    <div className="w-full">
-      <div className="mx-auto w-full max-w-md lg:max-w-2xl">
+    <PageContainer>
         <div className="mb-4">
           <DueList variant="compact" />
         </div>
@@ -49,7 +49,6 @@ export function AttendanceCalendar() {
             navigate(`/attendance/session/${encodeURIComponent(ymd)}`)
           }}
         />
-      </div>
-    </div>
+    </PageContainer>
   )
 }

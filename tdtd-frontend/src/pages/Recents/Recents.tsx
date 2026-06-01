@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { listRecents } from '../../api/recentsApi'
 import { activityLogHref } from '../../lib/activityLinks'
 import { formatRecordedAt, toYMD } from '../../lib/dates'
@@ -84,7 +85,7 @@ export function Recents() {
   const groups = useMemo(() => groupByDay(items), [items])
 
   return (
-    <div className="mx-auto w-full max-w-md lg:max-w-2xl">
+    <PageContainer>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Recents</h1>
@@ -153,6 +154,6 @@ export function Recents() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

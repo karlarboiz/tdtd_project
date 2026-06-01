@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import * as XLSX from 'xlsx'
 import { AddSubjectModal } from '../../components/AddSubjectModal/AddSubjectModal'
 import {
@@ -187,7 +188,7 @@ export function Subjects() {
   const showGradeFilter = hasSubjects && gradeLevels.length > 0
 
   return (
-    <div className="w-full">
+    <PageContainer variant="wide">
       <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
         <Link
           to="/"
@@ -413,6 +414,6 @@ export function Subjects() {
           />
         </>
       )}
-    </div>
+    </PageContainer>
   )
 }

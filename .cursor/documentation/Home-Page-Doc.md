@@ -34,7 +34,7 @@ Home composes widgets; it does not duplicate the full Recents feed or the full m
   mobile: single column stack (same order)
 ```
 
-- **Width:** `max-w-lg lg:max-w-4xl` (centered in shell main region).
+- **Width:** `PageContainer` variant `standard` (centered in shell main region).
 - **Desktop (`lg:`):** two-column grid — left: due + CTA; right: missed work + Student Lab.
 - **Mobile:** single column, same section order top to bottom.
 - **Branding:** no hero logo on Home; compact logo remains in `AppShell` header only.

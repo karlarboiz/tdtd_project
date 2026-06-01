@@ -11,9 +11,11 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 ## Layout & shell
 
 - [x] `AppShell`: top bar (brand, Recents, hamburger), `max-w-7xl` main region
+- [x] `PageContainer` in `tdtd-frontend/src/layouts/PageContainer.tsx` (`standard` | `wide`)
+- [x] All routed pages wrap root content in `PageContainer` (no ad-hoc root `max-w-*` wrappers)
 - [x] Mobile nav drawer links left-aligned (`justify-start` on full-width `NavLink`s in `AppShell`; not centered)
 - [x] Heavier pages use `lg:` multi-column grids (attendance, classes, subjects, scores)
-- [x] Home is a today dashboard (greeting, due items, attendance CTA, missed-work summary, Student Lab shortcut) at `max-w-lg lg:max-w-4xl` — see [Home-Page-Doc.md](../documentation/Home-Page-Doc.md)
+- [x] Home is a today dashboard (greeting, due items, attendance CTA, missed-work summary, Student Lab shortcut) in `PageContainer` `standard` — see [Home-Page-Doc.md](../documentation/Home-Page-Doc.md)
 
 ## Buttons
 
@@ -52,4 +54,10 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 
 ```bash
 cd tdtd-frontend && npm run lint && npm run build
+```
+
+After layout changes, confirm pages do not use root-level width wrappers outside `PageContainer` (modals and inline copy `max-w-*` are OK):
+
+```bash
+rg "max-w-(md|lg|2xl|4xl|7xl)" tdtd-frontend/src/pages --glob "*.tsx"
 ```

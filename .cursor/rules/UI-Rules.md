@@ -45,6 +45,21 @@ Use the `neutral-label` theme token for form labels (`text-neutral-label`). Reus
 Layout (desktop)
 The app uses a shared shell (`AppShell` in `tdtd-frontend`) with a persistent **top** bar: logo (`AppBrand`), **Recents** link, and a hamburger that toggles primary routes (Home, Attendance, Classes & students, Subjects, Scores, Student Lab). See [App-Shell-Function-Doc.md](../documentation/App-Shell-Function-Doc.md). Individual screens may still use inline back links where helpful. Page content lives in the shell main region, capped at a comfortable reading width (`max-w-7xl` with horizontal padding), not a phone-width root. Heavier pages use `lg:` two-column grids (e.g. attendance session, classes); mobile remains a single column unless a specific breakpoint is documented otherwise.
 
+Page content (`PageContainer`)
+Every routed page wraps its root content in `PageContainer` from `tdtd-frontend/src/layouts/PageContainer.tsx`. Layout is two layers:
+
+1. **`AppShell`** — navigation, `max-w-7xl`, and horizontal padding (the only place for shell-level `mx-auto` / `px-4` / `max-w-7xl`).
+2. **`PageContainer`** — content width inside the shell.
+
+Do not add page-level `max-w-7xl`, duplicate shell padding, or ad-hoc root wrappers such as `mx-auto max-w-md`, `max-w-lg`, or `max-w-2xl` on the page root. Use a `PageContainer` variant instead; if neither variant fits, extend `PageContainer` rather than inlining Tailwind width classes on the page.
+
+| Variant | Classes | Use when |
+|---------|---------|----------|
+| `standard` (default) | `max-w-2xl lg:max-w-4xl` | Focused flows: home, due list, recents, attendance calendar, score grading |
+| `wide` | `w-full` | Multi-column layouts and tables: classes, subjects, scores, attendance session, student lab |
+
+Example: `<PageContainer>` or `<PageContainer variant="wide" className="space-y-6">`. Inline `max-w-*` on description text or modals is allowed; it must not replace `PageContainer` for page width.
+
 Compliance
 Track implementation status in [UI-Compliance-Checklist.md](../documentation/UI-Compliance-Checklist.md).
 

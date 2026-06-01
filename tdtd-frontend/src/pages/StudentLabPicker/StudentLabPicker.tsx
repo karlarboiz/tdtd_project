@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { listClasses } from '../../api/classesApi'
 import { listStudentsByClass } from '../../api/studentsApi'
 import { formatClassShiftLabel } from '../../lib/classShift'
@@ -58,7 +59,7 @@ export function StudentLabPicker() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageContainer variant="wide" className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Student Lab</h1>
         <p className="mt-1 text-sm text-slate-600">
@@ -133,6 +134,6 @@ export function StudentLabPicker() {
           </ul>
         </section>
       )}
-    </div>
+    </PageContainer>
   )
 }

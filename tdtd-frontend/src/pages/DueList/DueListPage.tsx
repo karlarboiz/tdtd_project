@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { PageContainer } from '@/layouts/PageContainer'
 import { listMissedDueItems } from '@/api/dueListApi'
 import { formatLongDate } from '@/lib/dates'
 import { ApiError } from '@/lib/http'
@@ -89,7 +90,7 @@ export function DueListPage() {
   const groups = useMemo(() => groupByDate(items), [items])
 
   return (
-    <div className="mx-auto w-full max-w-lg lg:max-w-2xl">
+    <PageContainer>
       <header className="mb-6 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold text-slate-900">DueList</h1>
@@ -164,6 +165,6 @@ export function DueListPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }
