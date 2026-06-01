@@ -1,0 +1,23 @@
+# TDTD — Option B: API + UI tunnels in ONE ngrok agent (required on many free accounts).
+# Do not run two separate `ngrok http` commands; use this file instead.
+#
+# Setup (once): ngrok config add-authtoken YOUR_TOKEN
+#
+# Start (from repo root, after `npm start` in tdtd-node and `npm run dev` in tdtd-frontend):
+#   ngrok start --config "%LocalAppData%\ngrok\ngrok.yml" --config ngrok.tdtd.example.yml tdtd-api tdtd-web
+#
+# PowerShell:
+#   ngrok start --config "$env:LOCALAPPDATA\ngrok\ngrok.yml" --config ngrok.tdtd.example.yml tdtd-api tdtd-web
+#
+# Copy the two HTTPS forwarding URLs from the ngrok TUI:
+#   tdtd-api → VITE_API_URL in tdtd-frontend/.env.local (restart Vite)
+#   tdtd-web → URL you open / share in the browser
+
+version: "2"
+tunnels:
+  tdtd-api:
+    proto: http
+    addr: 3000
+  tdtd-web:
+    proto: http
+    addr: 5173
