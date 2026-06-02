@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listMissedDueItems } from '@/api/dueListApi'
 import { formatLongDate } from '@/lib/dates'
 import { ApiError } from '@/lib/http'
@@ -91,6 +93,7 @@ export function DueListPage() {
 
   return (
     <PageContainer>
+      <PageContentReveal>
       <header className="mb-6 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold text-slate-900">DueList</h1>
@@ -128,6 +131,7 @@ export function DueListPage() {
       )}
 
       {!loading && groups.length > 0 && (
+        <ContentReveal revealKey="due-list-ready">
         <div className="flex flex-col gap-6">
           {groups.map((group) => (
             <section key={group.date} aria-labelledby={`due-date-${group.date}`}>
@@ -164,7 +168,9 @@ export function DueListPage() {
             </section>
           ))}
         </div>
+        </ContentReveal>
       )}
+      </PageContentReveal>
     </PageContainer>
   )
 }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { getActiveSchoolYear } from '../../api/schoolYearApi'
 import { getStudentLab, type StudentLabQuery } from '../../api/studentLabApi'
 import { attendanceSessionPath } from '../../lib/attendanceSessionRoute'
@@ -162,40 +164,6 @@ export function StudentLab() {
       : 'This school year'
   }, [scorePreset, schoolYear?.label])
 
-  if (!studentId) {
-    return (
-      <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
-        <p className="text-slate-700">Missing student in URL.</p>
-        <Link
-          to="/student-lab"
-          className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-        >
-          Student Lab
-        </Link>
-      </div>
-    )
-  }
-
-  if (loading && !data) {
-    return <p className="text-sm text-slate-500">Loading student lab…</p>
-  }
-
-  if (!profile) {
-    return (
-      <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
-        <p className="text-slate-700">{error ?? 'Student not found.'}</p>
-        <Link
-          to="/student-lab"
-          className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-        >
-          Back to Student Lab
-        </Link>
-      </div>
-    )
-  }
-
-  const { student, class: classRow } = profile
-
   return (
     <PageContainer variant="wide" className="space-y-6">
       <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -216,23 +184,51 @@ export function StudentLab() {
         </Link>
       </div>
 
+      <PageContentReveal className="space-y-6">
+      {!studentId ? (
+        <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
+          <p className="text-slate-700">Missing student in URL.</p>
+          <Link
+            to="/student-lab"
+            className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+          >
+            Student Lab
+          </Link>
+        </div>
+      ) : loading && !data ? (
+        <p className="text-sm text-slate-500">Loading student lab…</p>
+      ) : !profile ? (
+        <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
+          <p className="text-slate-700">{error ?? 'Student not found.'}</p>
+          <Link
+            to="/student-lab"
+            className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+          >
+            Back to Student Lab
+          </Link>
+        </div>
+      ) : (
+        <ContentReveal
+          revealKey={`${studentId}-${attendanceMode}-${scorePreset}`}
+          className="space-y-6"
+        >
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">
-          {formatStudentName(student)}
+          {formatStudentName(profile.student)}
         </h1>
         <dl className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
           <div>
             <dt className="font-medium text-slate-500">Birth date</dt>
-            <dd>{student.birthDate}</dd>
+            <dd>{profile.student.birthDate}</dd>
           </div>
           <div>
             <dt className="font-medium text-slate-500">Gender</dt>
-            <dd>{genderLabel(student.gender)}</dd>
+            <dd>{genderLabel(profile.student.gender)}</dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="font-medium text-slate-500">Class</dt>
             <dd>
-              {classRow.name} · {formatClassShiftLabel(classRow.shift)}
+              {profile.class.name} · {formatClassShiftLabel(profile.class.shift)}
             </dd>
           </div>
         </dl>
@@ -387,6 +383,9 @@ export function StudentLab() {
           {error}
         </p>
       ) : null}
+        </ContentReveal>
+      )}
+      </PageContentReveal>
     </PageContainer>
   )
 }

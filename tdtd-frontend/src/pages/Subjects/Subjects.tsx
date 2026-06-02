@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import * as XLSX from 'xlsx'
 import { AddSubjectModal } from '../../components/AddSubjectModal/AddSubjectModal'
 import {
@@ -189,6 +191,7 @@ export function Subjects() {
 
   return (
     <PageContainer variant="wide">
+      <PageContentReveal>
       <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
         <Link
           to="/"
@@ -321,6 +324,7 @@ export function Subjects() {
 
             {hasSubjects ? (
               filteredSubjects.length > 0 ? (
+              <ContentReveal revealKey={`${gradeFilter}-${filteredSubjects.length}`}>
               <>
               <ul className="divide-y divide-slate-100 sm:hidden" role="list">
                 {filteredSubjects.map((s) => (
@@ -393,6 +397,7 @@ export function Subjects() {
                 </table>
               </div>
               </>
+              </ContentReveal>
               ) : (
                 <p className="px-5 py-10 text-center text-sm text-slate-500">
                   No subjects for <strong>{gradeFilter}</strong>. Choose{' '}
@@ -414,6 +419,7 @@ export function Subjects() {
           />
         </>
       )}
+      </PageContentReveal>
     </PageContainer>
   )
 }

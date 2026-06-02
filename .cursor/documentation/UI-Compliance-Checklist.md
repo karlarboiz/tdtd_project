@@ -45,6 +45,10 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 - [x] Focus-visible outlines on primary/secondary buttons and form controls (via shared classes)
 - [x] Legible base typography (`font-sans`, inherited sizing on controls)
 
+## Motion
+
+- [x] Unified content enter animation (`ContentReveal`, `PageContentReveal`, `.tdtd-content-enter`) — see [Content-Reveal-Function-Doc.md](./Content-Reveal-Function-Doc.md)
+
 ## Documentation sync
 
 - [x] UI-Rules nav list includes Student Lab

@@ -1,6 +1,8 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import * as XLSX from 'xlsx'
 import { createClass, listClasses } from '../../api/classesApi'
 import {
@@ -183,6 +185,7 @@ export function Classes() {
 
   return (
     <PageContainer variant="wide">
+      <PageContentReveal>
       <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
         <Link
           to="/"
@@ -349,7 +352,10 @@ export function Classes() {
               </button>
             </div>
 
-            <div className="mt-8 flex min-h-0 flex-1 flex-col border-t border-slate-100 pt-4 lg:min-h-[12rem]">
+            <ContentReveal
+              revealKey={selectedClassId}
+              className="mt-8 flex min-h-0 flex-1 flex-col border-t border-slate-100 pt-4 lg:min-h-[12rem]"
+            >
               <h2 className="shrink-0 font-semibold text-slate-900">
                 Students ({students.length})
               </h2>
@@ -378,10 +384,11 @@ export function Classes() {
                   </li>
                 )}
               </ul>
-            </div>
+            </ContentReveal>
           </div>
         </section>
       </div>
+      </PageContentReveal>
     </PageContainer>
   )
 }
