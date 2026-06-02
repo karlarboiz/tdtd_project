@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ListRowsSkeleton } from '@/components/LoadingSkeleton/ListRowsSkeleton'
+import { SkeletonBlock } from '@/components/LoadingSkeleton/SkeletonBlock'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listClasses } from '../../api/classesApi'
@@ -67,7 +69,13 @@ export function StudentLabPicker() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading classes…</p>
+        <section
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          aria-hidden
+        >
+          <SkeletonBlock className="mb-4 h-11 w-full rounded-xl" />
+          <ListRowsSkeleton rows={5} />
+        </section>
       ) : classes.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
           <p className="text-slate-700">No classes yet.</p>

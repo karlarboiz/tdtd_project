@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { ListRowsSkeleton } from '@/components/LoadingSkeleton/ListRowsSkeleton'
+import { ScoreRosterSkeleton } from '@/components/LoadingSkeleton/ScoreRosterSkeleton'
+import { SkeletonBar } from '@/components/LoadingSkeleton/SkeletonBar'
+import { SkeletonStatus } from '@/components/LoadingSkeleton/SkeletonStatus'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { RegisterStudentsModal } from '../../components/RegisterStudentsModal/RegisterStudentsModal'
@@ -363,9 +367,13 @@ export function AttendanceSession() {
           {rosterPanelActive ? (
             <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:max-h-[min(28rem,calc(100svh-9rem))] lg:overflow-y-auto">
               {rosterLoading ? (
-                <p className="text-center text-sm text-slate-500 lg:text-left">
-                  Checking for saved attendance…
-                </p>
+                <SkeletonStatus
+                  label="Checking for saved attendance"
+                  className="py-4 lg:text-left"
+                >
+                  <SkeletonBar className="mb-4 h-4 w-56" />
+                  <ListRowsSkeleton rows={4} showAction={false} />
+                </SkeletonStatus>
               ) : (
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h2 className="text-lg font-semibold text-slate-900">
@@ -468,7 +476,7 @@ export function AttendanceSession() {
               </div>
 
               {loadingClass ? (
-                <p className="py-8 text-center text-slate-500">Loading…</p>
+                <ScoreRosterSkeleton rows={6} className="py-4" />
               ) : students.length === 0 ? (
                 <p className="py-8 text-center text-slate-600">
                   No students in this class yet. Use &quot;Register Students or

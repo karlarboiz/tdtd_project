@@ -84,3 +84,26 @@ textarea {
     transform: none;
   }
 }
+
+@keyframes tdtd-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.tdtd-skeleton {
+  background-color: #e2e8f0;
+  border-radius: 0.5rem;
+  animation: tdtd-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tdtd-skeleton {
+    animation: none;
+    opacity: 0.65;
+  }
+}

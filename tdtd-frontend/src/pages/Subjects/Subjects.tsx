@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { SubjectsPageSkeleton } from '@/components/LoadingSkeleton/SubjectsPageSkeleton'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import * as XLSX from 'xlsx'
@@ -220,7 +221,7 @@ export function Subjects() {
       ) : null}
 
       {loading ? (
-        <p className="mt-8 text-sm text-slate-500">Loading…</p>
+        <SubjectsPageSkeleton className="mt-8" />
       ) : !schoolYear ? (
         <section className="mt-8 max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="font-semibold text-slate-900">Set up school year</h2>

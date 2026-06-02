@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { DueListSkeleton } from '@/components/LoadingSkeleton/DueListSkeleton'
 import { useDueItems } from '@/hooks/useDueItems'
 import type { DueItem } from '@/types/schema'
 
@@ -28,14 +29,24 @@ export function DueList({
   const loading = loadingProp ?? internal.loading
   const onDismiss = onDismissProp ?? internal.dismiss
 
-  if (loading) {
-    return null
-  }
-
   const headingClass =
     variant === 'compact'
       ? 'text-sm font-semibold text-amber-950'
       : 'text-base font-semibold text-amber-950'
+
+  if (loading) {
+    return (
+      <section
+        className="flex w-full flex-col gap-3"
+        aria-labelledby="due-list-heading"
+      >
+        <h2 id="due-list-heading" className={headingClass}>
+          Due
+        </h2>
+        <DueListSkeleton />
+      </section>
+    )
+  }
 
   if (items.length === 0) {
     if (!showEmptyState) {

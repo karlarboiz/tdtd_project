@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ScoresPageSkeleton } from '@/components/LoadingSkeleton/ScoresPageSkeleton'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listClasses } from '../../api/classesApi'
@@ -217,7 +218,7 @@ export function Scores() {
       </header>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <ScoresPageSkeleton />
       ) : classes.length === 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-slate-700">

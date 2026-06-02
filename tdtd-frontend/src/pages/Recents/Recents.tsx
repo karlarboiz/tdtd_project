@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { RecentsSkeleton } from '@/components/LoadingSkeleton/RecentsSkeleton'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listRecents } from '../../api/recentsApi'
@@ -113,8 +114,8 @@ export function Recents() {
         </p>
       ) : null}
 
-      {loading ? (
-        <p className="mt-8 text-sm text-slate-500">Loading activity…</p>
+      {loading && items.length === 0 ? (
+        <RecentsSkeleton className="mt-6" />
       ) : items.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-500 shadow-sm">
           No activity yet. Actions like saving attendance or registering students

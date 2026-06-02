@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ProfileDetailSkeleton } from '@/components/LoadingSkeleton/ProfileDetailSkeleton'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { getActiveSchoolYear } from '../../api/schoolYearApi'
@@ -196,7 +197,7 @@ export function StudentLab() {
           </Link>
         </div>
       ) : loading && !data ? (
-        <p className="text-sm text-slate-500">Loading student lab…</p>
+        <ProfileDetailSkeleton />
       ) : !profile ? (
         <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
           <p className="text-slate-700">{error ?? 'Student not found.'}</p>
@@ -210,7 +211,12 @@ export function StudentLab() {
       ) : (
         <ContentReveal
           revealKey={`${studentId}-${attendanceMode}-${scorePreset}`}
-          className="space-y-6"
+          className={[
+            'space-y-6',
+            loading && data ? 'pointer-events-none opacity-50' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
         >
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">
@@ -375,9 +381,6 @@ export function StudentLab() {
         ) : null}
       </section>
 
-      {loading ? (
-        <p className="text-center text-xs text-slate-400">Refreshing…</p>
-      ) : null}
       {error && data ? (
         <p className={`text-center ${errorAlertClass}`} role="alert">
           {error}
