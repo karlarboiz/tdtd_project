@@ -63,6 +63,9 @@ Example: `<PageContainer>` or `<PageContainer variant="wide" className="space-y-
 Motion
 Use the shared content-reveal pattern for list/detail panels and routed page bodies inside `PageContainer`. Do not animate `AppShell`, `<Outlet />`, or the full viewport. See [Content-Reveal-Function-Doc.md](../documentation/Content-Reveal-Function-Doc.md).
 
+Loading
+While fetching backend data, show skeleton placeholders from `LoadingSkeleton` components—not plain “Loading…” text or empty space. After data arrives, use content reveal. Silent refresh must not swap the whole list for a skeleton. See [Loading-Skeleton-Function-Doc.md](../documentation/Loading-Skeleton-Function-Doc.md).
+
 Compliance
 Track implementation status in [UI-Compliance-Checklist.md](../documentation/UI-Compliance-Checklist.md).
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { DueListPageSkeleton } from '@/components/LoadingSkeleton/DueListPageSkeleton'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listMissedDueItems } from '@/api/dueListApi'
@@ -119,9 +120,7 @@ export function DueListPage() {
         </p>
       )}
 
-      {loading && (
-        <p className="text-sm text-slate-500">Loading missed attendance…</p>
-      )}
+      {loading && items.length === 0 && <DueListPageSkeleton />}
 
       {!loading && !error && items.length === 0 && (
         <p className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-600">

@@ -41,3 +41,6 @@ export const errorAlertClass = 'text-sm font-medium text-accent'
 
 /** Enter animation for list/detail/page content — see Content-Reveal-Function-Doc.md */
 export const contentRevealClass = 'tdtd-content-enter'
+
+/** Pulse placeholder while fetching — see Loading-Skeleton-Function-Doc.md */
+export const skeletonClass = 'tdtd-skeleton'

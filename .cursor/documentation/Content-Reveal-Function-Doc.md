@@ -2,7 +2,7 @@
 
 Unified **enter animation** for list panels, detail views, and routed page bodies in `tdtd-frontend`. The app shell (header, nav) stays static.
 
-Not tied to a SQLite schema. See [UI-Rules.md](../rules/UI-Rules.md) for layout; this doc is the canonical **motion** spec.
+Not tied to a SQLite schema. See [UI-Rules.md](../rules/UI-Rules.md) for layout; this doc is the canonical **content enter** spec. While data is fetching, use skeleton loading per [Loading-Skeleton-Function-Doc.md](./Loading-Skeleton-Function-Doc.md) (MOT-002).
 
 ---
 

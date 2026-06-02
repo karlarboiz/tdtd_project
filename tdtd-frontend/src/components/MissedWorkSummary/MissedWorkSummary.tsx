@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { CardSkeleton } from '@/components/LoadingSkeleton/CardSkeleton'
 import { listMissedDueItems } from '@/api/dueListApi'
 import { formatLongDate } from '@/lib/dates'
 import type { DueItem } from '@/types/schema'
@@ -18,8 +19,8 @@ export function MissedWorkSummary() {
   const [items, setItems] = useState<DueItem[]>([])
   const [loading, setLoading] = useState(true)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
     try {
       setItems(await listMissedDueItems())
     } catch {
@@ -35,7 +36,7 @@ export function MissedWorkSummary() {
 
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible') void load()
+      if (document.visibilityState === 'visible') void load({ silent: true })
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
@@ -43,7 +44,11 @@ export function MissedWorkSummary() {
 
   const rangeLabel = useMemo(() => dateRangeLabel(items), [items])
 
-  if (loading || items.length === 0) {
+  if (loading && items.length === 0) {
+    return <CardSkeleton variant="amber" />
+  }
+
+  if (items.length === 0) {
     return null
   }
 
