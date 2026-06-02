@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { RegisterStudentsModal } from '../../components/RegisterStudentsModal/RegisterStudentsModal'
 import { listClasses } from '../../api/classesApi'
 import {
@@ -298,6 +299,7 @@ export function AttendanceSession() {
 
   return (
     <PageContainer variant="wide">
+      <PageContentReveal>
       <RegisterStudentsModal
         open={registerModalOpen}
         onClose={() => setRegisterModalOpen(false)}
@@ -516,6 +518,7 @@ export function AttendanceSession() {
             </section>
           ) : null}
         </div>
+      </PageContentReveal>
     </PageContainer>
   )
 }

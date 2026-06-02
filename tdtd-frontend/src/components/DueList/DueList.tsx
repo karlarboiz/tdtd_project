@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
 import { useDueItems } from '@/hooks/useDueItems'
 import type { DueItem } from '@/types/schema'
 
@@ -62,6 +63,8 @@ export function DueList({
     )
   }
 
+  const listKey = items.map((item) => item.id).join(',')
+
   return (
     <section
       className="flex w-full flex-col gap-3"
@@ -70,12 +73,13 @@ export function DueList({
       <h2 id="due-list-heading" className={headingClass}>
         Due
       </h2>
-      <ul
-        className="flex flex-col gap-3"
-        role="list"
-        aria-live="polite"
-      >
-        {items.map((item) => (
+      <ContentReveal revealKey={listKey}>
+        <ul
+          className="flex flex-col gap-3"
+          role="list"
+          aria-live="polite"
+        >
+          {items.map((item) => (
           <li
             key={item.id}
             role="listitem"
@@ -101,8 +105,9 @@ export function DueList({
               </button>
             </div>
           </li>
-        ))}
-      </ul>
+          ))}
+        </ul>
+      </ContentReveal>
     </section>
   )
 }

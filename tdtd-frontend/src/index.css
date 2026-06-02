@@ -62,3 +62,25 @@ textarea {
   width: 100%;
   box-sizing: border-box;
 }
+
+@keyframes tdtd-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tdtd-content-enter {
+  animation: tdtd-content-enter 200ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tdtd-content-enter {
+    animation: none;
+    transform: none;
+  }
+}

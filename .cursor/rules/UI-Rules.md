@@ -60,6 +60,9 @@ Do not add page-level `max-w-7xl`, duplicate shell padding, or ad-hoc root wrapp
 
 Example: `<PageContainer>` or `<PageContainer variant="wide" className="space-y-6">`. Inline `max-w-*` on description text or modals is allowed; it must not replace `PageContainer` for page width.
 
+Motion
+Use the shared content-reveal pattern for list/detail panels and routed page bodies inside `PageContainer`. Do not animate `AppShell`, `<Outlet />`, or the full viewport. See [Content-Reveal-Function-Doc.md](../documentation/Content-Reveal-Function-Doc.md).
+
 Compliance
 Track implementation status in [UI-Compliance-Checklist.md](../documentation/UI-Compliance-Checklist.md).
 

@@ -38,3 +38,6 @@ export const secondaryLinkTileClass =
   'rounded-2xl border-2 border-secondary bg-white px-5 py-4 text-center text-lg font-semibold text-secondary shadow-sm transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary'
 
 export const errorAlertClass = 'text-sm font-medium text-accent'
+
+/** Enter animation for list/detail/page content — see Content-Reveal-Function-Doc.md */
+export const contentRevealClass = 'tdtd-content-enter'
