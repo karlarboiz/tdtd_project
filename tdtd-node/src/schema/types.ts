@@ -226,3 +226,45 @@ export interface StudentLabPayload {
     recentParticipation: StudentLabScoreRow[]
   }
 }
+
+/** users.role — see .cursor/schemas/auth.md */
+export type UserRole = 'admin' | 'teacher'
+
+export interface UserRow {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  emailNormalized: string
+  passwordHash: string
+  role: UserRole
+  isActive: boolean
+  createdAt: number
+  updatedAt?: number
+}
+
+export interface RefreshTokenRow {
+  id: string
+  userId: string
+  tokenHash: string
+  expiresAt: number
+  revokedAt?: number
+  createdAt: number
+  replacedByTokenId?: string
+}
+
+/** Safe user shape returned from auth APIs (no secrets). */
+export interface AuthUser {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: UserRole
+  isActive: boolean
+}
+
+export interface AuthTokensResponse {
+  accessToken: string
+  refreshToken: string
+  user: AuthUser
+}

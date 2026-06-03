@@ -24,6 +24,7 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [TDTD-Batch-Function.md](./TDTD-Batch-Function.md) | Scheduled batch jobs (`tdtd-batch`), attendance reminders, deployment |
 | [Due-List-Function-Doc.md](./Due-List-Function-Doc.md) | DueList — teacher “what’s still due” (attendance v1; extends reminders) |
 | [Ngrok-Demo.md](./Ngrok-Demo.md) | Share local dev via ngrok (Option B: two tunnels + `VITE_API_URL`) |
+| [Authentication-Function.md](./Authentication-Function.md) | Email/password signup & login, JWT + refresh tokens (AUTH-001) |
 
 ## Entry format
 

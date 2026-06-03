@@ -18,6 +18,8 @@ export const TEACHER_APP_TABLES = [
   'score_entries',
   'activity_logs',
   'teacher_reminders',
+  'users',
+  'refresh_tokens',
 ] as const
 
 export type TeacherAppTableName = (typeof TEACHER_APP_TABLES)[number]
