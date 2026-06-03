@@ -23,6 +23,7 @@ Do not change schema structure unless explicitly instructed.
 | [quiz.md](./quiz.md) | `score_events`, `score_entries` |
 | [recents.md](./recents.md) | `activity_logs` |
 | [reminders.md](./reminders.md) | `teacher_reminders` (batch prompts; not Recents) |
+| [auth.md](./auth.md) | `users`, `refresh_tokens` (temporary v1) |
 | [student-lab.md](./student-lab.md) | Student Lab read model and API (no new tables) |
 
 ## Naming convention

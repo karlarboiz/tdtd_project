@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AppBrand } from '@/components/AppBrand/AppBrand'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -58,6 +59,8 @@ function NavMenuIcon({ open }: { open: boolean }) {
 export function AppShell() {
   const [navOpen, setNavOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   useEffect(() => {
     setNavOpen(false)
@@ -126,6 +129,16 @@ export function AppShell() {
             <NavLink to="/student-lab" className={navLinkClass}>
               Student Lab
             </NavLink>
+            <button
+              type="button"
+              className={navLinkClass({ isActive: false })}
+              onClick={() => {
+                void logout().then(() => navigate('/login', { replace: true }))
+              }}
+            >
+              Sign out
+              {user ? ` (${user.firstName})` : ''}
+            </button>
           </nav>
         </div>
       </header>

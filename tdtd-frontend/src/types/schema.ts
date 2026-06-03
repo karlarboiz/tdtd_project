@@ -190,3 +190,20 @@ export interface StudentLabPayload {
     recentParticipation: StudentLabScoreRow[]
   }
 }
+
+export type UserRole = 'admin' | 'teacher'
+
+export interface AuthUser {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: UserRole
+  isActive: boolean
+}
+
+export interface AuthTokensResponse {
+  accessToken: string
+  refreshToken: string
+  user: AuthUser
+}

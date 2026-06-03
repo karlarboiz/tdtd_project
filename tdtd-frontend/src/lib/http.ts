@@ -5,6 +5,14 @@
  *   `/api` proxy misbehaves; backend enables CORS. Override with `VITE_API_URL`, or set
  *   `VITE_API_URL=` (empty) to use relative `/api` + Vite proxy only.
  */
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from '@/lib/authStorage'
+import type { AuthTokensResponse } from '@/types/schema'
+
 function resolveApiBase(): string {
   const raw = import.meta.env.VITE_API_URL as string | undefined
   if (raw === '') return ''
@@ -38,9 +46,63 @@ function readErrorMessage(body: unknown): string {
   return 'Request failed'
 }
 
+function isPublicAuthPath(path: string): boolean {
+  return (
+    path.startsWith('/api/auth/login') ||
+    path.startsWith('/api/auth/signup') ||
+    path.startsWith('/api/auth/refresh') ||
+    path.startsWith('/api/auth/logout')
+  )
+}
+
+let refreshInFlight: Promise<boolean> | null = null
+
+async function tryRefreshAccessToken(): Promise<boolean> {
+  const refresh = getRefreshToken()
+  if (!refresh) return false
+
+  const res = await fetch(apiPath('/api/auth/refresh'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken: refresh }),
+  })
+
+  const text = await res.text()
+  let parsed: unknown
+  try {
+    parsed = text ? JSON.parse(text) : undefined
+  } catch {
+    parsed = undefined
+  }
+
+  if (!res.ok) {
+    clearTokens()
+    return false
+  }
+
+  const session = parsed as AuthTokensResponse
+  if (!session?.accessToken || !session?.refreshToken) {
+    clearTokens()
+    return false
+  }
+
+  setTokens(session.accessToken, session.refreshToken)
+  return true
+}
+
+async function refreshAccessTokenOnce(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = tryRefreshAccessToken().finally(() => {
+      refreshInFlight = null
+    })
+  }
+  return refreshInFlight
+}
+
 export async function apiJson<T>(
   path: string,
   init?: RequestInit,
+  retryOnUnauthorized = true,
 ): Promise<T> {
   const headers = new Headers(init?.headers)
   if (
@@ -49,6 +111,11 @@ export async function apiJson<T>(
     !headers.has('Content-Type')
   ) {
     headers.set('Content-Type', 'application/json')
+  }
+
+  const access = getAccessToken()
+  if (access && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${access}`)
   }
 
   const res = await fetch(apiPath(path), {
@@ -64,8 +131,24 @@ export async function apiJson<T>(
     parsed = undefined
   }
 
+  if (
+    res.status === 401 &&
+    retryOnUnauthorized &&
+    !isPublicAuthPath(path) &&
+    getRefreshToken()
+  ) {
+    const refreshed = await refreshAccessTokenOnce()
+    if (refreshed) {
+      return apiJson<T>(path, init, false)
+    }
+  }
+
   if (!res.ok) {
     throw new ApiError(res.status, readErrorMessage(parsed))
+  }
+
+  if (res.status === 204) {
+    return undefined as T
   }
 
   return parsed as T

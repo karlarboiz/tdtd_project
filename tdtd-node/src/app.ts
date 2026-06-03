@@ -2,6 +2,7 @@ import cors from 'cors'
 import express from 'express'
 import type { SqliteDatabase } from './db/sqlite-types.js'
 import { attendanceRouter } from './routes/attendance.routes.js'
+import { authRouter } from './routes/auth.routes.js'
 import { classRouter } from './routes/class.routes.js'
 import { scoreEventRouter } from './routes/scoreEvent.routes.js'
 import { studentRouter } from './routes/student.routes.js'
@@ -10,19 +11,26 @@ import { subjectRouter } from './routes/subject.routes.js'
 import { recentsRouter } from './routes/recents.routes.js'
 import { remindersRouter } from './routes/reminders.routes.js'
 import { dueListRouter } from './routes/dueList.routes.js'
+import { authenticate } from './middleware/authenticate.js'
 
 export function createApp(db: SqliteDatabase): express.Express {
   const app = express()
   app.use(cors({ origin: true }))
   app.use(express.json())
-  app.use('/api/classes', classRouter(db))
-  app.use('/api/students', studentRouter(db))
-  app.use('/api/attendance', attendanceRouter(db))
-  app.use('/api/school-years', schoolYearRouter(db))
-  app.use('/api/subjects', subjectRouter(db))
-  app.use('/api/score-events', scoreEventRouter(db))
-  app.use('/api/recents', recentsRouter(db))
-  app.use('/api/reminders', remindersRouter(db))
-  app.use('/api/due-list', dueListRouter(db))
+
+  const api = express.Router()
+  api.use('/auth', authRouter(db))
+  api.use(authenticate(db))
+  api.use('/classes', classRouter(db))
+  api.use('/students', studentRouter(db))
+  api.use('/attendance', attendanceRouter(db))
+  api.use('/school-years', schoolYearRouter(db))
+  api.use('/subjects', subjectRouter(db))
+  api.use('/score-events', scoreEventRouter(db))
+  api.use('/recents', recentsRouter(db))
+  api.use('/reminders', remindersRouter(db))
+  api.use('/due-list', dueListRouter(db))
+
+  app.use('/api', api)
   return app
 }

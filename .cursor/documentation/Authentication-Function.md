@@ -1,251 +1,165 @@
-# Authentication Function (Admin / Teacher)
+# Authentication — function documentation
 
-## Purpose
+Email/password **signup** and **login** with **JWT access tokens** and **opaque refresh tokens** (stored hashed in SQLite). All `/api/*` routes except public auth actions require a valid access token.
 
-Implement secure authentication for TDTD with support for user roles (`admin`, `teacher`) and compatibility with the current backend architecture (routes/controllers/services/dao plus SQLite migrations).
+**Canonical schema:** [auth.md](../schemas/auth.md)  
+**Status:** Shipped (AUTH-001) — temporary v1; profile and admin tooling will expand later.
 
-## Goals
+---
 
-- Secure login for users (email/password)
-- Session continuity via refresh flow
-- Server-enforced identity for all protected routes
-- Seamless integration with role-based authorization
+## v1 scope (shipped)
 
-## Recommended Auth Model
+| Feature | Behavior |
+|---------|----------|
+| **Signup** | `firstName`, `lastName`, `email`, `password` (min 8 chars). Default role `teacher`; **first account** in an empty DB becomes `admin`. |
+| **Login** | Email + password; generic error on failure. |
+| **Tokens** | Short-lived JWT access token + refresh token in JSON body (sessionStorage on web). |
+| **Refresh** | Rotates refresh token; old token revoked. |
+| **Logout** | Revokes refresh token server-side; client clears storage. |
+| **Me** | `GET /api/auth/me` with Bearer access token. |
+| **API guard** | All other `/api/*` routes use `authenticate` middleware. |
 
-Use:
+### Not in v1
 
-- Access token (short-lived, e.g. 15 minutes)
-- Refresh token (longer-lived, e.g. 7 to 30 days, rotated)
+- HttpOnly refresh cookies
+- Admin user-management routes (`POST /users`, role patches)
+- Password reset, 2FA, rate limiting, `npm run seed:admin`
+- Protecting batch JVM with auth (batch still uses shared SQLite file)
 
-Why:
+---
 
-- works well with API architecture
-- keeps access tokens short-lived
-- allows revocation and better security control via refresh-token store
+## Data model
 
-## Data Model Blueprint (SQLite)
+See [auth.md](../schemas/auth.md) — tables `users`, `refresh_tokens`.
 
-Add to migration flow in `src/db/migrate.ts`.
+---
 
-### users table
+## API
 
-Columns:
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/api/auth/signup` | Public |
+| POST | `/api/auth/login` | Public |
+| POST | `/api/auth/refresh` | Public (body: `{ refreshToken }`) |
+| POST | `/api/auth/logout` | Public (body: `{ refreshToken }`) → `204` |
+| GET | `/api/auth/me` | Bearer access token |
 
-- `id TEXT PRIMARY KEY`
-- `email TEXT NOT NULL`
-- `password_hash TEXT NOT NULL`
-- `role TEXT NOT NULL CHECK(role IN ('admin','teacher'))`
-- `is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1))`
-- `created_at INTEGER NOT NULL`
-- `updated_at INTEGER`
+**Login / refresh success body:**
 
-Constraints and indexes:
+```json
+{
+  "accessToken": "...",
+  "refreshToken": "...",
+  "user": {
+    "id": "...",
+    "firstName": "...",
+    "lastName": "...",
+    "email": "...",
+    "role": "teacher",
+    "isActive": true
+  }
+}
+```
 
-- unique index on normalized email (`LOWER(TRIM(email))`) strategy
-- optional index on `role`
-- optional index on `is_active`
+---
 
-### refresh_tokens table
+## Environment (tdtd-node)
 
-Columns:
+| Variable | Default (dev) | Purpose |
+|----------|---------------|---------|
+| `TDTD_JWT_ACCESS_SECRET` | dev placeholder | HS256 access JWT secret — **set in production** |
+| `TDTD_REFRESH_TOKEN_PEPPER` | dev placeholder | HMAC input for refresh token hash |
+| `TDTD_ACCESS_TOKEN_TTL_MINUTES` | `15` | Access token lifetime |
+| `TDTD_REFRESH_TOKEN_TTL_DAYS` | `14` | Refresh token lifetime |
 
-- `id TEXT PRIMARY KEY`
-- `user_id TEXT NOT NULL`
-- `token_hash TEXT NOT NULL`
-- `expires_at INTEGER NOT NULL`
-- `revoked_at INTEGER`
-- `created_at INTEGER NOT NULL`
-- `replaced_by_token_id TEXT` (optional rotation chain)
+---
 
-FK:
+## Architecture
 
-- `user_id -> users.id`
+```text
+tdtd-frontend (sessionStorage tokens)
+    → Authorization: Bearer <access>
+    → tdtd-node /api/auth/* (public subset)
+    → tdtd-node /api/* + authenticate middleware
+    → SQLite users + refresh_tokens
+```
 
-Indexes:
+**Module layout:**
 
-- `idx_refresh_tokens_user_id`
-- `idx_refresh_tokens_expires_at`
-- unique on `token_hash`
-
-Store only token hash, never raw refresh token.
-
-## Bootstrap Admin Strategy
-
-Implement one-time bootstrap path:
-
-- If no admin exists, allow creation of first admin (CLI or protected init flow).
-- After first admin exists, only existing admin can create another admin.
-
-Recommended script:
-
-- `npm run seed:admin` creates first admin with strong password input.
-- Immediately rotate password after first login if seeded from env.
-
-## API Contract Blueprint
-
-### Public auth endpoints
-
-#### POST /auth/login
-
-Input:
-
-- `email`
-- `password`
-
-Output:
-
-- access token
-- refresh token (prefer `HttpOnly` secure cookie; alternative body field)
-
-Errors:
-
-- `401` invalid credentials
-- `403` inactive account
-
-#### POST /auth/refresh
-
-Input:
-
-- refresh token (cookie/body)
-
-Behavior:
-
-- validate hash plus expiry plus revocation
-- rotate refresh token
-- return new access token (and new refresh token)
-
-Errors:
-
-- `401` invalid/expired/reused token
-
-#### POST /auth/logout
-
-Behavior:
-
-- revoke current refresh token (or all user tokens for global logout)
-
-#### GET /auth/me
-
-Behavior:
-
-- return authenticated user profile (`id`, `email`, `role`, `isActive`)
-
-### Admin user-management endpoints
-
-#### POST /users
-
-Create user with role (`admin` or `teacher`) - admin only.
-
-#### PATCH /users/:id/role
-
-Change role - admin only.
-
-#### PATCH /users/:id/active
-
-Activate/deactivate user - admin only.
-
-## Project-Specific Module Layout
-
-Suggested files aligned to existing architecture:
-
-- `src/controllers/auth.controller.ts`
+- `src/lib/email.ts`, `password.ts`, `tokens.ts`, `auth-config.ts`
+- `src/dao/user.dao.ts`, `refreshToken.dao.ts`
 - `src/services/auth.service.ts`
-- `src/dao/auth.dao.ts` (or user/refresh-token DAO split)
+- `src/controllers/auth.controller.ts`
 - `src/routes/auth.routes.ts`
+- `src/middleware/authenticate.ts`, `authorize.ts` (authorize ready for admin routes)
 
-Likely supporting files:
+**Frontend:**
 
-- `src/middleware/authenticate.ts`
-- `src/middleware/authorize.ts`
-- `src/lib/password.ts` (hash/verify)
-- `src/lib/tokens.ts` (sign/verify/generate token ids)
+- `src/contexts/AuthContext.tsx`
+- `src/pages/Login`, `src/pages/Signup`
+- `src/components/RequireAuth`
+- `src/lib/authStorage.ts`, `src/api/authApi.ts`
+- `src/lib/http.ts` — attaches Bearer; retries once after refresh on `401`
 
-Route registration:
+---
 
-- Plug `auth.routes` and `user.routes` into server route composition used by current app.
+## Security notes (v1)
 
-## Security Standards
+- Passwords: scrypt via `node:crypto`
+- Refresh tokens: random opaque string; only SHA-256 hash stored
+- Login errors: `Invalid email or password` (no email enumeration)
+- Signup duplicate email: `409` with explicit message (signup only)
+- Inactive users: `403` on login/refresh/me
 
-- Password hashing: Argon2id (preferred) or bcrypt with strong cost.
-- Validate password policy (minimum length plus baseline complexity).
-- Normalize email before lookup.
-- Rate-limit login endpoint.
-- Do not reveal whether email exists (generic auth error message).
-- Do not log credentials or raw tokens.
-- Invalidate refresh tokens on password reset/role downgrade/deactivation.
+---
 
-Cookie settings (if cookie-based refresh token):
+## Entry AUTH-001 — Email signup, login, tokens (initial)
 
-- `HttpOnly: true`
-- `Secure: true` (production)
-- `SameSite: Lax` or `Strict` based on client architecture
+**Date:** 2026-06-03
 
-## Authorization Integration
+**Summary:** SQLite `users` + `refresh_tokens`, auth REST API, JWT access + rotating refresh, frontend login/signup and protected app routes.
 
-After authentication is in place:
+**Reason:** Teachers need accounts before hosted/mobile sync; tokens gate API access without embedding secrets in the client beyond session storage.
 
-- All protected routes require `authenticate`.
-- Role-sensitive routes require `authorize('admin')`.
-- Teacher operational routes allow `authorize('admin', 'teacher')` where appropriate.
+**What changed**
 
-## Migration and Rollout Phases
+- Migration `migrateAuthTables` in `tdtd-node/src/db/migrate.ts`
+- Auth service, DAOs, middleware, routes; `app.ts` mounts `/api/auth` then `authenticate` on remaining API
+- Vitest: `auth.service.test.ts`
+- Frontend: Login, Signup, `AuthProvider`, `RequireAuth`, Bearer + refresh in `http.ts`
+- Schema doc [auth.md](../schemas/auth.md)
 
-### Phase 1 - Foundation
+**Files involved**
 
-- Add `users` and `refresh_tokens` tables
-- Implement password hashing and login
-- Add `/auth/me`
+- `tdtd-node/src/db/migrate.ts`, `schema/types.ts`, `schema/constants.ts`, `app.ts`, auth modules under `src/`
+- `tdtd-frontend/src/App.tsx`, `contexts/AuthContext.tsx`, `pages/Login`, `pages/Signup`, `lib/http.ts`, `lib/authStorage.ts`, `api/authApi.ts`, `types/schema.ts`, `layouts/AppShell.tsx`
+- `.cursor/schemas/auth.md`, this file
 
-### Phase 2 - Session lifecycle
+**Schemas involved**
 
-- Implement refresh plus rotation plus logout
-- Add token revocation checks
+- [auth.md](../schemas/auth.md)
 
-### Phase 3 - RBAC integration
+---
 
-- Add role middleware
-- Guard admin-only endpoints
+## Verify locally
 
-### Phase 4 - Hardening
+```bash
+cd tdtd-node && npm run build && npm test
+cd tdtd-frontend && npm run build
+```
 
-- Rate limiting
-- audit logs
-- improved alerting and monitoring for auth failures
+1. Start API: `cd tdtd-node && npm start`
+2. Start UI: `cd tdtd-frontend && npm run dev`
+3. Open `/signup`, create account, land on Home
+4. Sign out → `/login` → sign in again
+5. `GET /api/classes` without token → `401`
 
-## Testing Plan (Authentication)
+---
 
-### Unit tests
+## Future (from original blueprint)
 
-- password hash/verify
-- token sign/verify
-- refresh-token hash lookup and revocation logic
-
-### Integration tests
-
-- login success/failure
-- refresh success/rotation/reuse rejection
-- logout revocation
-- inactive user blocked
-
-### RBAC integration tests
-
-- admin can access admin endpoints
-- teacher gets `403` on admin endpoints
-- both can access shared teacher workflow endpoints as configured
-
-## Operational Checklist
-
-- Set required env vars (JWT secrets, token TTLs, bootstrap controls)
-- Run migrations
-- Create first admin
-- Verify `/auth/login` and `/auth/me`
-- Verify admin can create teacher
-- Verify teacher restrictions
-
-## Future Enhancements
-
-- Password reset flow (`password_resets` table)
-- Optional 2FA for admin accounts
-- Account lockout policy after repeated failed login
-- Fine-grained permissions if role model expands beyond `admin`/`teacher`
+- `npm run seed:admin` and admin-only user CRUD
+- HttpOnly refresh cookie for production
+- Rate limiting, password reset, lockout
+- `authorize('admin')` on management routes
+- Optional `GET /api/home` after login (dashboard aggregate)
