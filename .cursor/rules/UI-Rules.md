@@ -66,6 +66,17 @@ Use the shared content-reveal pattern for list/detail panels and routed page bod
 Loading
 While fetching backend data, show skeleton placeholders from `LoadingSkeleton` components—not plain “Loading…” text or empty space. After data arrives, use content reveal. Silent refresh must not swap the whole list for a skeleton. See [Loading-Skeleton-Function-Doc.md](../documentation/Loading-Skeleton-Function-Doc.md).
 
+Web vs mobile capability
+
+| Capability | Web (`VITE_APP_TARGET=web`) | Mobile app (`VITE_APP_TARGET=mobile`) |
+|------------|----------------------------|----------------------------------------|
+| Data | REST → `tdtd-node` only | Local SQLite first; sync when online |
+| Offline writes | No | Yes (outbox + sync) |
+| Attendance reminders | In-app banners | Local notifications (Capacitor) when enabled |
+| Install | Browser URL | App Store / Play / sideload |
+
+Detect target via `isMobileApp()` / `isOfflineCapable()` in `tdtd-frontend/src/mobile/appTarget.ts`. Web UI may show “Install the mobile app for offline use” on Home or settings when online-only.
+
 Compliance
 Track implementation status in [UI-Compliance-Checklist.md](../documentation/UI-Compliance-Checklist.md).
 

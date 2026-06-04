@@ -6,18 +6,27 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:mobile": "cross-env VITE_APP_TARGET=mobile vite build",
+    "cap:sync": "npm run build:mobile && cap sync",
+    "cap:open:android": "cap open android",
+    "cap:open:ios": "cap open ios",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/ios": "^7.2.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.2.0",
     "@eslint/js": "^10.0.1",
+    "cross-env": "^7.0.3",
     "@tailwindcss/vite": "^4.2.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

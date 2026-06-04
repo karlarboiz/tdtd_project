@@ -11,6 +11,8 @@ import { subjectRouter } from './routes/subject.routes.js'
 import { recentsRouter } from './routes/recents.routes.js'
 import { remindersRouter } from './routes/reminders.routes.js'
 import { dueListRouter } from './routes/dueList.routes.js'
+import { syncRouter } from './routes/sync.routes.js'
+import { healthRouter } from './routes/health.routes.js'
 import { authenticate } from './middleware/authenticate.js'
 
 export function createApp(db: SqliteDatabase): express.Express {
@@ -19,8 +21,10 @@ export function createApp(db: SqliteDatabase): express.Express {
   app.use(express.json())
 
   const api = express.Router()
+  api.use('/health', healthRouter())
   api.use('/auth', authRouter(db))
   api.use(authenticate(db))
+  api.use('/sync', syncRouter(db))
   api.use('/classes', classRouter(db))
   api.use('/students', studentRouter(db))
   api.use('/attendance', attendanceRouter(db))

@@ -6,8 +6,11 @@ import { defineConfig } from 'vite'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+const isMobileBuild = process.env.VITE_APP_TARGET === 'mobile'
+
 // https://vite.dev/config/
 export default defineConfig({
+  base: isMobileBuild ? './' : '/',
   plugins: [tailwindcss(), react()],
   resolve: {
     alias: {
