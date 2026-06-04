@@ -353,6 +353,19 @@ export function migrate(db: SqliteDatabase): void {
   migrateActivityLogsTable(db)
   migrateTeacherRemindersTable(db)
   migrateAuthTables(db)
+  migrateSyncTables(db)
+}
+
+/** Per-user sync cursor for mobile pull/push — see .cursor/schemas/sync.md */
+export function migrateSyncTables(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sync_device_state (
+      user_id TEXT PRIMARY KEY,
+      last_pull_cursor TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `)
 }
 
 /** Email/password auth — see .cursor/schemas/auth.md */
