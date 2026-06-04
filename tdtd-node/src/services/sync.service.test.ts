@@ -4,6 +4,7 @@ import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { migrate } from '../db/migrate.js'
 import { pullSync, pushSync } from './sync.service.js'
 import * as userDao from '../dao/user.dao.js'
+import * as syncDao from '../dao/sync.dao.js'
 
 describe('sync.service', () => {
   let db: SqliteDatabase
@@ -47,5 +48,21 @@ describe('sync.service', () => {
     ])
     expect(result.acceptedKeys).toEqual(['key-1'])
     expect(result.cursor).toBeTruthy()
+    const state = syncDao.getSyncDeviceState(db, 'user-1')
+    expect(state?.lastPullCursor).toBe(result.cursor)
+    expect(state?.updatedAt).toBeTypeOf('number')
+  })
+
+  it('push is idempotent for duplicate idempotency keys in one batch', () => {
+    const change = {
+      idempotencyKey: 'dup-key',
+      tableName: 'classes',
+      operation: 'insert' as const,
+      rowId: 'class-1',
+      payload: { name: 'Grade 1' },
+      clientUpdatedAt: Date.now(),
+    }
+    const result = pushSync(db, 'user-1', [change, change])
+    expect(result.acceptedKeys).toEqual(['dup-key', 'dup-key'])
   })
 })
