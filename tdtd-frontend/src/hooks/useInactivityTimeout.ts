@@ -11,6 +11,8 @@ const ACTIVITY_EVENTS = [
 
 type UseInactivityTimeoutOptions = {
   enabled: boolean
+  warningMs: number
+  logoutMs: number
   onWarning: () => void
   onLogout: () => void
   onDismissWarning?: () => void
@@ -18,6 +20,8 @@ type UseInactivityTimeoutOptions = {
 
 export function useInactivityTimeout({
   enabled,
+  warningMs,
+  logoutMs,
   onWarning,
   onLogout,
   onDismissWarning,
@@ -38,11 +42,14 @@ export function useInactivityTimeout({
       return
     }
 
-    const timer = createInactivityTimer({
-      onWarning: () => onWarningRef.current(),
-      onLogout: () => onLogoutRef.current(),
-      onDismissWarning: () => onDismissWarningRef.current?.(),
-    })
+    const timer = createInactivityTimer(
+      {
+        onWarning: () => onWarningRef.current(),
+        onLogout: () => onLogoutRef.current(),
+        onDismissWarning: () => onDismissWarningRef.current?.(),
+      },
+      { warningMs, logoutMs },
+    )
     timerRef.current = timer
     timer.start()
 
@@ -72,7 +79,7 @@ export function useInactivityTimeout({
       }
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [enabled])
+  }, [enabled, warningMs, logoutMs])
 
   const reset = useCallback(() => {
     timerRef.current?.reset()

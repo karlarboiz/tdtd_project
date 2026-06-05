@@ -4,7 +4,11 @@ import { AppBrand } from '@/components/AppBrand/AppBrand'
 import { InactivityWarningModal } from '@/components/InactivityWarningModal/InactivityWarningModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { useInactivityTimeout } from '@/hooks/useInactivityTimeout'
-import { INACTIVITY_COUNTDOWN_MS } from '@/lib/inactivityConfig'
+import {
+  INACTIVITY_COUNTDOWN_MS,
+  INACTIVITY_LOGOUT_MS,
+  INACTIVITY_WARNING_MS,
+} from '@/lib/inactivityConfig'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -80,6 +84,8 @@ export function AppShell() {
 
   const { reset } = useInactivityTimeout({
     enabled: true,
+    warningMs: INACTIVITY_WARNING_MS,
+    logoutMs: INACTIVITY_LOGOUT_MS,
     onWarning: () => setWarningOpen(true),
     onLogout: () => {
       dismissWarning()

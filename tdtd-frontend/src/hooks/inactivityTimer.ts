@@ -1,12 +1,12 @@
-import {
-  INACTIVITY_LOGOUT_MS,
-  INACTIVITY_WARNING_MS,
-} from '@/lib/inactivityConfig'
-
 export type InactivityTimerCallbacks = {
   onWarning: () => void
   onLogout: () => void
   onDismissWarning?: () => void
+}
+
+export type InactivityTimerOptions = {
+  warningMs: number
+  logoutMs: number
 }
 
 type TimerIds = {
@@ -14,13 +14,16 @@ type TimerIds = {
   logout: ReturnType<typeof setTimeout> | null
 }
 
-export function createInactivityTimer(callbacks: InactivityTimerCallbacks) {
+export function createInactivityTimer(
+  callbacks: InactivityTimerCallbacks,
+  { warningMs, logoutMs }: InactivityTimerOptions,
+) {
   let lastActivityAt = Date.now()
   let warningShown = false
   let paused = false
   let timers: TimerIds = { warning: null, logout: null }
-  let remainingWarningMs = INACTIVITY_WARNING_MS
-  let remainingLogoutMs = INACTIVITY_LOGOUT_MS
+  let remainingWarningMs = warningMs
+  let remainingLogoutMs = logoutMs
 
   function clearTimers() {
     if (timers.warning) {
@@ -33,26 +36,26 @@ export function createInactivityTimer(callbacks: InactivityTimerCallbacks) {
     }
   }
 
-  function scheduleTimers(warningMs: number, logoutMs: number) {
+  function scheduleTimers(nextWarningMs: number, nextLogoutMs: number) {
     clearTimers()
-    remainingWarningMs = warningMs
-    remainingLogoutMs = logoutMs
+    remainingWarningMs = nextWarningMs
+    remainingLogoutMs = nextLogoutMs
 
-    if (!warningShown && warningMs > 0) {
+    if (!warningShown && nextWarningMs > 0) {
       timers.warning = setTimeout(() => {
         warningShown = true
         timers.warning = null
         remainingWarningMs = 0
         callbacks.onWarning()
-      }, warningMs)
+      }, nextWarningMs)
     }
 
-    if (logoutMs > 0) {
+    if (nextLogoutMs > 0) {
       timers.logout = setTimeout(() => {
         timers.logout = null
         remainingLogoutMs = 0
         callbacks.onLogout()
-      }, logoutMs)
+      }, nextLogoutMs)
     }
   }
 
@@ -60,15 +63,15 @@ export function createInactivityTimer(callbacks: InactivityTimerCallbacks) {
     const elapsed = Date.now() - lastActivityAt
     remainingWarningMs = warningShown
       ? 0
-      : Math.max(0, INACTIVITY_WARNING_MS - elapsed)
-    remainingLogoutMs = Math.max(0, INACTIVITY_LOGOUT_MS - elapsed)
+      : Math.max(0, warningMs - elapsed)
+    remainingLogoutMs = Math.max(0, logoutMs - elapsed)
   }
 
   function start() {
     paused = false
     lastActivityAt = Date.now()
     warningShown = false
-    scheduleTimers(INACTIVITY_WARNING_MS, INACTIVITY_LOGOUT_MS)
+    scheduleTimers(warningMs, logoutMs)
   }
 
   function stop() {
@@ -85,7 +88,7 @@ export function createInactivityTimer(callbacks: InactivityTimerCallbacks) {
     if (wasWarningShown) {
       callbacks.onDismissWarning?.()
     }
-    scheduleTimers(INACTIVITY_WARNING_MS, INACTIVITY_LOGOUT_MS)
+    scheduleTimers(warningMs, logoutMs)
   }
 
   function handleActivity() {

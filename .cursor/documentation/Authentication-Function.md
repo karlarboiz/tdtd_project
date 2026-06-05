@@ -127,6 +127,15 @@ Constants in `tdtd-frontend/src/lib/inactivityConfig.ts`:
 - `INACTIVITY_LOGOUT_MS` = 300_000 (5 min)
 - `INACTIVITY_COUNTDOWN_MS` = 60_000 (1 min between warning and logout)
 
+**Dev testing:** In `npm run dev` only, override via `.env.local` (see `tdtd-frontend/.env.example`). Restart the dev server after changes. Example for a 10s / 15s cycle:
+
+```env
+VITE_INACTIVITY_WARNING_MS=10000
+VITE_INACTIVITY_LOGOUT_MS=15000
+```
+
+Overrides are ignored in production builds. Changing timeout values restarts the idle timer automatically (hook depends on `warningMs` / `logoutMs`).
+
 ---
 
 ## Security notes (v1)
