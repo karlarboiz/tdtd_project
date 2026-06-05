@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { PageContainer } from '@/layouts/PageContainer'
+import { AuthLayout } from '@/layouts/AuthLayout'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   bodyMutedClass,
@@ -41,57 +42,68 @@ export function Login() {
   }
 
   return (
-    <PageContainer>
-      <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
-      <p className={`mt-1 ${bodyMutedClass}`}>
-        Teacher&apos;s Dilemma Today
-      </p>
+    <AuthLayout
+      title="Sign in"
+      subtitle="Welcome back — sign in to continue."
+    >
+      <PageContentReveal>
+        <form className="mt-8 flex flex-col gap-4" onSubmit={onSubmit}>
+          <div>
+            <label htmlFor="login-email" className={formLabelClass}>
+              Email
+            </label>
+            <input
+              id="login-email"
+              type="email"
+              autoComplete="email"
+              required
+              className={`mt-1 ${formInputClasses()}`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="login-password" className={formLabelClass}>
+              Password
+            </label>
+            <input
+              id="login-password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className={`mt-1 ${formInputClasses()}`}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          {error ? (
+            <p
+              className={`rounded-xl bg-accent/10 px-3 py-2 ${errorAlertClass}`}
+            >
+              {error}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={submitting}
+            className={`w-full ${primaryButtonClass} px-4 py-3`}
+          >
+            {submitting ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
 
-      <form className="mt-8 flex flex-col gap-4" onSubmit={onSubmit}>
-        <div>
-          <label htmlFor="login-email" className={formLabelClass}>
-            Email
-          </label>
-          <input
-            id="login-email"
-            type="email"
-            autoComplete="email"
-            required
-            className={`mt-1 ${formInputClasses()}`}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="login-password" className={formLabelClass}>
-            Password
-          </label>
-          <input
-            id="login-password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className={`mt-1 ${formInputClasses()}`}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        {error ? <p className={errorAlertClass}>{error}</p> : null}
-        <button
-          type="submit"
-          disabled={submitting}
-          className={`${primaryButtonClass} px-4 py-3`}
+        <p
+          className={`mt-6 border-t border-slate-100 pt-6 ${bodyMutedClass}`}
         >
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-
-      <p className={`mt-6 ${bodyMutedClass}`}>
-        No account?{' '}
-        <Link to="/signup" className="font-semibold text-primary hover:underline">
-          Create one
-        </Link>
-      </p>
-    </PageContainer>
+          No account?{' '}
+          <Link
+            to="/signup"
+            className="font-semibold text-primary hover:underline"
+          >
+            Create one
+          </Link>
+        </p>
+      </PageContentReveal>
+    </AuthLayout>
   )
 }
