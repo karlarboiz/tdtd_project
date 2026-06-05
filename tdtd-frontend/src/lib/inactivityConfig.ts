@@ -1,4 +1,4 @@
-const DEFAULT_INACTIVITY_WARNING_MS = 60 * 1000
+const DEFAULT_INACTIVITY_WARNING_MS = 4 * 60 * 1000
 const DEFAULT_INACTIVITY_LOGOUT_MS = 5 * 60 * 1000
 
 function parsePositiveInt(value: string | undefined): number | undefined {
