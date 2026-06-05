@@ -18,6 +18,7 @@ Email/password **signup** and **login** with **JWT access tokens** and **opaque 
 | **Logout** | Revokes refresh token server-side; client clears storage. |
 | **Me** | `GET /api/auth/me` with Bearer access token. |
 | **API guard** | All other `/api/*` routes use `authenticate` middleware. |
+| **Inactivity timeout** | After **4 minutes** without user input, a warning modal appears with a **60-second** countdown; at **5 minutes** total idle the client calls `logout()` and redirects to `/login`. Timer pauses while the browser tab is hidden. Independent of JWT refresh (API activity does not reset the idle clock). |
 
 ### Not in v1
 
@@ -100,6 +101,31 @@ tdtd-frontend (sessionStorage tokens)
 - `src/components/RequireAuth`
 - `src/lib/authStorage.ts`, `src/api/authApi.ts`
 - `src/lib/http.ts` — attaches Bearer; retries once after refresh on `401`
+- `src/lib/inactivityConfig.ts` — idle timeout constants (4 min warning, 5 min logout)
+- `src/hooks/useInactivityTimeout.ts`, `src/hooks/inactivityTimer.ts` — idle timer with tab-pause
+- `src/components/InactivityWarningModal` — countdown warning before auto-logout
+- `src/layouts/AppShell.tsx` — mounts idle timeout for authenticated shell only
+
+---
+
+## Client inactivity timeout
+
+Frontend-only session guard for shared classroom devices. Server JWT/refresh lifetimes are unchanged.
+
+| Item | Detail |
+|------|--------|
+| **Warning** | Modal at 4 min idle: “You will be signed out in N seconds due to inactivity.” |
+| **Logout** | 5 min total idle → `logout()` (revokes refresh token) + navigate to `/login` |
+| **Stay signed in** | Primary button resets idle timers and closes the modal |
+| **Activity** | `pointerdown`, `keydown`, `click`, `scroll`, `touchstart` on `window` |
+| **Tab hidden** | Timers paused; countdown display paused; resume with remaining time on return |
+| **Scope** | Only inside `AppShell` (authenticated routes); not on `/login` or `/signup` |
+
+Constants in `tdtd-frontend/src/lib/inactivityConfig.ts`:
+
+- `INACTIVITY_WARNING_MS` = 240_000 (4 min)
+- `INACTIVITY_LOGOUT_MS` = 300_000 (5 min)
+- `INACTIVITY_COUNTDOWN_MS` = 60_000 (1 min between warning and logout)
 
 ---
 
@@ -141,6 +167,32 @@ tdtd-frontend (sessionStorage tokens)
 
 ---
 
+## Entry AUTH-002 — Client inactivity timeout
+
+**Date:** 2026-06-05
+
+**Summary:** Authenticated web shell warns after 4 minutes idle and auto-logs out at 5 minutes, with tab-hidden pause.
+
+**Reason:** Shared classroom devices should not stay signed in indefinitely when a teacher steps away; warning gives a chance to stay signed in without disrupting active use.
+
+**What changed**
+
+- `inactivityConfig.ts` — timeout constants
+- `inactivityTimer.ts` + `useInactivityTimeout.ts` — idle scheduling, activity reset, visibility pause
+- `InactivityWarningModal.tsx` — 60s countdown + “Stay signed in”
+- `AppShell.tsx` — wires hook, modal, and logout redirect
+- Vitest: `useInactivityTimeout.test.ts`
+
+**Files involved**
+
+- `tdtd-frontend/src/lib/inactivityConfig.ts`
+- `tdtd-frontend/src/hooks/inactivityTimer.ts`, `useInactivityTimeout.ts`, `useInactivityTimeout.test.ts`
+- `tdtd-frontend/src/components/InactivityWarningModal/InactivityWarningModal.tsx`
+- `tdtd-frontend/src/layouts/AppShell.tsx`
+- this file
+
+---
+
 ## Verify locally
 
 ```bash
@@ -153,6 +205,9 @@ cd tdtd-frontend && npm run build
 3. Open `/signup`, create account, land on Home
 4. Sign out → `/login` → sign in again
 5. `GET /api/classes` without token → `401`
+6. Sign in, stay idle 4 min → warning modal with countdown; click **Stay signed in** → modal closes
+7. Stay idle through full countdown → redirected to `/login`, tokens cleared
+8. Switch tab away during countdown → timer pauses; return before expiry → countdown resumes
 
 ---
 
