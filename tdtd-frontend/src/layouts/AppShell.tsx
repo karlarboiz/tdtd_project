@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AppBrand } from '@/components/AppBrand/AppBrand'
+import { InactivityWarningModal } from '@/components/InactivityWarningModal/InactivityWarningModal'
 import { useAuth } from '@/contexts/AuthContext'
+import { useInactivityTimeout } from '@/hooks/useInactivityTimeout'
+import {
+  INACTIVITY_COUNTDOWN_MS,
+  INACTIVITY_LOGOUT_MS,
+  INACTIVITY_WARNING_MS,
+} from '@/lib/inactivityConfig'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -56,11 +63,80 @@ function NavMenuIcon({ open }: { open: boolean }) {
   )
 }
 
+const INACTIVITY_COUNTDOWN_SECONDS = Math.ceil(
+  INACTIVITY_COUNTDOWN_MS / 1000,
+)
+
 export function AppShell() {
   const [navOpen, setNavOpen] = useState(false)
+  const [warningOpen, setWarningOpen] = useState(false)
+  const [secondsRemaining, setSecondsRemaining] = useState(
+    INACTIVITY_COUNTDOWN_SECONDS,
+  )
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+
+  const dismissWarning = useCallback(() => {
+    setWarningOpen(false)
+    setSecondsRemaining(INACTIVITY_COUNTDOWN_SECONDS)
+  }, [])
+
+  const { reset } = useInactivityTimeout({
+    enabled: true,
+    warningMs: INACTIVITY_WARNING_MS,
+    logoutMs: INACTIVITY_LOGOUT_MS,
+    onWarning: () => setWarningOpen(true),
+    onLogout: () => {
+      dismissWarning()
+      void logout().then(() => navigate('/login', { replace: true }))
+    },
+    onDismissWarning: dismissWarning,
+  })
+
+  const staySignedIn = useCallback(() => {
+    dismissWarning()
+    reset()
+  }, [dismissWarning, reset])
+
+  useEffect(() => {
+    if (!warningOpen) return
+
+    setSecondsRemaining(INACTIVITY_COUNTDOWN_SECONDS)
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    const startInterval = () => {
+      if (intervalId) return
+      intervalId = setInterval(() => {
+        setSecondsRemaining((seconds) => Math.max(0, seconds - 1))
+      }, 1000)
+    }
+
+    const stopInterval = () => {
+      if (!intervalId) return
+      clearInterval(intervalId)
+      intervalId = null
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stopInterval()
+        return
+      }
+      startInterval()
+    }
+
+    if (document.visibilityState === 'visible') {
+      startInterval()
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      stopInterval()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [warningOpen])
 
   useEffect(() => {
     setNavOpen(false)
@@ -78,7 +154,13 @@ export function AppShell() {
   }, [navOpen])
 
   return (
-    <div className="flex min-h-svh flex-col bg-neutral-bg lg:h-svh lg:overflow-hidden">
+    <>
+      <InactivityWarningModal
+        open={warningOpen}
+        secondsRemaining={secondsRemaining}
+        onStaySignedIn={staySignedIn}
+      />
+      <div className="flex min-h-svh flex-col bg-neutral-bg lg:h-svh lg:overflow-hidden">
       <header className="shrink-0 border-b border-slate-200 bg-white pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
         <div className="mx-auto w-full max-w-7xl px-4 pb-3 sm:pb-4 lg:px-6 lg:pb-4">
           <div className="flex items-center justify-between gap-3">
@@ -149,5 +231,6 @@ export function AppShell() {
         </div>
       </main>
     </div>
+    </>
   )
 }
