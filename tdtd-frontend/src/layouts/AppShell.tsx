@@ -86,6 +86,15 @@ export function AppShell() {
               </NavLink>
               <button
                 type="button"
+                className={recentsLinkClass({ isActive: false })}
+                onClick={() => {
+                  void logout().then(() => navigate('/login', { replace: true }))
+                }}
+              >
+                Sign out{user ? ` (${user.firstName})` : ''}
+              </button>
+              <button
+                type="button"
                 className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100"
                 aria-expanded={navOpen}
                 aria-controls="main-nav"
