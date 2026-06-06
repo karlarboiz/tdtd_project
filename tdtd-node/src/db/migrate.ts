@@ -352,6 +352,59 @@ export function migrate(db: SqliteDatabase): void {
   migrateSubjectUniqueConstraints(db)
   migrateActivityLogsTable(db)
   migrateTeacherRemindersTable(db)
+  migrateAuthTables(db)
+  migrateSyncTables(db)
+}
+
+/** Per-user sync cursor for mobile pull/push — see .cursor/schemas/sync.md */
+export function migrateSyncTables(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sync_device_state (
+      user_id TEXT PRIMARY KEY,
+      last_pull_cursor TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `)
+}
+
+/** Email/password auth — see .cursor/schemas/auth.md */
+export function migrateAuthTables(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      first_name TEXT NOT NULL,
+      last_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      email_normalized TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('admin', 'teacher')),
+      is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized
+      ON users(email_normalized);
+    CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+    CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      revoked_at INTEGER,
+      created_at INTEGER NOT NULL,
+      replaced_by_token_id TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash
+      ON refresh_tokens(token_hash);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id
+      ON refresh_tokens(user_id);
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at
+      ON refresh_tokens(expires_at);
+  `)
 }
 
 /** Scheduled / batch prompts — see .cursor/schemas/reminders.md */

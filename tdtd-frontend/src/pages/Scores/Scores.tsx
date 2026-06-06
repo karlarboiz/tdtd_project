@@ -1,6 +1,9 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ScoresPageSkeleton } from '@/components/LoadingSkeleton/ScoresPageSkeleton'
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listClasses } from '../../api/classesApi'
 import {
   getActiveSchoolYear,
@@ -205,6 +208,7 @@ export function Scores() {
 
   return (
     <PageContainer variant="wide">
+      <PageContentReveal>
       <header className="mb-6 lg:mb-8">
         <h1 className="text-2xl font-semibold text-slate-900">Scores</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-600">
@@ -214,7 +218,7 @@ export function Scores() {
       </header>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <ScoresPageSkeleton />
       ) : classes.length === 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-slate-700">
@@ -410,6 +414,7 @@ export function Scores() {
                 No assessments yet. Create one on the left.
               </p>
             ) : (
+              <ContentReveal revealKey={classId}>
               <ul className="mt-4 min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto lg:max-h-[calc(100svh-14rem)]">
                 {events.map((ev) => {
                   const subjectLabel =
@@ -443,10 +448,12 @@ export function Scores() {
                   )
                 })}
               </ul>
+              </ContentReveal>
             )}
           </section>
         </div>
       )}
+      </PageContentReveal>
     </PageContainer>
   )
 }

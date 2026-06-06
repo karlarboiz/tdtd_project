@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { CardSkeleton } from '@/components/LoadingSkeleton/CardSkeleton'
 import { primaryButtonClass, secondaryLinkTileClass } from '@/lib/uiClasses'
 import type { DueItem } from '@/types/schema'
 
@@ -12,7 +13,7 @@ export function TodayAttendanceCTA({
   loading,
 }: TodayAttendanceCTAProps) {
   if (loading) {
-    return null
+    return <CardSkeleton variant="button" />
   }
 
   const firstDue = dueItems[0]

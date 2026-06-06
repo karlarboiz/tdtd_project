@@ -1,4 +1,5 @@
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { DueList } from '@/components/DueList/DueList'
 import { MissedWorkSummary } from '@/components/MissedWorkSummary/MissedWorkSummary'
 import { StudentLabShortcut } from '@/components/StudentLabShortcut/StudentLabShortcut'
@@ -26,12 +27,13 @@ export function Home() {
 
   return (
     <PageContainer>
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900">{getGreeting()}</h1>
-        <p className="mt-1 text-sm text-slate-600">{formatTodayDate()}</p>
-      </header>
+      <PageContentReveal>
+        <header>
+          <h1 className="text-2xl font-semibold text-slate-900">{getGreeting()}</h1>
+          <p className="mt-1 text-sm text-slate-600">{formatTodayDate()}</p>
+        </header>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:items-start">
         <div className="flex flex-col gap-6">
           <DueList
             showEmptyState
@@ -45,7 +47,8 @@ export function Home() {
           <MissedWorkSummary />
           <StudentLabShortcut />
         </div>
-      </div>
+        </div>
+      </PageContentReveal>
     </PageContainer>
   )
 }

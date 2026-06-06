@@ -1,4 +1,5 @@
 import type { AttendancePeriod } from '@/types/schema'
+import { isMobileApp } from '@/mobile/appTarget'
 
 /**
  * Mobile-only: schedule Capacitor local notifications for AM/PM attendance.
@@ -22,9 +23,9 @@ export const DEFAULT_REMINDER_SCHEDULE: ReminderScheduleOptions = {
   enabled: false,
 }
 
-/** True when running inside a future Capacitor shell (`VITE_APP_TARGET=mobile`). */
+/** True when running inside the Capacitor shell (`VITE_APP_TARGET=mobile`). */
 export function isMobileReminderCapable(): boolean {
-  return import.meta.env.VITE_APP_TARGET === 'mobile'
+  return isMobileApp()
 }
 
 /**

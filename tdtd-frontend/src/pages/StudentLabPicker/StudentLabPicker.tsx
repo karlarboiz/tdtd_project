@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ListRowsSkeleton } from '@/components/LoadingSkeleton/ListRowsSkeleton'
+import { SkeletonBlock } from '@/components/LoadingSkeleton/SkeletonBlock'
 import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listClasses } from '../../api/classesApi'
 import { listStudentsByClass } from '../../api/studentsApi'
 import { formatClassShiftLabel } from '../../lib/classShift'
@@ -54,12 +58,9 @@ export function StudentLabPicker() {
 
   const selectedClass = classes.find((c) => c.id === classId)
 
-  if (loading) {
-    return <p className="text-sm text-slate-500">Loading classes…</p>
-  }
-
   return (
     <PageContainer variant="wide" className="space-y-6">
+      <PageContentReveal className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Student Lab</h1>
         <p className="mt-1 text-sm text-slate-600">
@@ -67,7 +68,15 @@ export function StudentLabPicker() {
         </p>
       </div>
 
-      {classes.length === 0 ? (
+      {loading ? (
+        <section
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          aria-hidden
+        >
+          <SkeletonBlock className="mb-4 h-11 w-full rounded-xl" />
+          <ListRowsSkeleton rows={5} />
+        </section>
+      ) : classes.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
           <p className="text-slate-700">No classes yet.</p>
           <Link
@@ -104,6 +113,7 @@ export function StudentLabPicker() {
             </p>
           ) : null}
 
+          <ContentReveal revealKey={classId}>
           <h2 className="mt-6 font-semibold text-slate-900">
             Students ({students.length})
           </h2>
@@ -132,8 +142,10 @@ export function StudentLabPicker() {
               </li>
             )}
           </ul>
+          </ContentReveal>
         </section>
       )}
+      </PageContentReveal>
     </PageContainer>
   )
 }

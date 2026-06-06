@@ -60,6 +60,23 @@ Do not add page-level `max-w-7xl`, duplicate shell padding, or ad-hoc root wrapp
 
 Example: `<PageContainer>` or `<PageContainer variant="wide" className="space-y-6">`. Inline `max-w-*` on description text or modals is allowed; it must not replace `PageContainer` for page width.
 
+Motion
+Use the shared content-reveal pattern for list/detail panels and routed page bodies inside `PageContainer`. Do not animate `AppShell`, `<Outlet />`, or the full viewport. See [Content-Reveal-Function-Doc.md](../documentation/Content-Reveal-Function-Doc.md).
+
+Loading
+While fetching backend data, show skeleton placeholders from `LoadingSkeleton` components—not plain “Loading…” text or empty space. After data arrives, use content reveal. Silent refresh must not swap the whole list for a skeleton. See [Loading-Skeleton-Function-Doc.md](../documentation/Loading-Skeleton-Function-Doc.md).
+
+Web vs mobile capability
+
+| Capability | Web (`VITE_APP_TARGET=web`) | Mobile app (`VITE_APP_TARGET=mobile`) |
+|------------|----------------------------|----------------------------------------|
+| Data | REST → `tdtd-node` only | Local SQLite first; sync when online |
+| Offline writes | No | Yes (outbox + sync) |
+| Attendance reminders | In-app banners | Local notifications (Capacitor) when enabled |
+| Install | Browser URL | App Store / Play / sideload |
+
+Detect target via `isMobileApp()` / `isOfflineCapable()` in `tdtd-frontend/src/mobile/appTarget.ts`. Web UI may show “Install the mobile app for offline use” on Home or settings when online-only.
+
 Compliance
 Track implementation status in [UI-Compliance-Checklist.md](../documentation/UI-Compliance-Checklist.md).
 

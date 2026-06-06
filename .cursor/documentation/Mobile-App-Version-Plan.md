@@ -83,14 +83,14 @@ MOBILE:  App UI → Local SQLite → (when online) Sync ↔ Server SQLite
 
 ## Major gaps today (repo audit)
 
-- [ ] No Capacitor / iOS / Android projects
-- [ ] No local SQLite on client
-- [ ] No sync protocol (pull/push, conflict rules, cursor/version)
+- [x] Capacitor / iOS / Android projects in `tdtd-frontend` (`capacitor.config.ts`, `android/`, `ios/`)
+- [ ] No local SQLite on client (DDL + outbox scaffold only; plugin not wired)
+- [x] Sync protocol scaffold (`GET /api/sync/pull`, `POST /api/sync/push`; row-level fan-out TBD)
 - [ ] No authentication or per-device identity
 - [ ] No production deploy story (HTTPS, single API URL for mobile builds)
 - [ ] `tdtd-node` does not serve SPA; no documented hosted stack
 - [ ] Excel import via `xlsx` — heavy; needs mobile file UX review
-- [ ] No mobile-only feature flags in frontend
+- [x] Mobile-only feature flags (`VITE_APP_TARGET`, `src/mobile/appTarget.ts`)
 - [ ] No privacy policy / store listing assets
 - [ ] No in-app reminder UX or notification permissions flow
 - [ ] No Web Push / local notification plugins
@@ -122,7 +122,7 @@ Mobile offline still needs a **sync endpoint** when online.
 - [ ] Build `tdtd-frontend` for web with `VITE_API_URL` / same-origin `/api`.
 - [ ] Optionally: serve `dist/` from Express or CDN; CORS locked to known origins (not `origin: true` in production).
 - [ ] Environment matrix documented: `dev` (LAN), `staging`, `production`.
-- [ ] Health check route `GET /api/health`.
+- [x] Health check route `GET /api/health`.
 
 ---
 
@@ -234,12 +234,30 @@ Mobile offline still needs a **sync endpoint** when online.
 
 ---
 
+## Repo layout (locked)
+
+Capacitor and native projects live **inside** [`tdtd-frontend`](../../tdtd-frontend) — no new top-level `tdtd-mobile/` folder. Server sync and auth stay in [`tdtd-node`](../../tdtd-node). Optional `tdtd-mobile-core/` extraction only if Phase 4–5 code outgrows the frontend package.
+
+```text
+tdtd-project/
+├── tdtd-frontend/     # React + Vite + Capacitor (web + mobile builds)
+│   ├── src/mobile/    # app target, sync client, repositories (mobile-only paths)
+│   ├── android/       # Capacitor Android project
+│   └── ios/           # Capacitor iOS project
+├── tdtd-node/         # REST + /api/sync/*
+└── tdtd-batch/        # unchanged
+```
+
+Build flavors: `VITE_APP_TARGET=web` (default) vs `mobile`. Web never opens device SQLite.
+
+---
+
 ## Open questions (fill in before Phase 4)
 
 | # | Question | Decision |
 |---|----------|----------|
-| 1 | Capacitor in same repo as `tdtd-frontend` or separate? | |
-| 2 | Can web and mobile share one React codebase with adapters? | |
+| 1 | Capacitor in same repo as `tdtd-frontend` or separate? | **Same repo; Capacitor inside `tdtd-frontend`** (no `tdtd-mobile/` root). |
+| 2 | Can web and mobile share one React codebase with adapters? | **Yes** — `src/api/*` for web HTTP; `src/mobile/repositories/*` + sync for mobile; `isOfflineCapable()` guards local DB. |
 | 3 | Server mandatory for first mobile launch, or weeks of offline-only OK? | |
 | 4 | One teacher per phone — enforce via auth? | |
 | 5 | Delete/student GDPR — export and wipe local + server? | |

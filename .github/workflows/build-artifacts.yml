@@ -26,6 +26,7 @@ jobs:
           VITE_API_URL: ""
         run: |
           npm ci
+          npm test
           npm run build
 
       - uses: actions/setup-java@v4
