@@ -14,10 +14,7 @@ import {
   saveAttendance as saveAttendanceRequest,
 } from '../../api/attendanceApi'
 import { listStudentsByClass } from '../../api/studentsApi'
-import {
-  classShiftMatchesPeriod,
-  formatClassShiftLabel,
-} from '../../lib/classShift'
+import { listClassesForAttendancePeriod } from '../../lib/classShift'
 import { formatStudentName } from '../../lib/studentDisplay'
 import type {
   AttendancePeriod,
@@ -161,8 +158,7 @@ export function AttendanceSession() {
   }, [refreshPresentRoster])
 
   const classesForPeriod = useMemo(
-    () =>
-      allClasses.filter((c) => classShiftMatchesPeriod(c.shift, period)),
+    () => listClassesForAttendancePeriod(allClasses, period),
     [allClasses, period],
   )
 
@@ -266,11 +262,8 @@ export function AttendanceSession() {
       const list = await listClasses()
       setAllClasses(list)
       if (createdClassId) {
-        const match = list.find(
-          (c) =>
-            c.id === createdClassId &&
-            classShiftMatchesPeriod(c.shift, period),
-        )
+        const available = listClassesForAttendancePeriod(list, period)
+        const match = available.some((c) => c.id === createdClassId)
         setClassId(match ? createdClassId : '')
       } else if (classId) {
         await loadClassStudents(classId)
@@ -418,7 +411,7 @@ export function AttendanceSession() {
                             </span>
                             {cls ? (
                               <span className="text-sm text-slate-500">
-                                {cls.name} · {formatClassShiftLabel(cls.shift)}
+                                {cls.name}
                               </span>
                             ) : null}
                           </li>
@@ -446,7 +439,7 @@ export function AttendanceSession() {
               {hasClassesForPeriod &&
                 classesForPeriod.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} · {formatClassShiftLabel(c.shift)}
+                    {c.name}
                   </option>
                 ))}
             </select>

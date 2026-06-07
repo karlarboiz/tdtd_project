@@ -36,6 +36,43 @@ Attendance is **weekday-only** (Monday–Friday). Saturday and Sunday are not sc
 
 ---
 
+## Class display (session page)
+
+On the attendance session screen, class names are shown **without** a shift suffix. The AM/PM toggle selects the session period; the Class list shows **one row per grade name**.
+
+| UI element | Label format | Notes |
+|------------|--------------|-------|
+| Class `<select>` options | `{class.name}` only | e.g. "Grade 5", not "Grade 5 · Morning (MRNG)" |
+| Present-roster panel (per student) | `{class.name}` only | Same rationale |
+| Class list (AM and PM) | Same grade names in both periods | `listClassesForAttendancePeriod` — prefers shift matching the period (`MRNG` for AM, `AFTNN` for PM); if a grade has only one section registered, it appears in both periods |
+| Empty-state / helper copy | May still mention MRNG/AFTNN | When no classes exist at all — unchanged |
+
+**Other pages** (Classes, Scores, Register Students, Student Lab) still use `formatClassShiftLabel` with `{name} · {shift}` where morning and afternoon classes appear together.
+
+---
+
+## Entry ATT-006 — Session class labels without shift suffix
+
+**Date:** 2026-06-07
+
+**Summary:** Show grade/class name only in attendance session Class dropdown and present-roster panel.
+
+**Reason:** AM/PM toggle already indicates session period; repeating "Morning (MRNG)" on every option adds noise.
+
+**What changed:**
+- **`AttendanceSession`:** Class `<select>` options and present-roster rows render `{class.name}` only; removed `formatClassShiftLabel` from this page.
+- **`classShift.ts`:** `listClassesForAttendancePeriod` — same grade names in AM and PM; prefers period-matching shift, falls back when only one section exists (e.g. morning-only grades still listed in PM).
+
+**Files involved:**
+- `tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx`
+- `tdtd-frontend/src/lib/classShift.ts`
+- `tdtd-frontend/src/lib/classShift.test.ts`
+
+**Schemas involved:**
+- None (presentation only)
+
+---
+
 ## Entry ATT-005 — Weekend attendance unavailable
 
 **Date:** 2026-06-07
