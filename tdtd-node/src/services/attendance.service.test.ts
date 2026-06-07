@@ -108,6 +108,20 @@ describe('attendance.service', () => {
   })
 
   describe('saveAttendance', () => {
+    it('rejects weekend dates', () => {
+      const db = makeDb()
+      expect(() =>
+        saveAttendance(db, {
+          date: '2026-06-06',
+          period: 'AM',
+          classStudentIds: ['s-1'],
+          presentStudentIds: ['s-1'],
+        }),
+      ).toThrowError(
+        new HttpError(400, 'attendance is not recorded on weekends'),
+      )
+    })
+
     it('filters present ids by class list and records activity', () => {
       const db = makeDb()
       vi.mocked(attendanceDao.findSessionByDatePeriod).mockReturnValue({

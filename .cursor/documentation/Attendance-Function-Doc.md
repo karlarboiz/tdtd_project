@@ -17,6 +17,55 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-o
 
 ---
 
+## Weekend rules
+
+Attendance is **weekday-only** (Monday–Friday). Saturday and Sunday are not school days.
+
+| Layer | Behavior |
+|-------|----------|
+| **Calendar** (`MonthlyCalendar`) | Weekend cells disabled (gray, not clickable); future dates also disabled |
+| **Calendar page** | When today is a weekend, an info banner: *"No attendance on weekends — pick a weekday from the calendar."* |
+| **Session page** | If `:date` is Sat/Sun, shows unavailable card (*"Attendance is not taken on weekends."*) with link back to calendar — no roster editing |
+| **DueList** | No attendance due items on weekends; empty state copy explains why — see [Due-List-Function-Doc.md](./Due-List-Function-Doc.md) |
+| **API save** | `POST /save` returns `400 attendance is not recorded on weekends` for Sat/Sun dates |
+| **API read** | GET endpoints unchanged — legacy weekend rows (if any) remain readable |
+
+**Weekend definition (frontend):** local calendar weekday from `parseYMD(ymd)` (`isWeekendYmd` / `isWeekendDate` in `lib/dates.ts`).
+
+**Weekend definition (backend save):** `isWeekendYmd(ymd, TDTD_TIMEZONE)` — default `Asia/Manila`, same as due-list and batch.
+
+---
+
+## Entry ATT-005 — Weekend attendance unavailable
+
+**Date:** 2026-06-07
+
+**Summary:** Block attendance on Sat/Sun at the session UI and on the save API; add calendar weekend banner.
+
+**Reason:** School attendance applies on weekdays only; closes the URL bypass gap where teachers could open `/attendance/session/:date` directly on a weekend.
+
+**What changed:**
+- **`lib/dates.ts`:** `isWeekendYmd`, `isWeekendDate` — shared frontend weekend checks.
+- **`AttendanceSession`:** Unavailable card when session date is a weekend; data-fetch effects skip weekend dates.
+- **`AttendanceCalendar`:** Info banner when today is a weekend.
+- **`MonthlyCalendar` / `DueList`:** Refactored to use shared date helpers.
+- **`attendance.service.ts`:** `assertWeekday` on `saveAttendance` only; read paths unchanged.
+
+**Files involved:**
+- `tdtd-frontend/src/lib/dates.ts`
+- `tdtd-frontend/src/lib/dates.test.ts`
+- `tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx`
+- `tdtd-frontend/src/pages/AttendanceCalendar/AttendanceCalendar.tsx`
+- `tdtd-frontend/src/components/MonthlyCalendar/MonthlyCalendar.tsx`
+- `tdtd-frontend/src/components/DueList/DueList.tsx`
+- `tdtd-node/src/services/attendance.service.ts`
+- `tdtd-node/src/services/attendance.service.test.ts`
+
+**Schemas involved:**
+- None
+
+---
+
 ## Entry ATT-004 — Session period in URL, AM/PM toggle, calendar auto-resolve
 
 **Date:** 2026-05-26
