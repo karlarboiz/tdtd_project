@@ -21,6 +21,18 @@ export function parseYMD(s: string): Date | null {
   return d
 }
 
+export function isWeekendYmd(ymd: string): boolean {
+  const d = parseYMD(ymd)
+  if (!d) return false
+  const dow = d.getDay()
+  return dow === 0 || dow === 6
+}
+
+export function isWeekendDate(d: Date): boolean {
+  const dow = d.getDay()
+  return dow === 0 || dow === 6
+}
+
 export function formatLongDate(ymd: string): string {
   const d = parseYMD(ymd)
   if (!d) return ymd

@@ -25,7 +25,7 @@ import type {
   ClassRow,
   StudentRow,
 } from '@/types/schema'
-import { formatLongDate, parseYMD } from '../../lib/dates'
+import { formatLongDate, isWeekendYmd, parseYMD } from '../../lib/dates'
 import {
   formInputClasses,
   formLabelClass,
@@ -46,6 +46,7 @@ export function AttendanceSession() {
   const dateYmd = dateParam ?? ''
   const parsed = parseYMD(dateYmd)
   const isDateValid = parsed !== null
+  const isWeekendSession = isWeekendYmd(dateYmd)
   const periodFromUrl = parseAttendancePeriod(searchParams.get('period'))
   const [resolvedPeriod, setResolvedPeriod] = useState<AttendancePeriod | null>(
     periodFromUrl,
@@ -62,7 +63,7 @@ export function AttendanceSession() {
   }, [dateYmd, periodFromUrl, isDateValid])
 
   useEffect(() => {
-    if (!isDateValid || periodFromUrl) return
+    if (!isDateValid || periodFromUrl || isWeekendSession) return
 
     let cancelled = false
     void (async () => {
@@ -94,7 +95,7 @@ export function AttendanceSession() {
     return () => {
       cancelled = true
     }
-  }, [dateYmd, isDateValid, periodFromUrl, setSearchParams])
+  }, [dateYmd, isDateValid, isWeekendSession, periodFromUrl, setSearchParams])
 
   function setPeriod(next: AttendancePeriod) {
     setSearchParams({ period: next }, { replace: true })
@@ -134,7 +135,7 @@ export function AttendanceSession() {
   }, [dateYmd, period])
 
   const refreshPresentRoster = useCallback(async () => {
-    if (!parseYMD(dateYmd) || resolvingPeriod) {
+    if (!parseYMD(dateYmd) || resolvingPeriod || isWeekendSession) {
       if (!resolvingPeriod) {
         setRosterSession(null)
         setSavedPresentStudents([])
@@ -153,7 +154,7 @@ export function AttendanceSession() {
     } finally {
       setRosterLoading(false)
     }
-  }, [dateYmd, period, resolvingPeriod])
+  }, [dateYmd, period, resolvingPeriod, isWeekendSession])
 
   useEffect(() => {
     void refreshPresentRoster()
@@ -281,6 +282,22 @@ export function AttendanceSession() {
     return (
       <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
         <p className="text-slate-700">Invalid date in URL.</p>
+        <button
+          type="button"
+          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+          onClick={() => navigate('/attendance')}
+        >
+          Choose a date
+        </button>
+      </div>
+    )
+  }
+
+  if (isWeekendSession) {
+    return (
+      <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
+        <p className="text-sm font-medium text-slate-500">{formatLongDate(dateYmd)}</p>
+        <p className="mt-2 text-slate-700">Attendance is not taken on weekends.</p>
         <button
           type="button"
           className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
