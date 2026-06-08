@@ -1,0 +1,9 @@
+{
+	"appId": "com.tdtd.teacher",
+	"appName": "Teacher's Dilemma Today",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	},
+	"packageClassList": []
+}
