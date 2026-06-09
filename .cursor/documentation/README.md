@@ -4,7 +4,7 @@ Change history and feature notes for **Teacher's Dilemma Today**, organized by p
 
 Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These files record **what we built, when, why**, and which files/schemas were involved.
 
-**Planning** (not yet shipped): [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md).
+**Planning** (not yet shipped): [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md). **Strategic alignment** (living): [Spec-Align-Doc.md](./Spec-Align-Doc.md) · [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) — checklist audit and prioritized execution backlog.
 
 ## Documents
 
@@ -25,6 +25,8 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [Due-List-Function-Doc.md](./Due-List-Function-Doc.md) | DueList — teacher “what’s still due” (attendance v1; extends reminders) |
 | [Ngrok-Demo.md](./Ngrok-Demo.md) | Share local dev via ngrok (Option B: two tunnels + `VITE_API_URL`) |
 | [Authentication-Function.md](./Authentication-Function.md) | Email/password signup & login, JWT + refresh tokens (AUTH-001) |
+| [Spec-Align-Doc.md](./Spec-Align-Doc.md) | Product spec checklist vs shipped features; gap map and priority differentiators |
+| [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) | Prioritized `GAP-###` backlog mapped to existing plan docs and Spec-Align sections |
 
 ## Entry format
 

@@ -2,12 +2,8 @@ import { Link } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
 import { DueListSkeleton } from '@/components/LoadingSkeleton/DueListSkeleton'
 import { useDueItems } from '@/hooks/useDueItems'
+import { isWeekendDate } from '@/lib/dates'
 import type { DueItem } from '@/types/schema'
-
-function isWeekend(date = new Date()): boolean {
-  const day = date.getDay()
-  return day === 0 || day === 6
-}
 
 type DueListProps = {
   variant?: 'default' | 'compact'
@@ -53,7 +49,7 @@ export function DueList({
       return null
     }
 
-    const weekend = isWeekend()
+    const weekend = isWeekendDate(new Date())
 
     return (
       <section

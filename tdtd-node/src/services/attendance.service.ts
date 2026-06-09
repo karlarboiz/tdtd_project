@@ -7,6 +7,7 @@ import type {
   StudentRow,
 } from '../schema/types.js'
 import { HttpError } from '../errors/http-error.js'
+import { getConfiguredTimezone, isWeekendYmd } from '../lib/timezone.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
 import * as studentDao from '../dao/student.dao.js'
 import { ACTIVITY_ACTION, recordActivity } from './activityLog.service.js'
@@ -28,6 +29,12 @@ function assertValidDate(date: string): IsoDateString {
 function assertPeriod(p: string): AttendancePeriod {
   if (p === 'AM' || p === 'PM') return p
   throw new HttpError(400, 'period must be AM or PM')
+}
+
+function assertWeekday(date: IsoDateString): void {
+  if (isWeekendYmd(date, getConfiguredTimezone())) {
+    throw new HttpError(400, 'attendance is not recorded on weekends')
+  }
 }
 
 function parseYmdOrThrow(raw: string, label: string): IsoDateString {
@@ -125,6 +132,7 @@ export type SaveAttendanceInput = {
 
 export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): AttendanceSessionRow {
   const date = assertValidDate(input.date)
+  assertWeekday(date)
   const period = assertPeriod(input.period)
   const classIds = [...new Set(input.classStudentIds.map((id) => id.trim()))].filter(
     Boolean,

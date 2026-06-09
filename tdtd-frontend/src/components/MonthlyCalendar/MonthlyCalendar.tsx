@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { toYMD, startOfLocalDay } from '../../lib/dates'
+import { isWeekendDate, toYMD, startOfLocalDay } from '../../lib/dates'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -26,8 +26,7 @@ function buildMonthGrid(year: number, month: number, today: Date): Cell[] {
     const date = new Date(year, month, d)
     const ymd = toYMD(date)
     const dayStart = startOfLocalDay(date).getTime()
-    const dow = date.getDay()
-    const isWeekend = dow === 0 || dow === 6
+    const isWeekend = isWeekendDate(date)
     const isFuture = dayStart > todayStart
     const disabled = isFuture || isWeekend
     const isToday = dayStart === todayStart

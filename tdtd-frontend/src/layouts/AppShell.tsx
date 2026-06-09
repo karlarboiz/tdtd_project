@@ -29,6 +29,29 @@ const recentsLinkClass = ({ isActive }: { isActive: boolean }) =>
       : 'text-slate-700 active:bg-slate-100 hover:bg-slate-100',
   ].join(' ')
 
+function SignOutIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-6 w-6"
+      aria-hidden
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  )
+}
+
+const iconButtonClass =
+  'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100 touch-manipulation'
+
 function NavMenuIcon({ open }: { open: boolean }) {
   if (open) {
     return (
@@ -98,6 +121,12 @@ export function AppShell() {
     dismissWarning()
     reset()
   }, [dismissWarning, reset])
+
+  const signOutLabel = user ? `Sign out (${user.firstName})` : 'Sign out'
+
+  const handleSignOut = useCallback(() => {
+    void logout().then(() => navigate('/login', { replace: true }))
+  }, [logout, navigate])
 
   useEffect(() => {
     if (!warningOpen) return
@@ -171,7 +200,16 @@ export function AppShell() {
               </NavLink>
               <button
                 type="button"
-                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100"
+                className={iconButtonClass}
+                aria-label={signOutLabel}
+                title={signOutLabel}
+                onClick={handleSignOut}
+              >
+                <SignOutIcon />
+              </button>
+              <button
+                type="button"
+                className={iconButtonClass}
                 aria-expanded={navOpen}
                 aria-controls="main-nav"
                 aria-label={navOpen ? 'Close menu' : 'Open menu'}
@@ -211,16 +249,6 @@ export function AppShell() {
             <NavLink to="/student-lab" className={navLinkClass}>
               Student Lab
             </NavLink>
-            <button
-              type="button"
-              className={navLinkClass({ isActive: false })}
-              onClick={() => {
-                void logout().then(() => navigate('/login', { replace: true }))
-              }}
-            >
-              Sign out
-              {user ? ` (${user.firstName})` : ''}
-            </button>
           </nav>
         </div>
       </header>

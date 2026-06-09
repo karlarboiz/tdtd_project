@@ -5,10 +5,11 @@ import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { getAttendanceSessionDatesRange } from '../../api/attendanceApi'
 import { DueList } from '../../components/DueList/DueList'
 import { MonthlyCalendar } from '../../components/MonthlyCalendar/MonthlyCalendar'
-import { toYMD } from '../../lib/dates'
+import { isWeekendDate, toYMD } from '../../lib/dates'
 
 export function AttendanceCalendar() {
   const navigate = useNavigate()
+  const todayIsWeekend = isWeekendDate(new Date())
   const [sessionDatesWithSavedAttendance, setSessionDatesWithSavedAttendance] =
     useState<ReadonlySet<string>>(new Set())
 
@@ -32,6 +33,14 @@ export function AttendanceCalendar() {
         <div className="mb-4">
           <DueList variant="compact" />
         </div>
+
+        {todayIsWeekend ? (
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+            <p className="text-sm font-medium text-slate-600">
+              No attendance on weekends — pick a weekday from the calendar.
+            </p>
+          </div>
+        ) : null}
 
         <div className="mb-6 flex items-center gap-3">
           <button
