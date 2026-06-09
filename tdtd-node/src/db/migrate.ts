@@ -353,6 +353,7 @@ export function migrate(db: SqliteDatabase): void {
   migrateActivityLogsTable(db)
   migrateTeacherRemindersTable(db)
   migrateAuthTables(db)
+  migrateAuthPasswordPolicy(db)
   migrateSyncTables(db)
 }
 
@@ -380,6 +381,7 @@ export function migrateAuthTables(db: SqliteDatabase): void {
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK (role IN ('admin', 'teacher')),
       is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+      password_changed_at INTEGER NOT NULL,
       created_at INTEGER NOT NULL,
       updated_at INTEGER
     );
@@ -404,6 +406,42 @@ export function migrateAuthTables(db: SqliteDatabase): void {
       ON refresh_tokens(user_id);
     CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at
       ON refresh_tokens(expires_at);
+  `)
+}
+
+function userColumnNames(db: SqliteDatabase): Set<string> {
+  const rows = db.prepare(`PRAGMA table_info(users)`).all() as { name: string }[]
+  return new Set(rows.map((r) => r.name))
+}
+
+/** Password expiration + reset tokens — see .cursor/schemas/auth.md */
+export function migrateAuthPasswordPolicy(db: SqliteDatabase): void {
+  if (!tableExists(db, 'users')) return
+
+  const cols = userColumnNames(db)
+  if (!cols.has('password_changed_at')) {
+    db.exec(`ALTER TABLE users ADD COLUMN password_changed_at INTEGER`)
+    db.exec(
+      `UPDATE users SET password_changed_at = created_at WHERE password_changed_at IS NULL`,
+    )
+  }
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      used_at INTEGER,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_password_reset_tokens_token_hash
+      ON password_reset_tokens(token_hash);
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id
+      ON password_reset_tokens(user_id);
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at
+      ON password_reset_tokens(expires_at);
   `)
 }
 

@@ -3,6 +3,7 @@ import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { HttpError } from '../errors/http-error.js'
 import * as userDao from '../dao/user.dao.js'
 import { verifyAccessToken } from '../lib/tokens.js'
+import { toAuthUser } from '../services/auth.service.js'
 import type { AuthUser } from '../schema/types.js'
 
 export type AuthenticatedRequest = Request & {
@@ -34,18 +35,13 @@ export function authenticate(db: SqliteDatabase) {
         throw new HttpError(401, 'Unauthorized')
       }
 
-      req.auth = {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        isActive: user.isActive,
-      }
+      req.auth = toAuthUser(user)
       next()
     } catch (e) {
       if (e instanceof HttpError) {
-        res.status(e.statusCode).json({ error: e.message })
+        const body: { error: string; code?: string } = { error: e.message }
+        if (e.code) body.code = e.code
+        res.status(e.statusCode).json(body)
         return
       }
       res.status(401).json({ error: 'Unauthorized' })

@@ -200,6 +200,9 @@ export interface AuthUser {
   email: string
   role: UserRole
   isActive: boolean
+  passwordChangedAt: number
+  mustChangePassword: boolean
+  passwordExpiresAt: number
 }
 
 export interface AuthTokensResponse {

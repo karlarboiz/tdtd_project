@@ -1,15 +1,21 @@
 import { randomUUID } from 'node:crypto'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
+import * as passwordResetTokenDao from '../dao/passwordResetToken.dao.js'
 import * as refreshTokenDao from '../dao/refreshToken.dao.js'
 import * as userDao from '../dao/user.dao.js'
 import { HttpError } from '../errors/http-error.js'
+import {
+  getPasswordMaxAgeMs,
+  getPasswordResetTtlMs,
+  getRefreshTokenTtlMs,
+} from '../lib/auth-config.js'
 import { isValidEmailFormat, normalizeEmail } from '../lib/email.js'
+import { sendPasswordResetEmail } from '../lib/mail.js'
 import {
   assertPasswordPolicy,
   hashPassword,
   verifyPassword,
 } from '../lib/password.js'
-import { getRefreshTokenTtlMs } from '../lib/auth-config.js'
 import {
   generateOpaqueRefreshToken,
   hashRefreshToken,
@@ -24,7 +30,16 @@ import type {
 
 const GENERIC_AUTH_ERROR = 'Invalid email or password'
 
-export function toAuthUser(row: UserRow): AuthUser {
+export function getPasswordExpiresAt(changedAt: number): number {
+  return changedAt + getPasswordMaxAgeMs()
+}
+
+export function isPasswordExpired(changedAt: number, now = Date.now()): boolean {
+  return now >= getPasswordExpiresAt(changedAt)
+}
+
+export function toAuthUser(row: UserRow, now = Date.now()): AuthUser {
+  const passwordExpiresAt = getPasswordExpiresAt(row.passwordChangedAt)
   return {
     id: row.id,
     firstName: row.firstName,
@@ -32,6 +47,9 @@ export function toAuthUser(row: UserRow): AuthUser {
     email: row.email,
     role: row.role,
     isActive: row.isActive,
+    passwordChangedAt: row.passwordChangedAt,
+    mustChangePassword: isPasswordExpired(row.passwordChangedAt, now),
+    passwordExpiresAt,
   }
 }
 
@@ -71,7 +89,7 @@ async function issueTokenPair(
   return {
     accessToken,
     refreshToken,
-    user: toAuthUser(user),
+    user: toAuthUser(user, now),
   }
 }
 
@@ -177,7 +195,7 @@ export async function refreshSession(
   return {
     accessToken: await signAccessToken(user.id, user.role),
     refreshToken: newRefresh,
-    user: toAuthUser(user),
+    user: toAuthUser(user, now),
   }
 }
 
@@ -202,4 +220,120 @@ export function getMe(db: SqliteDatabase, userId: string): AuthUser {
   }
   assertActiveUser(user)
   return toAuthUser(user)
+}
+
+export async function changePassword(
+  db: SqliteDatabase,
+  userId: string,
+  body: { currentPassword?: unknown; newPassword?: unknown },
+): Promise<AuthTokensResponse> {
+  const currentPassword =
+    typeof body.currentPassword === 'string' ? body.currentPassword : ''
+  const newPassword =
+    typeof body.newPassword === 'string' ? body.newPassword : ''
+
+  if (!currentPassword || !newPassword) {
+    throw new HttpError(400, 'currentPassword and newPassword are required')
+  }
+
+  const user = userDao.findUserById(db, userId)
+  if (!user) {
+    throw new HttpError(401, 'Unauthorized')
+  }
+  assertActiveUser(user)
+
+  if (!(await verifyPassword(currentPassword, user.passwordHash))) {
+    throw new HttpError(401, 'Current password is incorrect')
+  }
+
+  if (currentPassword === newPassword) {
+    throw new HttpError(400, 'New password must differ from current password')
+  }
+
+  try {
+    assertPasswordPolicy(newPassword)
+  } catch {
+    throw new HttpError(400, 'password must be at least 8 characters')
+  }
+
+  const now = Date.now()
+  userDao.updatePassword(db, userId, await hashPassword(newPassword), now)
+  refreshTokenDao.revokeAllRefreshTokensForUser(db, userId, now)
+
+  const updated = userDao.findUserById(db, userId)!
+  return issueTokenPair(db, updated)
+}
+
+export async function forgotPassword(
+  db: SqliteDatabase,
+  body: { email?: unknown },
+): Promise<void> {
+  const emailRaw = typeof body.email === 'string' ? body.email.trim() : ''
+  if (!emailRaw || !isValidEmailFormat(emailRaw)) {
+    return
+  }
+
+  const user = userDao.findUserByEmailNormalized(db, normalizeEmail(emailRaw))
+  if (!user || !user.isActive) {
+    return
+  }
+
+  const now = Date.now()
+  passwordResetTokenDao.invalidateUnusedPasswordResetTokensForUser(
+    db,
+    user.id,
+    now,
+  )
+
+  const rawToken = generateOpaqueRefreshToken()
+  passwordResetTokenDao.insertPasswordResetToken(db, {
+    id: randomUUID(),
+    userId: user.id,
+    tokenHash: hashRefreshToken(rawToken),
+    expiresAt: now + getPasswordResetTtlMs(),
+    createdAt: now,
+  })
+
+  await sendPasswordResetEmail(user.email, rawToken)
+}
+
+export async function resetPassword(
+  db: SqliteDatabase,
+  body: { token?: unknown; password?: unknown },
+): Promise<AuthTokensResponse> {
+  const rawToken = typeof body.token === 'string' ? body.token.trim() : ''
+  const password = typeof body.password === 'string' ? body.password : ''
+
+  if (!rawToken || !password) {
+    throw new HttpError(400, 'token and password are required')
+  }
+
+  try {
+    assertPasswordPolicy(password)
+  } catch {
+    throw new HttpError(400, 'password must be at least 8 characters')
+  }
+
+  const row = passwordResetTokenDao.findPasswordResetTokenByHash(
+    db,
+    hashRefreshToken(rawToken),
+  )
+  const now = Date.now()
+
+  if (!row || row.usedAt != null || row.expiresAt <= now) {
+    throw new HttpError(400, 'Invalid or expired reset token')
+  }
+
+  const user = userDao.findUserById(db, row.userId)
+  if (!user) {
+    throw new HttpError(400, 'Invalid or expired reset token')
+  }
+  assertActiveUser(user)
+
+  userDao.updatePassword(db, user.id, await hashPassword(password), now)
+  passwordResetTokenDao.markPasswordResetTokenUsed(db, row.id, now)
+  refreshTokenDao.revokeAllRefreshTokensForUser(db, user.id, now)
+
+  const updated = userDao.findUserById(db, user.id)!
+  return issueTokenPair(db, updated)
 }
