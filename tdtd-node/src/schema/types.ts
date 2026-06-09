@@ -239,8 +239,18 @@ export interface UserRow {
   passwordHash: string
   role: UserRole
   isActive: boolean
+  passwordChangedAt: number
   createdAt: number
   updatedAt?: number
+}
+
+export interface PasswordResetTokenRow {
+  id: string
+  userId: string
+  tokenHash: string
+  expiresAt: number
+  usedAt?: number
+  createdAt: number
 }
 
 export interface RefreshTokenRow {
@@ -261,6 +271,9 @@ export interface AuthUser {
   email: string
   role: UserRole
   isActive: boolean
+  passwordChangedAt: number
+  mustChangePassword: boolean
+  passwordExpiresAt: number
 }
 
 export interface AuthTokensResponse {

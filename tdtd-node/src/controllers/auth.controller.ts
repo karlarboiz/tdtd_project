@@ -6,7 +6,9 @@ import * as authService from '../services/auth.service.js'
 
 function handleAuthError(res: Response, e: unknown): void {
   if (e instanceof HttpError) {
-    res.status(e.statusCode).json({ error: e.message })
+    const body: { error: string; code?: string } = { error: e.message }
+    if (e.code) body.code = e.code
+    res.status(e.statusCode).json(body)
     return
   }
   console.error(e)
@@ -62,6 +64,41 @@ export function meHandler(db: SqliteDatabase) {
         return
       }
       res.json(authService.getMe(db, req.auth.id))
+    } catch (e) {
+      handleAuthError(res, e)
+    }
+  }
+}
+
+export function changePasswordHandler(db: SqliteDatabase) {
+  return async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.auth) {
+        res.status(401).json({ error: 'Unauthorized' })
+        return
+      }
+      res.json(await authService.changePassword(db, req.auth.id, req.body))
+    } catch (e) {
+      handleAuthError(res, e)
+    }
+  }
+}
+
+export function forgotPasswordHandler(db: SqliteDatabase) {
+  return async (req: Request, res: Response): Promise<void> => {
+    try {
+      await authService.forgotPassword(db, req.body)
+      res.status(204).send()
+    } catch (e) {
+      handleAuthError(res, e)
+    }
+  }
+}
+
+export function resetPasswordHandler(db: SqliteDatabase) {
+  return async (req: Request, res: Response): Promise<void> => {
+    try {
+      res.json(await authService.resetPassword(db, req.body))
     } catch (e) {
       handleAuthError(res, e)
     }

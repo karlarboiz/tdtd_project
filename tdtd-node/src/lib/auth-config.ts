@@ -22,3 +22,27 @@ export function getRefreshTokenTtlMs(): number {
   if (!Number.isFinite(days) || days < 1) return 14 * 24 * 60 * 60 * 1000
   return Math.floor(days * 24 * 60 * 60 * 1000)
 }
+
+export function getPasswordMaxAgeMs(): number {
+  const raw = process.env.TDTD_PASSWORD_MAX_AGE_DAYS
+  const days = raw ? Number(raw) : 60
+  if (!Number.isFinite(days) || days < 1) return 60 * 24 * 60 * 60 * 1000
+  return Math.floor(days * 24 * 60 * 60 * 1000)
+}
+
+export function getPasswordResetTtlMs(): number {
+  const raw = process.env.TDTD_PASSWORD_RESET_TTL_MINUTES
+  const minutes = raw ? Number(raw) : 60
+  if (!Number.isFinite(minutes) || minutes < 1) return 60 * 60 * 1000
+  return Math.floor(minutes * 60 * 1000)
+}
+
+export function getAppUrl(): string {
+  const raw = process.env.TDTD_APP_URL?.trim()
+  if (raw) return raw.replace(/\/$/, '')
+  return 'http://localhost:5173'
+}
+
+export function isSmtpConfigured(): boolean {
+  return Boolean(process.env.TDTD_SMTP_HOST?.trim())
+}

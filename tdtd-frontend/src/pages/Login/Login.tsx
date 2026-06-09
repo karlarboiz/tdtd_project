@@ -12,7 +12,7 @@ import {
 } from '@/lib/uiClasses'
 
 export function Login() {
-  const { login, isAuthenticated, loading: authLoading } = useAuth()
+  const { login, isAuthenticated, loading: authLoading, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from =
@@ -24,6 +24,9 @@ export function Login() {
   const [submitting, setSubmitting] = useState(false)
 
   if (!authLoading && isAuthenticated) {
+    if (user?.mustChangePassword) {
+      return <Navigate to="/change-password" replace state={{ from }} />
+    }
     return <Navigate to={from} replace />
   }
 
@@ -32,8 +35,12 @@ export function Login() {
     setError(null)
     setSubmitting(true)
     try {
-      await login(email, password)
-      navigate(from, { replace: true })
+      const session = await login(email, password)
+      if (session.user.mustChangePassword) {
+        navigate('/change-password', { replace: true, state: { from } })
+      } else {
+        navigate(from, { replace: true })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {
@@ -75,6 +82,14 @@ export function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <p className="mt-2 text-right text-sm">
+              <Link
+                to="/forgot-password"
+                className="font-semibold text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </p>
           </div>
           {error ? (
             <p

@@ -1,12 +1,16 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { RequireAuth } from '@/components/RequireAuth/RequireAuth'
+import { RequireFreshPassword } from '@/components/RequireFreshPassword/RequireFreshPassword'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { AppShell } from './layouts/AppShell'
 import { AttendanceCalendar } from './pages/AttendanceCalendar/AttendanceCalendar'
 import { AttendanceSession } from './pages/AttendanceSession/AttendanceSession'
 import { Classes } from './pages/Classes/Classes'
+import { ChangePassword } from './pages/ChangePassword/ChangePassword'
+import { ForgotPassword } from './pages/ForgotPassword/ForgotPassword'
 import { Home } from './pages/Home/Home'
 import { Login } from './pages/Login/Login'
+import { ResetPassword } from './pages/ResetPassword/ResetPassword'
 import { Signup } from './pages/Signup/Signup'
 import { ScoreGrading } from './pages/ScoreGrading/ScoreGrading'
 import { Scores } from './pages/Scores/Scores'
@@ -23,10 +27,22 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/change-password"
+            element={
+              <RequireAuth>
+                <ChangePassword />
+              </RequireAuth>
+            }
+          />
           <Route
             element={
               <RequireAuth>
-                <AppShell />
+                <RequireFreshPassword>
+                  <AppShell />
+                </RequireFreshPassword>
               </RequireAuth>
             }
           >

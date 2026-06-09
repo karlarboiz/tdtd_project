@@ -24,7 +24,7 @@ type AuthState = {
 
 type AuthContextValue = AuthState & {
   applySession: (session: AuthTokensResponse) => void
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<AuthTokensResponse>
   signup: (input: {
     firstName: string
     lastName: string
@@ -73,7 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      applySession(await authApi.login({ email, password }))
+      const session = await authApi.login({ email, password })
+      applySession(session)
+      return session
     },
     [applySession],
   )

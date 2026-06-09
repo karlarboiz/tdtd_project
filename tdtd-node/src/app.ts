@@ -14,6 +14,7 @@ import { dueListRouter } from './routes/dueList.routes.js'
 import { syncRouter } from './routes/sync.routes.js'
 import { healthRouter } from './routes/health.routes.js'
 import { authenticate } from './middleware/authenticate.js'
+import { requireFreshPassword } from './middleware/requireFreshPassword.js'
 
 export function createApp(db: SqliteDatabase): express.Express {
   const app = express()
@@ -24,6 +25,7 @@ export function createApp(db: SqliteDatabase): express.Express {
   api.use('/health', healthRouter())
   api.use('/auth', authRouter(db))
   api.use(authenticate(db))
+  api.use(requireFreshPassword())
   api.use('/sync', syncRouter(db))
   api.use('/classes', classRouter(db))
   api.use('/students', studentRouter(db))

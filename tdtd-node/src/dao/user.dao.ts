@@ -10,9 +10,14 @@ type UserDbRow = {
   password_hash: string
   role: UserRole
   is_active: number
+  password_changed_at: number
   created_at: number
   updated_at: number | null
 }
+
+const USER_SELECT = `SELECT id, first_name, last_name, email, email_normalized, password_hash,
+              role, is_active, password_changed_at, created_at, updated_at
+       FROM users`
 
 function mapRow(row: UserDbRow): UserRow {
   return {
@@ -24,6 +29,7 @@ function mapRow(row: UserDbRow): UserRow {
     passwordHash: row.password_hash,
     role: row.role,
     isActive: row.is_active === 1,
+    passwordChangedAt: row.password_changed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? undefined,
   }
@@ -39,11 +45,7 @@ export function findUserByEmailNormalized(
   emailNormalized: string,
 ): UserRow | undefined {
   const row = db
-    .prepare(
-      `SELECT id, first_name, last_name, email, email_normalized, password_hash,
-              role, is_active, created_at, updated_at
-       FROM users WHERE email_normalized = ?`,
-    )
+    .prepare(`${USER_SELECT} WHERE email_normalized = ?`)
     .get(emailNormalized) as UserDbRow | undefined
   return row ? mapRow(row) : undefined
 }
@@ -53,11 +55,7 @@ export function findUserById(
   id: string,
 ): UserRow | undefined {
   const row = db
-    .prepare(
-      `SELECT id, first_name, last_name, email, email_normalized, password_hash,
-              role, is_active, created_at, updated_at
-       FROM users WHERE id = ?`,
-    )
+    .prepare(`${USER_SELECT} WHERE id = ?`)
     .get(id) as UserDbRow | undefined
   return row ? mapRow(row) : undefined
 }
@@ -78,8 +76,8 @@ export function insertUser(
   db.prepare(
     `INSERT INTO users (
       id, first_name, last_name, email, email_normalized, password_hash,
-      role, is_active, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+      role, is_active, password_changed_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
   ).run(
     input.id,
     input.firstName,
@@ -89,6 +87,19 @@ export function insertUser(
     input.passwordHash,
     input.role,
     input.createdAt,
+    input.createdAt,
   )
   return findUserById(db, input.id)!
+}
+
+export function updatePassword(
+  db: SqliteDatabase,
+  userId: string,
+  passwordHash: string,
+  changedAt: number,
+): void {
+  db.prepare(
+    `UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ?
+     WHERE id = ?`,
+  ).run(passwordHash, changedAt, changedAt, userId)
 }

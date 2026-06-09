@@ -30,20 +30,25 @@ export function apiPath(path: string): string {
 
 export class ApiError extends Error {
   readonly status: number
+  readonly code?: string
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
-function readErrorMessage(body: unknown): string {
-  if (body && typeof body === 'object' && 'error' in body) {
-    const e = (body as { error: unknown }).error
-    return typeof e === 'string' ? e : 'Request failed'
+function readErrorBody(body: unknown): { message: string; code?: string } {
+  if (body && typeof body === 'object') {
+    const record = body as Record<string, unknown>
+    const message =
+      typeof record.error === 'string' ? record.error : 'Request failed'
+    const code = typeof record.code === 'string' ? record.code : undefined
+    return { message, code }
   }
-  return 'Request failed'
+  return { message: 'Request failed' }
 }
 
 function isPublicAuthPath(path: string): boolean {
@@ -51,7 +56,9 @@ function isPublicAuthPath(path: string): boolean {
     path.startsWith('/api/auth/login') ||
     path.startsWith('/api/auth/signup') ||
     path.startsWith('/api/auth/refresh') ||
-    path.startsWith('/api/auth/logout')
+    path.startsWith('/api/auth/logout') ||
+    path.startsWith('/api/auth/forgot-password') ||
+    path.startsWith('/api/auth/reset-password')
   )
 }
 
@@ -144,7 +151,8 @@ export async function apiJson<T>(
   }
 
   if (!res.ok) {
-    throw new ApiError(res.status, readErrorMessage(parsed))
+    const { message, code } = readErrorBody(parsed)
+    throw new ApiError(res.status, message, code)
   }
 
   if (res.status === 204) {
