@@ -23,9 +23,22 @@ java -jar tdtd-batch-app/target/tdtd-batch-app.jar
 
 ## Run once (Task Scheduler / manual)
 
+Attendance reminder:
+
 ```bash
 TDTD_BATCH_RUN_ONCE=AM java -jar tdtd-batch-app/target/tdtd-batch-app.jar
 ```
+
+Attendance session PDF:
+
+```bash
+export TDTD_PDF_DATE=2026-06-10
+export TDTD_PDF_PERIOD=AM
+export TDTD_PDF_OUTPUT_DIR=data/reports
+TDTD_BATCH_RUN_ONCE=ATTENDANCE_PDF java -jar tdtd-batch-app/target/tdtd-batch-app.jar
+```
+
+See [.cursor/documentation/Report-Generation-Function-Doc.md](../.cursor/documentation/Report-Generation-Function-Doc.md).
 
 ## Environment
 
@@ -35,4 +48,7 @@ TDTD_BATCH_RUN_ONCE=AM java -jar tdtd-batch-app/target/tdtd-batch-app.jar
 | `TDTD_TIMEZONE` | `Asia/Manila` | Calendar “today” for jobs |
 | `TDTD_CRON_AM` | `0 0 7 * * ?` | Quartz cron (07:00) |
 | `TDTD_CRON_PM` | `0 30 12 * * ?` | Quartz cron (12:30) |
-| `TDTD_BATCH_RUN_ONCE` | — | `AM` or `PM` then exit |
+| `TDTD_BATCH_RUN_ONCE` | — | `AM`, `PM`, or `ATTENDANCE_PDF` then exit |
+| `TDTD_PDF_DATE` | today in `TDTD_TIMEZONE` | PDF session date (`YYYY-MM-DD`) |
+| `TDTD_PDF_PERIOD` | — | Required for PDF: `AM` or `PM` |
+| `TDTD_PDF_OUTPUT_DIR` | `data/reports` | PDF output directory |

@@ -15,6 +15,8 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-o
 
 **Session URL:** `/attendance/session/:date?period=AM|PM` — `period` query selects morning vs afternoon; omit on calendar open to auto-resolve (see ATT-004).
 
+**Related:** Server-side PDF export (run-once batch) — [Report-Generation-Function-Doc.md](./Report-Generation-Function-Doc.md).
+
 ---
 
 ## Weekend rules

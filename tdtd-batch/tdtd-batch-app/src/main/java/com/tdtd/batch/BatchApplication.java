@@ -1,6 +1,7 @@
 package com.tdtd.batch;
 
 import com.tdtd.batch.dao.DatabaseFactory;
+import com.tdtd.batch.job.AttendancePdfJob;
 import com.tdtd.batch.job.AttendanceReminderJob;
 import com.tdtd.batch.service.AttendanceReminderService;
 import com.tdtd.batch.util.BatchConfig;
@@ -24,11 +25,19 @@ public final class BatchApplication {
   private BatchApplication() {}
 
   public static void main(String[] args) throws Exception {
-    BatchConfig config = BatchConfig.fromEnvironment();
+    BatchConfig config;
+    try {
+      config = BatchConfig.fromEnvironment();
+    } catch (IllegalArgumentException e) {
+      LOG.error("Invalid configuration: {}", e.getMessage());
+      System.exit(2);
+      return;
+    }
+
     LOG.info("tdtd-batch starting — db={}, timezone={}", config.getDbPath(), config.getTimeZone());
 
-    if (config.getRunOncePeriod().isPresent()) {
-      runOnce(config, config.getRunOncePeriod().get());
+    if (config.getRunOnceMode().isPresent()) {
+      runOnce(config, config.getRunOnceMode().get());
       return;
     }
 
@@ -79,18 +88,35 @@ public final class BatchApplication {
     Thread.currentThread().join();
   }
 
-  private static void runOnce(BatchConfig config, String period) throws Exception {
-    String p = period.toUpperCase();
-    if (!p.equals("AM") && !p.equals("PM")) {
-      LOG.error("TDTD_BATCH_RUN_ONCE must be AM or PM, got: {}", period);
+  private static void runOnce(BatchConfig config, String mode) throws Exception {
+    String m = mode.toUpperCase();
+    if (BatchConfig.RUN_ONCE_ATTENDANCE_PDF.equals(m)) {
+      try {
+        AttendancePdfJob.run(config);
+      } catch (IllegalArgumentException e) {
+        LOG.error("Attendance PDF failed: {}", e.getMessage());
+        System.exit(2);
+        return;
+      } catch (Exception e) {
+        LOG.error("Attendance PDF failed", e);
+        System.exit(1);
+        return;
+      }
+      System.exit(0);
+      return;
+    }
+
+    if (!m.equals("AM") && !m.equals("PM")) {
+      LOG.error("TDTD_BATCH_RUN_ONCE must be AM, PM, or ATTENDANCE_PDF, got: {}", mode);
       System.exit(2);
       return;
     }
+
     String dateYmd = TimeZones.todayIn(config.getTimeZone()).toString();
     AttendanceReminderService service = new AttendanceReminderService();
     try (Connection conn = DatabaseFactory.open(config.getDbPath())) {
-      String result = service.sync(conn, dateYmd, p, config.getTimeZone());
-      LOG.info("Run-once {} {} → {}", dateYmd, p, result);
+      String result = service.sync(conn, dateYmd, m, config.getTimeZone());
+      LOG.info("Run-once {} {} → {}", dateYmd, m, result);
     }
     System.exit(0);
   }
