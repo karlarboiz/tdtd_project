@@ -45,6 +45,8 @@ type MonthlyCalendarProps = {
   onSelectDate: (ymd: string) => void
   /** Dates (YYYY-MM-DD) that already have at least one saved attendance session */
   sessionDatesWithSavedAttendance?: ReadonlySet<string>
+  /** Weekday dates on or before today with at least one missing AM/PM session */
+  sessionDatesWithMissedAttendance?: ReadonlySet<string>
   /** Called when the visible month/year changes (including initial mount). */
   onVisibleMonthChange?: (year: number, month: number) => void
 }
@@ -52,6 +54,7 @@ type MonthlyCalendarProps = {
 export function MonthlyCalendar({
   onSelectDate,
   sessionDatesWithSavedAttendance,
+  sessionDatesWithMissedAttendance,
   onVisibleMonthChange,
 }: MonthlyCalendarProps) {
   const today = useMemo(() => new Date(), [])
@@ -134,6 +137,9 @@ export function MonthlyCalendar({
           const hasSavedAttendance =
             !disabled &&
             (sessionDatesWithSavedAttendance?.has(ymd) ?? false)
+          const hasMissedAttendance =
+            !disabled &&
+            (sessionDatesWithMissedAttendance?.has(ymd) ?? false)
           const dayLabel = cell.date.toLocaleDateString(undefined, {
             weekday: 'long',
             month: 'long',
@@ -142,9 +148,13 @@ export function MonthlyCalendar({
           })
           const ariaLabel = disabled
             ? undefined
-            : hasSavedAttendance
-              ? `${dayLabel}, attendance saved`
-              : `${dayLabel}, select to take attendance`
+            : hasSavedAttendance && hasMissedAttendance
+              ? `${dayLabel}, attendance partially saved`
+              : hasSavedAttendance
+                ? `${dayLabel}, attendance saved`
+                : hasMissedAttendance
+                  ? `${dayLabel}, attendance missed`
+                  : `${dayLabel}, select to take attendance`
           return (
             <button
               key={ymd}
@@ -161,11 +171,15 @@ export function MonthlyCalendar({
               ].join(' ')}
             >
               <span>{cell.date.getDate()}</span>
-              {hasSavedAttendance && (
-                <span
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                  aria-hidden
-                />
+              {(hasSavedAttendance || hasMissedAttendance) && (
+                <span className="flex flex-row gap-0.5" aria-hidden>
+                  {hasSavedAttendance ? (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  ) : null}
+                  {hasMissedAttendance ? (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 ring-1 ring-red-600" />
+                  ) : null}
+                </span>
               )}
             </button>
           )
