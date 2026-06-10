@@ -19,7 +19,6 @@ import {
   SCORE_EVENT_KIND,
   type ScoreEventKindValue,
 } from '@/constants/TDTDConstants'
-import { formatClassShiftLabel } from '../../lib/classShift'
 import { ApiError } from '../../lib/http'
 import {
   buildScoreEventTitle,
@@ -246,7 +245,7 @@ export function Scores() {
             >
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} · {formatClassShiftLabel(c.shift)}
+                  {c.name}
                 </option>
               ))}
             </select>
