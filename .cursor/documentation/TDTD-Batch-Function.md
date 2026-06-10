@@ -43,7 +43,27 @@ tdtd-frontend ◄──────── REST /api/due-list, /api/reminders ─
 | AM attendance | 07:00 | `TDTD_CRON_AM` |
 | PM attendance | 12:30 | `TDTD_CRON_PM` |
 
-**One-shot (OS Task Scheduler):** `TDTD_BATCH_RUN_ONCE=AM` or `PM` runs `AttendanceReminderJob` once and exits.
+**One-shot (OS Task Scheduler):** `TDTD_BATCH_RUN_ONCE=AM` or `PM` runs `AttendanceReminderJob` once and exits. `TDTD_BATCH_RUN_ONCE=ATTENDANCE_PDF` generates an attendance session PDF — see [Report-Generation-Function-Doc.md](./Report-Generation-Function-Doc.md).
+
+---
+
+## Entry BATCH-002 — Attendance session PDF (run-once)
+
+**Date:** 2026-06-11
+
+**Summary:** Run-once job writes a daily AM/PM attendance roster PDF to disk via Apache PDFBox.
+
+**Reason:** Teachers need a printable attendance record; batch reuses JDBC access without new API routes in v1.
+
+**What changed:**
+
+- `AttendancePdfJob`, `AttendancePdfService`, `AttendanceReportDao`, `ClassPeriodFilter`
+- Env: `TDTD_PDF_DATE`, `TDTD_PDF_PERIOD`, `TDTD_PDF_OUTPUT_DIR` (with `TDTD_BATCH_RUN_ONCE=ATTENDANCE_PDF`)
+- Full spec: [Report-Generation-Function-Doc.md](./Report-Generation-Function-Doc.md) (REP-001)
+
+**Files involved:** `tdtd-batch/**` report sources, `Report-Generation-Function-Doc.md`
+
+**Schemas involved:** [attendance.md](../schemas/attendance.md), [core.md](../schemas/core.md)
 
 ---
 

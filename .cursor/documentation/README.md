@@ -22,6 +22,7 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [Student-Lab-Function-Doc.md](./Student-Lab-Function-Doc.md) | Per-student profile, attendance, and recent scores (view-only) |
 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) | Native app roadmap; offline-on-mobile-only checklist |
 | [TDTD-Batch-Function.md](./TDTD-Batch-Function.md) | Scheduled batch jobs (`tdtd-batch`), attendance reminders, deployment |
+| [Report-Generation-Function-Doc.md](./Report-Generation-Function-Doc.md) | Server-side PDF reports (`tdtd-batch`); v1 attendance session roster |
 | [Due-List-Function-Doc.md](./Due-List-Function-Doc.md) | DueList — teacher “what’s still due” (attendance v1; extends reminders) |
 | [Ngrok-Demo.md](./Ngrok-Demo.md) | Share local dev via ngrok (Option B: two tunnels + `VITE_API_URL`) |
 | [Authentication-Function.md](./Authentication-Function.md) | Email/password signup & login, JWT + refresh tokens (AUTH-001) |
