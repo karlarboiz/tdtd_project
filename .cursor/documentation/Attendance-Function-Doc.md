@@ -23,7 +23,7 @@ Attendance is **weekday-only** (Monday–Friday). Saturday and Sunday are not sc
 
 | Layer | Behavior |
 |-------|----------|
-| **Calendar** (`MonthlyCalendar`) | Weekend cells disabled (gray, not clickable); future dates also disabled |
+| **Calendar** (`MonthlyCalendar`) | Weekend cells disabled (gray, not clickable); future dates also disabled; weekday dots indicate saved and/or missed attendance (see [Calendar indicators](#calendar-indicators)) |
 | **Calendar page** | When today is a weekend, an info banner: *"No attendance on weekends — pick a weekday from the calendar."* |
 | **Session page** | If `:date` is Sat/Sun, shows unavailable card (*"Attendance is not taken on weekends."*) with link back to calendar — no roster editing |
 | **DueList** | No attendance due items on weekends; empty state copy explains why — see [Due-List-Function-Doc.md](./Due-List-Function-Doc.md) |
@@ -33,6 +33,21 @@ Attendance is **weekday-only** (Monday–Friday). Saturday and Sunday are not sc
 **Weekend definition (frontend):** local calendar weekday from `parseYMD(ymd)` (`isWeekendYmd` / `isWeekendDate` in `lib/dates.ts`).
 
 **Weekend definition (backend save):** `isWeekendYmd(ymd, TDTD_TIMEZONE)` — default `Asia/Manila`, same as due-list and batch.
+
+---
+
+## Calendar indicators
+
+On `/attendance`, each enabled weekday cell may show zero, one, or two dots below the day number:
+
+| Dot | Color | Meaning |
+|-----|-------|---------|
+| Saved | Teal (`primary`) | At least one AM or PM session saved for that date (`GET /api/attendance/session-dates`) |
+| Missed | Orange fill, red border | Weekday on or before today with at least one missing AM or PM session (same rules as `GET /api/due-list/missed`) |
+
+Both dots can appear on the same day when only one period was saved (e.g. AM logged, PM still missing). Weekends and future dates show no dots and remain disabled.
+
+**Data loading:** `AttendanceCalendar` fetches saved dates for the full visible month and missed dates for the portion of that month on or before today. Dots refresh when the visible month changes, when the user returns to `/attendance`, and when the browser tab becomes visible again.
 
 ---
 
@@ -48,6 +63,30 @@ On the attendance session screen, class names are shown **without** a shift suff
 | Empty-state / helper copy | May still mention MRNG/AFTNN | When no classes exist at all — unchanged |
 
 **Other pages** (Classes, Scores, Register Students, Student Lab) still use `formatClassShiftLabel` with `{name} · {shift}` where morning and afternoon classes appear together.
+
+---
+
+## Entry ATT-007 — Calendar missed-attendance dot
+
+**Date:** 2026-06-11
+
+**Summary:** Show an orange dot with a red border on weekday calendar cells where at least one AM or PM attendance session was never saved.
+
+**Reason:** Teachers need a quick visual scan of the monthly calendar to spot school days with missing attendance, aligned with the existing missed-work due-list logic.
+
+**What changed:**
+- **`MonthlyCalendar`:** New `sessionDatesWithMissedAttendance` prop; orange/red missed dot alongside the existing teal saved dot; updated `aria-label` for saved, missed, partially saved, and blank weekdays.
+- **`AttendanceCalendar`:** Loads missed dates via `GET /api/due-list/missed` (capped to today within the visible month) in parallel with session-dates; refreshes on route return and tab visibility.
+- **`missedAttendanceDates.ts`:** Helper to dedupe missed due-list rows to unique dates.
+
+**Files involved:**
+- `tdtd-frontend/src/components/MonthlyCalendar/MonthlyCalendar.tsx`
+- `tdtd-frontend/src/pages/AttendanceCalendar/AttendanceCalendar.tsx`
+- `tdtd-frontend/src/lib/missedAttendanceDates.ts`
+- `tdtd-frontend/src/lib/missedAttendanceDates.test.ts`
+
+**Schemas involved:**
+- None (presentation + existing APIs)
 
 ---
 

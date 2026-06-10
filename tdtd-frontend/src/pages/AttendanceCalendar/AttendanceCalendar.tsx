@@ -1,31 +1,73 @@
-import { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { getAttendanceSessionDatesRange } from '../../api/attendanceApi'
+import { listMissedDueItems } from '../../api/dueListApi'
 import { DueList } from '../../components/DueList/DueList'
 import { MonthlyCalendar } from '../../components/MonthlyCalendar/MonthlyCalendar'
 import { isWeekendDate, toYMD } from '../../lib/dates'
+import { uniqueDatesFromMissedDueItems } from '../../lib/missedAttendanceDates'
 
 export function AttendanceCalendar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const todayIsWeekend = isWeekendDate(new Date())
   const [sessionDatesWithSavedAttendance, setSessionDatesWithSavedAttendance] =
     useState<ReadonlySet<string>>(new Set())
+  const [sessionDatesWithMissedAttendance, setSessionDatesWithMissedAttendance] =
+    useState<ReadonlySet<string>>(new Set())
+  const visibleMonthRef = useRef<{ year: number; month: number } | null>(null)
 
   const loadMonthSessionDates = useCallback(
     async (year: number, month: number) => {
+      visibleMonthRef.current = { year, month }
       const from = toYMD(new Date(year, month, 1))
-      const to = toYMD(new Date(year, month + 1, 0))
+      const monthEnd = toYMD(new Date(year, month + 1, 0))
+      const today = toYMD(new Date())
+      const to = monthEnd > today ? today : monthEnd
+
       try {
-        const { dates } = await getAttendanceSessionDatesRange({ from, to })
+        const savedPromise = getAttendanceSessionDatesRange({ from, to: monthEnd })
+        const missedPromise =
+          from > today
+            ? Promise.resolve([])
+            : listMissedDueItems({ from, to })
+
+        const [{ dates }, missed] = await Promise.all([
+          savedPromise,
+          missedPromise,
+        ])
         setSessionDatesWithSavedAttendance(new Set(dates))
+        setSessionDatesWithMissedAttendance(
+          uniqueDatesFromMissedDueItems(missed),
+        )
       } catch {
         setSessionDatesWithSavedAttendance(new Set())
+        setSessionDatesWithMissedAttendance(new Set())
       }
     },
     [],
   )
+
+  useEffect(() => {
+    const visible = visibleMonthRef.current
+    if (visible) {
+      void loadMonthSessionDates(visible.year, visible.month)
+    }
+  }, [loadMonthSessionDates, location.pathname])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      const visible = visibleMonthRef.current
+      if (visible) {
+        void loadMonthSessionDates(visible.year, visible.month)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [loadMonthSessionDates])
 
   return (
     <PageContainer>
@@ -55,6 +97,7 @@ export function AttendanceCalendar() {
 
         <MonthlyCalendar
           sessionDatesWithSavedAttendance={sessionDatesWithSavedAttendance}
+          sessionDatesWithMissedAttendance={sessionDatesWithMissedAttendance}
           onVisibleMonthChange={loadMonthSessionDates}
           onSelectDate={(ymd) => {
             navigate(`/attendance/session/${encodeURIComponent(ymd)}`)
