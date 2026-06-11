@@ -9,6 +9,7 @@ import type {
 import { HttpError } from '../errors/http-error.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
 import * as reminderDao from '../dao/teacherReminder.dao.js'
+import { isSchoolDayYmd } from '../lib/schoolDay.js'
 import { getConfiguredTimezone, getTodayYmdInTimezone } from '../lib/timezone.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -77,6 +78,11 @@ export function syncAttendanceDueReminder(
   date: IsoDateString,
   period: AttendancePeriod,
 ): 'opened' | 'resolved' | 'unchanged' {
+  const timeZone = getConfiguredTimezone()
+  if (!isSchoolDayYmd(db, date, timeZone)) {
+    return 'unchanged'
+  }
+
   const session = attendanceDao.findSessionByDatePeriod(db, date, period)
   if (session) {
     const open = reminderDao.findOpenByTypeDatePeriod(

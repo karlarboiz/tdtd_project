@@ -13,6 +13,7 @@ import { remindersRouter } from './routes/reminders.routes.js'
 import { dueListRouter } from './routes/dueList.routes.js'
 import { syncRouter } from './routes/sync.routes.js'
 import { healthRouter } from './routes/health.routes.js'
+import { holidayRouter } from './routes/holiday.routes.js'
 import { authenticate } from './middleware/authenticate.js'
 import { requireFreshPassword } from './middleware/requireFreshPassword.js'
 
@@ -36,6 +37,7 @@ export function createApp(db: SqliteDatabase): express.Express {
   api.use('/recents', recentsRouter(db))
   api.use('/reminders', remindersRouter(db))
   api.use('/due-list', dueListRouter(db))
+  api.use('/holidays', holidayRouter(db))
 
   app.use('/api', api)
   return app

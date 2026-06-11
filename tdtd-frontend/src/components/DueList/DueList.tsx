@@ -1,8 +1,10 @@
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
 import { DueListSkeleton } from '@/components/LoadingSkeleton/DueListSkeleton'
 import { useDueItems } from '@/hooks/useDueItems'
-import { isWeekendDate } from '@/lib/dates'
+import { getHolidayForDate } from '@/api/holidaysApi'
+import { isWeekendDate, toYMD } from '@/lib/dates'
 import type { DueItem } from '@/types/schema'
 
 type DueListProps = {
@@ -24,6 +26,28 @@ export function DueList({
   const items = itemsProp ?? internal.items
   const loading = loadingProp ?? internal.loading
   const onDismiss = onDismissProp ?? internal.dismiss
+  const [todayHolidayName, setTodayHolidayName] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (loading || items.length > 0 || isWeekendDate(new Date())) {
+      setTodayHolidayName(null)
+      return
+    }
+    const today = toYMD(new Date())
+    let cancelled = false
+    void getHolidayForDate(today)
+      .then((result) => {
+        if (cancelled) return
+        setTodayHolidayName(result.holidays[0]?.name ?? null)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setTodayHolidayName(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [items.length, loading])
 
   const headingClass =
     variant === 'compact'
@@ -63,7 +87,9 @@ export function DueList({
           <p className="text-sm font-medium text-secondary">
             {weekend
               ? 'No attendance due on weekends.'
-              : "You're all caught up for today."}
+              : todayHolidayName
+                ? `No attendance due today — ${todayHolidayName}.`
+                : "You're all caught up for today."}
           </p>
         </div>
       </section>

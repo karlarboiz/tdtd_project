@@ -281,3 +281,19 @@ export interface AuthTokensResponse {
   refreshToken: string
   user: AuthUser
 }
+
+/** Philippine government holiday classification from Official Gazette proclamations. */
+export type GovernmentHolidayType =
+  | 'REGULAR'
+  | 'SPECIAL_NON_WORKING'
+  | 'SPECIAL_WORKING'
+
+export interface GovernmentHolidayRow {
+  date: IsoDateString
+  name: string
+  type: GovernmentHolidayType
+  year: number
+  proclamation?: string
+  sourceUrl?: string
+  fetchedAt: number
+}

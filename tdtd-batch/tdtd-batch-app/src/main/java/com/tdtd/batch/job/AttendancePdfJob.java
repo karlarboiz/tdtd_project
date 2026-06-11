@@ -2,8 +2,8 @@ package com.tdtd.batch.job;
 
 import com.tdtd.batch.dao.DatabaseFactory;
 import com.tdtd.batch.service.AttendancePdfService;
+import com.tdtd.batch.service.SchoolDays;
 import com.tdtd.batch.util.BatchConfig;
-import com.tdtd.batch.util.TimeZones;
 import java.nio.file.Path;
 import java.sql.Connection;
 import org.slf4j.Logger;
@@ -24,15 +24,15 @@ public final class AttendancePdfJob {
                         "TDTD_PDF_PERIOD is required when TDTD_BATCH_RUN_ONCE=ATTENDANCE_PDF"));
 
     var date = config.resolvePdfDateOrToday();
-    if (TimeZones.isWeekendYmd(date)) {
-      throw new IllegalArgumentException(
-          "Attendance is not recorded on weekends: " + date);
-    }
-
-    Path outputDir = config.getPdfOutputDir();
-    AttendancePdfService service = new AttendancePdfService();
-
     try (Connection conn = DatabaseFactory.open(config.getDbPath())) {
+      if (!SchoolDays.isSchoolDay(conn, date)) {
+        throw new IllegalArgumentException(
+            "Attendance is not recorded on non-school days: " + date);
+      }
+
+      Path outputDir = config.getPdfOutputDir();
+      AttendancePdfService service = new AttendancePdfService();
+
       Path written =
           service.generate(conn, date, period, outputDir, config.getTimeZone());
       LOG.info(

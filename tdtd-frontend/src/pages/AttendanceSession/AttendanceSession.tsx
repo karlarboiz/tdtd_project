@@ -13,6 +13,7 @@ import {
   getAttendanceState,
   saveAttendance as saveAttendanceRequest,
 } from '../../api/attendanceApi'
+import { getHolidayForDate } from '../../api/holidaysApi'
 import { listStudentsByClass } from '../../api/studentsApi'
 import { listClassesForAttendancePeriod } from '../../lib/classShift'
 import { formatStudentName } from '../../lib/studentDisplay'
@@ -44,6 +45,9 @@ export function AttendanceSession() {
   const parsed = parseYMD(dateYmd)
   const isDateValid = parsed !== null
   const isWeekendSession = isWeekendYmd(dateYmd)
+  const [holidayName, setHolidayName] = useState<string | null>(null)
+  const [holidayLoading, setHolidayLoading] = useState(() => isDateValid && !isWeekendSession)
+  const isNonSchoolSession = isWeekendSession || holidayName !== null
   const periodFromUrl = parseAttendancePeriod(searchParams.get('period'))
   const [resolvedPeriod, setResolvedPeriod] = useState<AttendancePeriod | null>(
     periodFromUrl,
@@ -60,7 +64,34 @@ export function AttendanceSession() {
   }, [dateYmd, periodFromUrl, isDateValid])
 
   useEffect(() => {
-    if (!isDateValid || periodFromUrl || isWeekendSession) return
+    if (!isDateValid || isWeekendSession) {
+      setHolidayName(null)
+      setHolidayLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setHolidayLoading(true)
+    void getHolidayForDate(dateYmd)
+      .then((result) => {
+        if (cancelled) return
+        setHolidayName(result.holidays[0]?.name ?? null)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setHolidayName(null)
+      })
+      .finally(() => {
+        if (!cancelled) setHolidayLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [dateYmd, isDateValid, isWeekendSession])
+
+  useEffect(() => {
+    if (!isDateValid || periodFromUrl || isNonSchoolSession || holidayLoading) return
 
     let cancelled = false
     void (async () => {
@@ -92,7 +123,7 @@ export function AttendanceSession() {
     return () => {
       cancelled = true
     }
-  }, [dateYmd, isDateValid, isWeekendSession, periodFromUrl, setSearchParams])
+  }, [dateYmd, isDateValid, isNonSchoolSession, holidayLoading, periodFromUrl, setSearchParams])
 
   function setPeriod(next: AttendancePeriod) {
     setSearchParams({ period: next }, { replace: true })
@@ -132,7 +163,7 @@ export function AttendanceSession() {
   }, [dateYmd, period])
 
   const refreshPresentRoster = useCallback(async () => {
-    if (!parseYMD(dateYmd) || resolvingPeriod || isWeekendSession) {
+    if (!parseYMD(dateYmd) || resolvingPeriod || isNonSchoolSession || holidayLoading) {
       if (!resolvingPeriod) {
         setRosterSession(null)
         setSavedPresentStudents([])
@@ -151,7 +182,7 @@ export function AttendanceSession() {
     } finally {
       setRosterLoading(false)
     }
-  }, [dateYmd, period, resolvingPeriod, isWeekendSession])
+  }, [dateYmd, period, resolvingPeriod, isNonSchoolSession, holidayLoading])
 
   useEffect(() => {
     void refreshPresentRoster()
@@ -291,6 +322,37 @@ export function AttendanceSession() {
       <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
         <p className="text-sm font-medium text-slate-500">{formatLongDate(dateYmd)}</p>
         <p className="mt-2 text-slate-700">Attendance is not taken on weekends.</p>
+        <button
+          type="button"
+          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+          onClick={() => navigate('/attendance')}
+        >
+          Choose a date
+        </button>
+      </div>
+    )
+  }
+
+  if (holidayLoading) {
+    return (
+      <PageContainer variant="wide">
+        <PageContentReveal>
+          <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-sm">
+            <SkeletonBar className="mx-auto h-4 w-40" />
+            <SkeletonBar className="mx-auto mt-4 h-4 w-56" />
+          </div>
+        </PageContentReveal>
+      </PageContainer>
+    )
+  }
+
+  if (holidayName) {
+    return (
+      <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
+        <p className="text-sm font-medium text-slate-500">{formatLongDate(dateYmd)}</p>
+        <p className="mt-2 text-slate-700">
+          Attendance is not taken on {holidayName}.
+        </p>
         <button
           type="button"
           className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"

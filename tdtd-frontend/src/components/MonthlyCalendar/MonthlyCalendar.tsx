@@ -13,7 +13,12 @@ type Cell =
       isToday: boolean
     }
 
-function buildMonthGrid(year: number, month: number, today: Date): Cell[] {
+function buildMonthGrid(
+  year: number,
+  month: number,
+  today: Date,
+  nonSchoolDates?: ReadonlySet<string>,
+): Cell[] {
   const todayStart = startOfLocalDay(today).getTime()
   const first = new Date(year, month, 1)
   const startWeekday = first.getDay()
@@ -27,8 +32,9 @@ function buildMonthGrid(year: number, month: number, today: Date): Cell[] {
     const ymd = toYMD(date)
     const dayStart = startOfLocalDay(date).getTime()
     const isWeekend = isWeekendDate(date)
+    const isHoliday = nonSchoolDates?.has(ymd) ?? false
     const isFuture = dayStart > todayStart
-    const disabled = isFuture || isWeekend
+    const disabled = isFuture || isWeekend || isHoliday
     const isToday = dayStart === todayStart
     cells.push({
       kind: 'day',
@@ -47,6 +53,10 @@ type MonthlyCalendarProps = {
   sessionDatesWithSavedAttendance?: ReadonlySet<string>
   /** Weekday dates on or before today with at least one missing AM/PM session */
   sessionDatesWithMissedAttendance?: ReadonlySet<string>
+  /** Non-school weekdays (government holidays) to gray out */
+  nonSchoolDates?: ReadonlySet<string>
+  /** Holiday names keyed by YYYY-MM-DD for accessible labels */
+  holidayNamesByDate?: ReadonlyMap<string, string>
   /** Called when the visible month/year changes (including initial mount). */
   onVisibleMonthChange?: (year: number, month: number) => void
 }
@@ -55,6 +65,8 @@ export function MonthlyCalendar({
   onSelectDate,
   sessionDatesWithSavedAttendance,
   sessionDatesWithMissedAttendance,
+  nonSchoolDates,
+  holidayNamesByDate,
   onVisibleMonthChange,
 }: MonthlyCalendarProps) {
   const today = useMemo(() => new Date(), [])
@@ -73,8 +85,8 @@ export function MonthlyCalendar({
   )
 
   const grid = useMemo(
-    () => buildMonthGrid(view.year, view.month, today),
-    [today, view.month, view.year],
+    () => buildMonthGrid(view.year, view.month, today, nonSchoolDates),
+    [today, view.month, view.year, nonSchoolDates],
   )
 
   useEffect(() => {
@@ -146,8 +158,11 @@ export function MonthlyCalendar({
             day: 'numeric',
             year: 'numeric',
           })
+          const holidayName = holidayNamesByDate?.get(ymd)
           const ariaLabel = disabled
-            ? undefined
+            ? holidayName
+              ? `${dayLabel}, ${holidayName}, no attendance`
+              : undefined
             : hasSavedAttendance && hasMissedAttendance
               ? `${dayLabel}, attendance partially saved`
               : hasSavedAttendance
