@@ -3,12 +3,12 @@ import * as attendanceDao from '../dao/attendance.dao.js'
 import * as schoolYearDao from '../dao/schoolYear.dao.js'
 import { HttpError } from '../errors/http-error.js'
 import { attendanceSessionPath } from '../lib/attendanceSessionPath.js'
+import { isSchoolDayYmd } from '../lib/schoolDay.js'
 import {
   addDaysYmd,
   getConfiguredTimezone,
   getTodayYmdInTimezone,
   isWeekendInTimezone,
-  isWeekendYmd,
 } from '../lib/timezone.js'
 import type {
   AttendancePeriod,
@@ -122,8 +122,9 @@ function reminderToDueItem(row: TeacherReminderRow): DueItem {
   }
 }
 
-/** Attendance due rows are only surfaced for today on weekdays (school days). */
+/** Attendance due rows are only surfaced for today on school days. */
 export function shouldShowAttendanceDue(
+  db: SqliteDatabase,
   date: IsoDateString,
   today: IsoDateString,
   timeZone: string,
@@ -131,6 +132,7 @@ export function shouldShowAttendanceDue(
 ): boolean {
   if (date !== today) return false
   if (isWeekendInTimezone(timeZone, now)) return false
+  if (!isSchoolDayYmd(db, date, timeZone)) return false
   return true
 }
 
@@ -147,7 +149,7 @@ export function listDueItems(
   const today = getTodayYmdInTimezone(timeZone, now)
   const date = resolveDate(dateRaw, today)
 
-  if (!shouldShowAttendanceDue(date, today, timeZone, now)) {
+  if (!shouldShowAttendanceDue(db, date, today, timeZone, now)) {
     return []
   }
 
@@ -195,7 +197,7 @@ export function listMissedAttendanceDueItems(
 
   const items: DueItem[] = []
   for (let d = from; d <= to; d = addDaysYmd(d, 1)) {
-    if (isWeekendYmd(d, timeZone)) continue
+    if (!isSchoolDayYmd(db, d, timeZone)) continue
     for (const period of PERIODS) {
       if (!saved.has(`${d}|${period}`)) {
         items.push(buildMissedAttendanceDueItem(d, period, today))

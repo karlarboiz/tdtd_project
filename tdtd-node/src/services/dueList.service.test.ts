@@ -6,6 +6,7 @@ import Sqlite from 'better-sqlite3'
 import { migrate } from '../db/migrate.js'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
+import { insertGovernmentHolidaySeed } from '../dao/governmentHoliday.dao.js'
 import { dismissReminder } from './teacherReminder.service.js'
 import {
   listDueItems,
@@ -37,19 +38,39 @@ describe('shouldShowAttendanceDue', () => {
 
   it('allows today on a weekday', () => {
     expect(
-      shouldShowAttendanceDue('2026-05-29', '2026-05-29', 'Asia/Manila', fri),
+      shouldShowAttendanceDue(db, '2026-05-29', '2026-05-29', 'Asia/Manila', fri),
     ).toBe(true)
   })
 
   it('blocks non-today dates', () => {
     expect(
-      shouldShowAttendanceDue('2026-05-28', '2026-05-29', 'Asia/Manila', fri),
+      shouldShowAttendanceDue(db, '2026-05-28', '2026-05-29', 'Asia/Manila', fri),
     ).toBe(false)
   })
 
   it('blocks weekends', () => {
     expect(
-      shouldShowAttendanceDue('2026-05-30', '2026-05-30', 'Asia/Manila', sat),
+      shouldShowAttendanceDue(db, '2026-05-30', '2026-05-30', 'Asia/Manila', sat),
+    ).toBe(false)
+  })
+
+  it('blocks non-working holidays', () => {
+    insertGovernmentHolidaySeed(db, {
+      date: '2026-06-12',
+      name: 'Independence Day',
+      type: 'REGULAR',
+      year: 2026,
+      fetchedAt: Date.now(),
+    })
+    const holiday = new Date('2026-06-12T12:00:00+08:00')
+    expect(
+      shouldShowAttendanceDue(
+        db,
+        '2026-06-12',
+        '2026-06-12',
+        'Asia/Manila',
+        holiday,
+      ),
     ).toBe(false)
   })
 })
@@ -147,6 +168,23 @@ describe('listMissedAttendanceDueItems', () => {
       '2026-05-30',
       '2026-05-31',
       new Date('2026-05-31T12:00:00+08:00'),
+    )
+    expect(items).toHaveLength(0)
+  })
+
+  it('skips non-working holidays in range', () => {
+    insertGovernmentHolidaySeed(db, {
+      date: '2026-05-29',
+      name: 'Test Holiday',
+      type: 'REGULAR',
+      year: 2026,
+      fetchedAt: Date.now(),
+    })
+    const items = listMissedAttendanceDueItems(
+      db,
+      '2026-05-29',
+      '2026-05-29',
+      fri,
     )
     expect(items).toHaveLength(0)
   })

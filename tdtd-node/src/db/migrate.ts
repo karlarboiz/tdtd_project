@@ -355,6 +355,24 @@ export function migrate(db: SqliteDatabase): void {
   migrateAuthTables(db)
   migrateAuthPasswordPolicy(db)
   migrateSyncTables(db)
+  migrateGovernmentHolidaysTable(db)
+}
+
+/** Cached PH nationwide holidays scraped from Official Gazette proclamations. */
+export function migrateGovernmentHolidaysTable(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS government_holidays (
+      date TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL CHECK (type IN ('REGULAR', 'SPECIAL_NON_WORKING', 'SPECIAL_WORKING')),
+      year INTEGER NOT NULL,
+      proclamation TEXT,
+      source_url TEXT,
+      fetched_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_government_holidays_year
+      ON government_holidays(year);
+  `)
 }
 
 /** Per-user sync cursor for mobile pull/push — see .cursor/schemas/sync.md */

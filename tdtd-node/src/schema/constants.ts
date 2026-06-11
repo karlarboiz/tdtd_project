@@ -20,6 +20,7 @@ export const TEACHER_APP_TABLES = [
   'teacher_reminders',
   'users',
   'refresh_tokens',
+  'government_holidays',
 ] as const
 
 export type TeacherAppTableName = (typeof TEACHER_APP_TABLES)[number]

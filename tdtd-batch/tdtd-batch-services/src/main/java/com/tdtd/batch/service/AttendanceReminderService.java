@@ -4,6 +4,7 @@ import com.tdtd.batch.dao.AttendanceDao;
 import com.tdtd.batch.dao.TeacherReminderDao;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,16 @@ public final class AttendanceReminderService {
 
   public String sync(Connection conn, String dateYmd, String period, String timeZoneId)
       throws SQLException {
+    LocalDate date = LocalDate.parse(dateYmd);
+    if (!SchoolDays.isSchoolDay(conn, date)) {
+      LOG.info(
+          "Skipping attendance reminder for non-school day {} {} ({})",
+          dateYmd,
+          period,
+          timeZoneId);
+      return "skipped";
+    }
+
     if (attendanceDao.sessionExists(conn, dateYmd, period)) {
       int n = reminderDao.resolveOpen(conn, dateYmd, period, System.currentTimeMillis());
       if (n > 0) {

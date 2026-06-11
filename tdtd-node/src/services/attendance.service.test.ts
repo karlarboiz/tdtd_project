@@ -35,6 +35,14 @@ vi.mock('./teacherReminder.service.js', () => ({
   resolveAttendanceReminder: vi.fn(),
 }))
 
+vi.mock('../lib/schoolDay.js', () => ({
+  isSchoolDayYmd: vi.fn((_db, ymd: string) => {
+    const d = new Date(ymd + 'T12:00:00')
+    const dow = d.getDay()
+    return dow !== 0 && dow !== 6
+  }),
+}))
+
 function makeDb(): SqliteDatabase {
   return {
     transaction: (fn: () => void) => fn,
@@ -118,7 +126,7 @@ describe('attendance.service', () => {
           presentStudentIds: ['s-1'],
         }),
       ).toThrowError(
-        new HttpError(400, 'attendance is not recorded on weekends'),
+        new HttpError(400, 'attendance is not recorded on non-school days'),
       )
     })
 
