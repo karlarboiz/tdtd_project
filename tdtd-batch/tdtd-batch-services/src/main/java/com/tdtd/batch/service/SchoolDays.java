@@ -1,6 +1,6 @@
 package com.tdtd.batch.service;
 
-import com.tdtd.batch.dao.GovernmentHolidayDao;
+import com.tdtd.batch.dao.Governm entHolidayDao;
 import com.tdtd.batch.util.TimeZones;
 import java.sql.Connection;
 import java.sql.SQLException;
