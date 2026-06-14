@@ -1,27 +1,62 @@
 /** Parameterized SQL for students / class FK checks. */
 
+const STUDENT_COLS = `
+  id, first_name, middle_name, last_name, birth_date, gender, class_id,
+  lrn, learner_status, house_no, street, barangay, city_municipality, province,
+  father_name, mother_name, guardian_name, parent_contact,
+  mother_tongue, religion, is_4ps, is_ip,
+  date_enrolled, previous_school, last_grade_completed, created_at
+`
+
 export const STUDENT_QUERIES = {
   insert: `
     INSERT INTO students (
-      id, first_name, middle_name, last_name, birth_date, gender, class_id, created_at
+      id, first_name, middle_name, last_name, birth_date, gender, class_id,
+      lrn, learner_status, house_no, street, barangay, city_municipality, province,
+      father_name, mother_name, guardian_name, parent_contact,
+      mother_tongue, religion, is_4ps, is_ip,
+      date_enrolled, previous_school, last_grade_completed, created_at
     )
     VALUES (
-      @id, @first_name, @middle_name, @last_name, @birth_date, @gender, @class_id, @created_at
+      @id, @first_name, @middle_name, @last_name, @birth_date, @gender, @class_id,
+      @lrn, @learner_status, @house_no, @street, @barangay, @city_municipality, @province,
+      @father_name, @mother_name, @guardian_name, @parent_contact,
+      @mother_tongue, @religion, @is_4ps, @is_ip,
+      @date_enrolled, @previous_school, @last_grade_completed, @created_at
     )
+  `,
+  updateProfile: `
+    UPDATE students SET
+      first_name = @first_name,
+      middle_name = @middle_name,
+      last_name = @last_name,
+      birth_date = @birth_date,
+      gender = @gender,
+      lrn = @lrn,
+      learner_status = @learner_status,
+      house_no = @house_no,
+      street = @street,
+      barangay = @barangay,
+      city_municipality = @city_municipality,
+      province = @province,
+      father_name = @father_name,
+      mother_name = @mother_name,
+      guardian_name = @guardian_name,
+      parent_contact = @parent_contact,
+      mother_tongue = @mother_tongue,
+      religion = @religion,
+      is_4ps = @is_4ps,
+      is_ip = @is_ip,
+      date_enrolled = @date_enrolled,
+      previous_school = @previous_school,
+      last_grade_completed = @last_grade_completed
+    WHERE id = @id
   `,
   classExists: `
     SELECT 1 AS ok FROM classes WHERE id = ? LIMIT 1
   `,
   listByClass: `
-    SELECT
-      id,
-      first_name,
-      middle_name,
-      last_name,
-      birth_date,
-      gender,
-      class_id,
-      created_at
+    SELECT ${STUDENT_COLS}
     FROM students
     WHERE class_id = ?
     ORDER BY last_name COLLATE NOCASE ASC, first_name COLLATE NOCASE ASC
@@ -30,15 +65,7 @@ export const STUDENT_QUERIES = {
     SELECT class_id AS class_id FROM students WHERE id = ? LIMIT 1
   `,
   getById: `
-    SELECT
-      id,
-      first_name,
-      middle_name,
-      last_name,
-      birth_date,
-      gender,
-      class_id,
-      created_at
+    SELECT ${STUDENT_COLS}
     FROM students
     WHERE id = ?
     LIMIT 1

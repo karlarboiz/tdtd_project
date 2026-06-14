@@ -356,6 +356,7 @@ export function migrate(db: SqliteDatabase): void {
   migrateAuthPasswordPolicy(db)
   migrateSyncTables(db)
   migrateGovernmentHolidaysTable(db)
+  migrateDepEdTables(db)
 }
 
 /** Cached PH nationwide holidays scraped from Official Gazette proclamations. */
@@ -539,5 +540,176 @@ export function migrateSubjectUniqueConstraints(db: SqliteDatabase): void {
       ON subjects(short_code COLLATE NOCASE)
       WHERE short_code IS NOT NULL AND TRIM(short_code) != '';
     `)
+  }
+}
+
+function classDepEdColumnNames(db: SqliteDatabase): Set<string> {
+  const rows = db.prepare(`PRAGMA table_info(classes)`).all() as { name: string }[]
+  return new Set(rows.map((r) => r.name))
+}
+
+function studentDepEdColumnNames(db: SqliteDatabase): Set<string> {
+  const rows = db.prepare(`PRAGMA table_info(students)`).all() as { name: string }[]
+  return new Set(rows.map((r) => r.name))
+}
+
+function scoreEventDepEdColumnNames(db: SqliteDatabase): Set<string> {
+  if (!tableExists(db, 'score_events')) return new Set()
+  const rows = db.prepare(`PRAGMA table_info(score_events)`).all() as { name: string }[]
+  return new Set(rows.map((r) => r.name))
+}
+
+/** DepEd forms: school settings, enrollment fields, daily attendance, grading, enrollment history. */
+export function migrateDepEdTables(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS school_settings (
+      id TEXT PRIMARY KEY,
+      school_name TEXT NOT NULL,
+      school_id TEXT,
+      district TEXT,
+      division TEXT,
+      region TEXT,
+      school_address TEXT,
+      school_head_name TEXT,
+      default_school_year_id TEXT,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (default_school_year_id) REFERENCES school_years(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS daily_attendance_records (
+      id TEXT PRIMARY KEY,
+      student_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('present', 'absent', 'late', 'excused')),
+      class_id TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (student_id) REFERENCES students(id),
+      FOREIGN KEY (class_id) REFERENCES classes(id),
+      UNIQUE(student_id, date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_daily_attendance_date ON daily_attendance_records(date);
+    CREATE INDEX IF NOT EXISTS idx_daily_attendance_class ON daily_attendance_records(class_id);
+
+    CREATE TABLE IF NOT EXISTS computed_subject_grades (
+      id TEXT PRIMARY KEY,
+      student_id TEXT NOT NULL,
+      subject_id TEXT NOT NULL,
+      class_id TEXT NOT NULL,
+      school_year_id TEXT NOT NULL,
+      quarter INTEGER NOT NULL CHECK (quarter >= 0 AND quarter <= 4),
+      transmuted_grade REAL,
+      descriptor TEXT,
+      final_grade REAL,
+      manual_override INTEGER NOT NULL DEFAULT 0 CHECK (manual_override IN (0, 1)),
+      computed_at INTEGER NOT NULL,
+      FOREIGN KEY (student_id) REFERENCES students(id),
+      FOREIGN KEY (subject_id) REFERENCES subjects(id),
+      FOREIGN KEY (class_id) REFERENCES classes(id),
+      FOREIGN KEY (school_year_id) REFERENCES school_years(id),
+      UNIQUE(student_id, subject_id, school_year_id, quarter)
+    );
+    CREATE INDEX IF NOT EXISTS idx_computed_grades_class ON computed_subject_grades(class_id, school_year_id);
+
+    CREATE TABLE IF NOT EXISTS enrollment_history (
+      id TEXT PRIMARY KEY,
+      student_id TEXT NOT NULL,
+      school_year_id TEXT NOT NULL,
+      grade_level TEXT NOT NULL,
+      section_name TEXT,
+      school_name TEXT NOT NULL,
+      grades_snapshot_json TEXT,
+      promotion_status TEXT CHECK (promotion_status IN ('PROMOTED', 'CONDITIONAL', 'RETAINED')),
+      archived_at INTEGER NOT NULL,
+      FOREIGN KEY (student_id) REFERENCES students(id),
+      FOREIGN KEY (school_year_id) REFERENCES school_years(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_enrollment_history_student ON enrollment_history(student_id);
+  `)
+
+  const classCols = classDepEdColumnNames(db)
+  if (!classCols.has('grade_level')) {
+    db.exec(`ALTER TABLE classes ADD COLUMN grade_level TEXT`)
+  }
+  if (!classCols.has('section_name')) {
+    db.exec(`ALTER TABLE classes ADD COLUMN section_name TEXT`)
+  }
+  if (!classCols.has('class_adviser_name')) {
+    db.exec(`ALTER TABLE classes ADD COLUMN class_adviser_name TEXT`)
+  }
+
+  const studentCols = studentDepEdColumnNames(db)
+  const addStudentCol = (name: string, ddl: string) => {
+    if (!studentCols.has(name)) {
+      db.exec(`ALTER TABLE students ADD COLUMN ${name} ${ddl}`)
+    }
+  }
+  addStudentCol('lrn', 'TEXT')
+  addStudentCol('learner_status', 'TEXT')
+  addStudentCol('house_no', 'TEXT')
+  addStudentCol('street', 'TEXT')
+  addStudentCol('barangay', 'TEXT')
+  addStudentCol('city_municipality', 'TEXT')
+  addStudentCol('province', 'TEXT')
+  addStudentCol('father_name', 'TEXT')
+  addStudentCol('mother_name', 'TEXT')
+  addStudentCol('guardian_name', 'TEXT')
+  addStudentCol('parent_contact', 'TEXT')
+  addStudentCol('mother_tongue', 'TEXT')
+  addStudentCol('religion', 'TEXT')
+  addStudentCol('is_4ps', 'INTEGER DEFAULT 0')
+  addStudentCol('is_ip', 'INTEGER DEFAULT 0')
+  addStudentCol('date_enrolled', 'TEXT')
+  addStudentCol('previous_school', 'TEXT')
+  addStudentCol('last_grade_completed', 'TEXT')
+
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_students_lrn_unique
+      ON students(lrn)
+      WHERE lrn IS NOT NULL AND TRIM(lrn) != '';
+  `)
+
+  const scoreCols = scoreEventDepEdColumnNames(db)
+  if (!scoreCols.has('quarter')) {
+    db.exec(`ALTER TABLE score_events ADD COLUMN quarter INTEGER CHECK (quarter >= 1 AND quarter <= 4)`)
+  }
+  if (!scoreCols.has('assessment_bucket')) {
+    db.exec(`ALTER TABLE score_events ADD COLUMN assessment_bucket TEXT CHECK (assessment_bucket IN ('WW', 'PT', 'QA'))`)
+  }
+
+  migrateAttendanceStatusCodes(db)
+}
+
+/** Allow absent/late/excused on attendance_records (rebuild CHECK). */
+function migrateAttendanceStatusCodes(db: SqliteDatabase): void {
+  if (!tableExists(db, 'attendance_records')) return
+  const row = db
+    .prepare(
+      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'attendance_records'`,
+    )
+    .get() as { sql: string } | undefined
+  if (row?.sql.includes("'absent'")) return
+
+  db.pragma('foreign_keys = OFF')
+  try {
+    db.exec(`
+      CREATE TABLE attendance_records__new (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        student_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('present', 'absent', 'late', 'excused')),
+        timestamp INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES attendance_sessions(id),
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        UNIQUE(session_id, student_id)
+      );
+      INSERT INTO attendance_records__new (id, session_id, student_id, status, timestamp)
+      SELECT id, session_id, student_id, status, timestamp FROM attendance_records;
+      DROP TABLE attendance_records;
+      ALTER TABLE attendance_records__new RENAME TO attendance_records;
+      CREATE INDEX IF NOT EXISTS idx_records_session ON attendance_records(session_id);
+      CREATE INDEX IF NOT EXISTS idx_records_student ON attendance_records(student_id);
+    `)
+  } finally {
+    db.pragma('foreign_keys = ON')
   }
 }

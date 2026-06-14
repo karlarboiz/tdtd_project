@@ -13,9 +13,11 @@ import { remindersRouter } from './routes/reminders.routes.js'
 import { dueListRouter } from './routes/dueList.routes.js'
 import { syncRouter } from './routes/sync.routes.js'
 import { healthRouter } from './routes/health.routes.js'
-import { holidayRouter } from './routes/holiday.routes.js'
+import { depedRouter, reportsRouter } from './routes/deped.routes.js'
+import { schoolSettingsRouter } from './routes/schoolSettings.routes.js'
 import { authenticate } from './middleware/authenticate.js'
 import { requireFreshPassword } from './middleware/requireFreshPassword.js'
+import { holidayRouter } from './routes/holiday.routes.js'
 
 export function createApp(db: SqliteDatabase): express.Express {
   const app = express()
@@ -37,6 +39,9 @@ export function createApp(db: SqliteDatabase): express.Express {
   api.use('/recents', recentsRouter(db))
   api.use('/reminders', remindersRouter(db))
   api.use('/due-list', dueListRouter(db))
+  api.use('/deped', depedRouter(db))
+  api.use('/reports', reportsRouter(db))
+  api.use('/school-settings', schoolSettingsRouter(db))
   api.use('/holidays', holidayRouter(db))
 
   app.use('/api', api)

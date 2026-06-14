@@ -5,17 +5,41 @@ import {
   listStudentsByClass,
   registerStudent,
   registerStudentsBulk,
+  updateStudentProfile,
 } from '../services/student.service.js'
 import { HttpError } from '../errors/http-error.js'
 
+function paramId(raw: string | string[]): string {
+  return Array.isArray(raw) ? raw[0]! : raw
+}
+
 function parseStudentPayload(body: Record<string, unknown>): StudentPayloadInput {
+  const str = (k: string) =>
+    typeof body[k] === 'string' ? (body[k] as string) : undefined
   return {
     firstName: typeof body.firstName === 'string' ? body.firstName : '',
-    middleName:
-      typeof body.middleName === 'string' ? body.middleName : undefined,
+    middleName: str('middleName'),
     lastName: typeof body.lastName === 'string' ? body.lastName : '',
     birthDate: typeof body.birthDate === 'string' ? body.birthDate : '',
     gender: typeof body.gender === 'string' ? body.gender : '',
+    lrn: str('lrn'),
+    learnerStatus: str('learnerStatus'),
+    houseNo: str('houseNo'),
+    street: str('street'),
+    barangay: str('barangay'),
+    cityMunicipality: str('cityMunicipality'),
+    province: str('province'),
+    fatherName: str('fatherName'),
+    motherName: str('motherName'),
+    guardianName: str('guardianName'),
+    parentContact: str('parentContact'),
+    motherTongue: str('motherTongue'),
+    religion: str('religion'),
+    is4ps: body.is4ps === true,
+    isIp: body.isIp === true,
+    dateEnrolled: str('dateEnrolled'),
+    previousSchool: str('previousSchool'),
+    lastGradeCompleted: str('lastGradeCompleted'),
   }
 }
 
@@ -101,6 +125,22 @@ export function bulkRegisterHandler(db: SqliteDatabase) {
         return
       }
       console.error(e)
+      res.status(500).json({ error: 'internal server error' })
+    }
+  }
+}
+
+export function patchStudentHandler(db: SqliteDatabase) {
+  return (req: Request, res: Response): void => {
+    try {
+      const studentId = paramId(req.params.studentId)
+      const row = updateStudentProfile(db, studentId, req.body)
+      res.json(row)
+    } catch (e) {
+      if (e instanceof HttpError) {
+        res.status(e.statusCode).json({ error: e.message })
+        return
+      }
       res.status(500).json({ error: 'internal server error' })
     }
   }

@@ -22,6 +22,24 @@ export type StudentPayloadInput = {
   lastName: string
   birthDate: string
   gender: string
+  lrn?: string
+  learnerStatus?: string
+  houseNo?: string
+  street?: string
+  barangay?: string
+  cityMunicipality?: string
+  province?: string
+  fatherName?: string
+  motherName?: string
+  guardianName?: string
+  parentContact?: string
+  motherTongue?: string
+  religion?: string
+  is4ps?: boolean
+  isIp?: boolean
+  dateEnrolled?: string
+  previousSchool?: string
+  lastGradeCompleted?: string
 }
 
 export type RegisterStudentInput = StudentPayloadInput & {
@@ -91,8 +109,68 @@ export function toStudentRow(
     birthDate,
     gender,
     classId,
+    lrn: input.lrn?.trim() || undefined,
+    learnerStatus: input.learnerStatus as StudentRow['learnerStatus'],
+    houseNo: input.houseNo?.trim() || undefined,
+    street: input.street?.trim() || undefined,
+    barangay: input.barangay?.trim() || undefined,
+    cityMunicipality: input.cityMunicipality?.trim() || undefined,
+    province: input.province?.trim() || undefined,
+    fatherName: input.fatherName?.trim() || undefined,
+    motherName: input.motherName?.trim() || undefined,
+    guardianName: input.guardianName?.trim() || undefined,
+    parentContact: input.parentContact?.trim() || undefined,
+    motherTongue: input.motherTongue?.trim() || undefined,
+    religion: input.religion?.trim() || undefined,
+    is4ps: input.is4ps,
+    isIp: input.isIp,
+    dateEnrolled: input.dateEnrolled?.trim() || undefined,
+    previousSchool: input.previousSchool?.trim() || undefined,
+    lastGradeCompleted: input.lastGradeCompleted?.trim() || undefined,
     createdAt,
   }
+}
+
+export function updateStudentProfile(
+  db: SqliteDatabase,
+  studentId: string,
+  input: Partial<StudentPayloadInput>,
+): StudentRow {
+  const existing = studentDao.getStudentById(db, studentId)
+  if (!existing) throw new HttpError(404, 'student not found')
+
+  const row = toStudentRow(
+    existing.classId,
+    {
+      firstName: input.firstName ?? existing.firstName,
+      middleName: input.middleName ?? existing.middleName,
+      lastName: input.lastName ?? existing.lastName,
+      birthDate: input.birthDate ?? existing.birthDate,
+      gender: input.gender ?? existing.gender,
+      lrn: input.lrn ?? existing.lrn,
+      learnerStatus: input.learnerStatus ?? existing.learnerStatus,
+      houseNo: input.houseNo ?? existing.houseNo,
+      street: input.street ?? existing.street,
+      barangay: input.barangay ?? existing.barangay,
+      cityMunicipality: input.cityMunicipality ?? existing.cityMunicipality,
+      province: input.province ?? existing.province,
+      fatherName: input.fatherName ?? existing.fatherName,
+      motherName: input.motherName ?? existing.motherName,
+      guardianName: input.guardianName ?? existing.guardianName,
+      parentContact: input.parentContact ?? existing.parentContact,
+      motherTongue: input.motherTongue ?? existing.motherTongue,
+      religion: input.religion ?? existing.religion,
+      is4ps: input.is4ps ?? existing.is4ps,
+      isIp: input.isIp ?? existing.isIp,
+      dateEnrolled: input.dateEnrolled ?? existing.dateEnrolled,
+      previousSchool: input.previousSchool ?? existing.previousSchool,
+      lastGradeCompleted: input.lastGradeCompleted ?? existing.lastGradeCompleted,
+    },
+    existing.id,
+    existing.createdAt,
+  )
+  studentDao.updateStudentProfile(db, row)
+  return row
 }
 
 export function listStudentsByClass(db: SqliteDatabase, classId: string): StudentRow[] {

@@ -243,6 +243,9 @@ export function AppShell() {
             <NavLink to="/subjects" className={navLinkClass}>
               Subjects
             </NavLink>
+            <NavLink to="/reports" className={navLinkClass}>
+              DepEd Reports
+            </NavLink>
             <NavLink to="/scores" className={navLinkClass}>
               Scores
             </NavLink>

@@ -171,15 +171,21 @@ Large epic; schema future notes in [core.md](../schemas/core.md), [quiz.md](../s
 
 | ID | Title | Spec § | Source doc | Depends | Closes |
 |----|-------|--------|------------|---------|--------|
-| GAP-080 | Design doc: quarters, WW/PT/QA weights, transmutation | §5 | [quiz.md](../schemas/quiz.md) future; [Schema-Rules.md](../rules/Schema-Rules.md) DepEd report generation | Stable score history | Built-in DepEd grading logic |
-| GAP-081 | Map `score_events` kinds/subtypes to WW/PT/QA buckets | §5 | **TBD epic** — depends on GAP-080 | GAP-080 | Quarter-based grading automation |
-| GAP-082 | Quarter grade computation API | §5 | **TBD epic** | GAP-081 | Quarter-based grading automation |
-| GAP-083 | SF1 generation (PDF/Excel DepEd layout) | §5 | [core.md](../schemas/core.md) future extensions | GAP-082, GAP-001 | One-click SF1 |
-| GAP-084 | SF9 / SF10 generation | §5 | Same as GAP-083 | GAP-083 | One-click SF9, SF10 |
-| GAP-085 | Auto-fill report cards from computed grades | §5 | **TBD epic** | GAP-082 | Auto-fill report cards |
+| GAP-080 | Design doc: quarters, WW/PT/QA weights, transmutation | §5 | [deped-grading.md](../schemas/deped-grading.md) | Stable score history | Built-in DepEd grading logic |
+| GAP-081 | Map `score_events` kinds/subtypes to WW/PT/QA buckets | §5 | [quiz.md](../schemas/quiz.md) | GAP-080 | Quarter-based grading automation |
+| GAP-082 | Quarter grade computation API | §5 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | GAP-081 | Quarter-based grading automation |
+| GAP-087 | School settings + student enrollment schema (LRN, address, parents) | §5 | [deped-forms.md](../schemas/deped-forms.md), [core.md](../schemas/core.md) | — | SF1/SF9/SF10 headers |
+| GAP-088 | DepEd attendance codes + daily register | §5 | [attendance.md](../schemas/attendance.md) | — | SF2, SF4, SF1 monthly cols |
+| GAP-089 | SF2 generation (PDF/Excel) | §5 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | GAP-087, GAP-088 | Daily attendance report |
+| GAP-097 | SF4 generation (PDF/Excel) | §5 | Same | GAP-088 | Monthly class attendance |
+| GAP-083 | SF1 generation (PDF/Excel DepEd layout) | §5 | [deped-forms.md](../schemas/deped-forms.md) | GAP-082, GAP-087, GAP-001 | One-click SF1 |
+| GAP-084 | SF9 / SF10 generation | §5 | Same as GAP-083 | GAP-083, GAP-099 | One-click SF9, SF10 |
+| GAP-099 | Multi-year enrollment history for SF10 | §5 | [deped-forms.md](../schemas/deped-forms.md) | GAP-087, GAP-082 | Permanent record archive |
+| GAP-098 | SF5 promotion report generation | §5 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | GAP-082 | Class promotion export |
+| GAP-085 | Auto-fill report cards from computed grades | §5 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | GAP-082 | Auto-fill report cards |
 | GAP-086 | DueList: quarter deadline approaching | §10 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) optional deadlines | GAP-082 | Quarter deadline approaching |
 
-**Suggested P7 order:** GAP-080 → GAP-081 → GAP-082 → GAP-083 → GAP-084 → GAP-085 → GAP-086
+**Suggested P7 order:** GAP-080 → GAP-081 → GAP-082; GAP-087 ∥ GAP-088 → GAP-089 → GAP-097 → GAP-083 → GAP-084 + GAP-099 → GAP-098 → GAP-085 → GAP-086
 
 ---
 
@@ -276,12 +282,18 @@ Focus: **Smart** (rules) then **DepEd**.
 | GAP-074 | P6 | DueList at-risk kind | §4, §10 | Due-List-Function-Doc |
 | GAP-075 | P6 | Rule-based NL summaries | §4 | TBD epic |
 | GAP-076 | P6 | Report comment snippets | §4 | quiz.md future |
-| GAP-080 | P7 | DepEd quarters/weights design | §5 | quiz.md, Schema-Rules |
-| GAP-081 | P7 | WW/PT/QA event mapping | §5 | TBD epic |
-| GAP-082 | P7 | Quarter grade API | §5 | TBD epic |
-| GAP-083 | P7 | SF1 export | §5 | core.md future |
-| GAP-084 | P7 | SF9/SF10 export | §5 | core.md future |
-| GAP-085 | P7 | Report card auto-fill | §5 | TBD epic |
+| GAP-080 | P7 | DepEd quarters/weights design | §5 | deped-grading.md |
+| GAP-081 | P7 | WW/PT/QA event mapping | §5 | quiz.md |
+| GAP-082 | P7 | Quarter grade API | §5 | DepEd-School-Forms-Function-Doc |
+| GAP-087 | P7 | Enrollment + school settings schema | §5 | deped-forms.md, core.md |
+| GAP-088 | P7 | DepEd attendance codes + daily register | §5 | attendance.md |
+| GAP-089 | P7 | SF2 export | §5 | DepEd-School-Forms-Function-Doc |
+| GAP-097 | P7 | SF4 export | §5 | DepEd-School-Forms-Function-Doc |
+| GAP-083 | P7 | SF1 export | §5 | deped-forms.md |
+| GAP-084 | P7 | SF9/SF10 export | §5 | DepEd-School-Forms-Function-Doc |
+| GAP-099 | P7 | Multi-year enrollment history | §5 | deped-forms.md |
+| GAP-098 | P7 | SF5 promotion report | §5 | DepEd-School-Forms-Function-Doc |
+| GAP-085 | P7 | Report card auto-fill | §5 | DepEd-School-Forms-Function-Doc |
 | GAP-086 | P7 | Quarter deadline DueList | §10 | Mobile plan deadlines |
 | GAP-090 | P8 | Modular nav modes | §11 | TBD epic |
 | GAP-091 | P8 | Bulk edit students | §1 | Classes-Function-Doc |

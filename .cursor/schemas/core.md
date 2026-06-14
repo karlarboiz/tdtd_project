@@ -19,6 +19,9 @@ classes: {
   id: string (uuid, primary key)
   name: string // e.g. "Grade 5"
   shift: string // "MRNG" | "AFTNN" — morning vs afternoon section schedule
+  gradeLevel?: string // e.g. "5", "7", "11" — DepEd grade band
+  sectionName?: string // e.g. "Rose", "Apple"
+  classAdviserName?: string
   createdAt: number (timestamp)
   updatedAt?: number (timestamp, optional)
 }
@@ -37,6 +40,24 @@ students: {
   birthDate: string // format: "YYYY-MM-DD"
   gender: string // stored as "M" | "F" | "O" (Male / Female / Other)
   classId: string // FK → classes.id
+  lrn?: string // 12-digit Learner Reference Number (unique when set)
+  learnerStatus?: string // NEW | TRANSFEREE | CONTINUING
+  houseNo?: string
+  street?: string
+  barangay?: string
+  cityMunicipality?: string
+  province?: string
+  fatherName?: string
+  motherName?: string
+  guardianName?: string
+  parentContact?: string
+  motherTongue?: string
+  religion?: string
+  is4ps?: boolean
+  isIp?: boolean
+  dateEnrolled?: string // YYYY-MM-DD
+  previousSchool?: string
+  lastGradeCompleted?: string
   createdAt: number (timestamp)
 }
 ```
@@ -106,6 +127,27 @@ See [Classes-Function-Doc.md](../documentation/Classes-Function-Doc.md) for teac
 
 ---
 
+## school_settings
+
+DepEd form headers — see [deped-forms.md](./deped-forms.md).
+
+```
+school_settings: {
+  id: string (uuid, primary key)
+  schoolName: string
+  schoolId: string // BEIS
+  district: string
+  division: string
+  region: string
+  schoolAddress?: string
+  schoolHeadName?: string
+  defaultSchoolYearId?: string
+  updatedAt: number (timestamp)
+}
+```
+
+---
+
 ## Relationships
 
 ```
@@ -164,10 +206,11 @@ See `tdtd-node/src/db/migrate.ts`:
 
 Do not implement yet:
 
-- DepEd report generation (depends on stable core roster).
 - Selective client-side caching or sync for roster data.
 - `UNIQUE(name, shift)` on `classes` (or school-scoped equivalent).
 - Cross-class student identity check on register/import (warn or reject duplicates).
 - One class roster eligible for both AM and PM attendance (full-day cohort model).
 
-**Student Lab** (shipped separately): read-only aggregation of roster + attendance + scores — see [student-lab.md](./student-lab.md). No columns added to `students` or `classes`.
+**DepEd report generation** — shipped; see [deped-forms.md](./deped-forms.md), [DepEd-School-Forms-Function-Doc.md](../documentation/DepEd-School-Forms-Function-Doc.md).
+
+**Student Lab** (shipped separately): read-only aggregation of roster + attendance + scores — see [student-lab.md](./student-lab.md).
