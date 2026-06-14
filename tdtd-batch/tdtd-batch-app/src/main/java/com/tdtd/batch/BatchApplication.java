@@ -2,6 +2,7 @@ package com.tdtd.batch;
 
 import com.tdtd.batch.dao.DatabaseFactory;
 import com.tdtd.batch.job.AttendancePdfJob;
+import com.tdtd.batch.job.AttendanceReminderJob;
 import com.tdtd.batch.job.DepEdReportJob;
 import com.tdtd.batch.service.AttendanceReminderService;
 import com.tdtd.batch.util.BatchConfig;
