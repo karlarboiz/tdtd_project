@@ -106,13 +106,94 @@ TDTD_BATCH_RUN_ONCE=ATTENDANCE_PDF java -jar tdtd-batch-app/target/tdtd-batch-ap
 
 ---
 
+## Future entries (shipped with DepEd epic)
+
+| Id | Summary | Notes |
+|----|---------|-------|
+| REP-002 | On-demand PDF/Excel via `tdtd-node` API + Reports UI | `GET /api/reports/:form` |
+| REP-003 | Superseded by REP-007 (SF4 monthly matrix) | — |
+| REP-004 | DepEd SF1 layout (PDF/Excel) | GAP-083 |
+| REP-005 | Scheduled cron for end-of-day PDF generation | Quartz trigger in batch daemon |
+| REP-006 | DepEd SF2 daily attendance (PDF/Excel) | GAP-089 |
+| REP-007 | DepEd SF4 monthly class attendance (PDF/Excel) | GAP-097 |
+| REP-008 | DepEd SF9 report card (PDF) | GAP-084 |
+| REP-009 | DepEd SF10 permanent record (PDF) | GAP-084, GAP-099 |
+| REP-010 | DepEd SF5 promotion report (PDF/Excel) | GAP-098 |
+
+See [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) for batch env vars and field mappings.
+
+---
+
+## Entry REP-004 — DepEd SF1 export
+
+**Date:** 2026-06-14
+
+**Summary:** Batch job `TDTD_BATCH_RUN_ONCE=SF1_PDF` generates SF1 School Register PDF and Excel from enrollment + school settings.
+
+**Batch env:** `TDTD_REPORT_CLASS_ID`, `TDTD_REPORT_OUTPUT_DIR`, `TDTD_DB_PATH`, `TDTD_TIMEZONE`.
+
+**Output:** `sf1-{classId}-{schoolYear}.pdf` / `.xlsx`
+
+**Schemas:** `school_settings`, extended `classes`/`students`, `daily_attendance_records`.
+
+---
+
+## Entry REP-006 — DepEd SF2 export
+
+**Date:** 2026-06-14
+
+**Summary:** Batch job `TDTD_BATCH_RUN_ONCE=SF2_PDF` — daily attendance report for a class and month.
+
+**Batch env:** `TDTD_REPORT_CLASS_ID`, `TDTD_REPORT_MONTH` (YYYY-MM), `TDTD_REPORT_OUTPUT_DIR`.
+
+**Output:** `sf2-{classId}-{month}.pdf` / `.xlsx`
+
+---
+
+## Entry REP-007 — DepEd SF4 export
+
+**Date:** 2026-06-14
+
+**Summary:** Batch job `TDTD_BATCH_RUN_ONCE=SF4_PDF` — monthly class attendance matrix with M/F breakdown.
+
+**Output:** `sf4-{classId}-{month}.pdf` / `.xlsx`
+
+---
+
+## Entry REP-008 — DepEd SF9 export
+
+**Date:** 2026-06-14
+
+**Summary:** Batch job `TDTD_BATCH_RUN_ONCE=SF9_PDF` — learner report card per student or class batch.
+
+**Output:** `sf9-{studentId}-{schoolYear}.pdf`
+
+---
+
+## Entry REP-009 — DepEd SF10 export
+
+**Date:** 2026-06-14
+
+**Summary:** Batch job `TDTD_BATCH_RUN_ONCE=SF10_PDF` — permanent record from `enrollment_history`.
+
+**Output:** `sf10-{studentId}.pdf`
+
+---
+
+## Entry REP-010 — DepEd SF5 export
+
+**Date:** 2026-06-14
+
+**Summary:** Batch job `TDTD_BATCH_RUN_ONCE=SF5_PDF` — class promotion report with final grades and action taken.
+
+**Output:** `sf5-{classId}-{schoolYear}.pdf` / `.xlsx`
+
+---
+
 ## Future entries (not shipped)
 
 | Id | Summary | Notes |
 |----|---------|-------|
-| REP-002 | On-demand PDF download via `tdtd-node` API + Attendance UI button | User-triggered export |
-| REP-003 | Monthly attendance matrix PDF (students × school days) | Date-range report |
-| REP-004 | DepEd SF1 layout (PDF/Excel) | See [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) GAP-083 |
 | REP-005 | Scheduled cron for end-of-day PDF generation | Quartz trigger in batch daemon |
 
 ---

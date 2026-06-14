@@ -207,3 +207,58 @@ export function listMissedAttendanceDueItems(
 
   return items.sort(compareMissedDueItems)
 }
+
+const QUARTER_ENDS: Record<number, string> = {
+  1: '-08-31',
+  2: '-10-31',
+  3: '-12-31',
+  4: '-03-31',
+}
+
+/** GAP-086 — surface quarter grading deadlines in DueList. */
+export function listQuarterDeadlineDueItems(
+  db: SqliteDatabase,
+  now = new Date(),
+): DueItem[] {
+  const timeZone = getConfiguredTimezone()
+  const today = getTodayYmdInTimezone(timeZone, now)
+  const sy = schoolYearDao.getActiveSchoolYear(db)
+  if (!sy) return []
+
+  const yearStart = sy.startDate?.slice(0, 4) ?? today.slice(0, 4)
+  const items: DueItem[] = []
+
+  for (let q = 1; q <= 4; q++) {
+    const suffix = QUARTER_ENDS[q]!
+    const year =
+      q === 4 && sy.label.includes('-')
+        ? sy.label.split('-')[1]!.trim()
+        : yearStart
+    const deadline = `${year}${suffix}`
+    if (deadline >= today && deadline <= addDaysYmd(today, 14)) {
+      items.push({
+        id: `quarter-deadline:Q${q}`,
+        kind: 'QUARTER_DEADLINE',
+        title: `Quarter ${q} grades due`,
+        message: `Complete and export Q${q} report cards before ${deadline}.`,
+        date: deadline,
+        actionPath: '/reports',
+        createdAt: now.getTime(),
+      })
+    }
+  }
+
+  return items
+}
+
+/** Combined due items: today attendance + missed + quarter deadlines. */
+export function listAllDueItems(
+  db: SqliteDatabase,
+  dateRaw?: unknown,
+  now = new Date(),
+): DueItem[] {
+  const todayItems = listDueItems(db, dateRaw, now)
+  const missed = listMissedAttendanceDueItems(db, undefined, undefined, now)
+  const quarter = listQuarterDeadlineDueItems(db, now)
+  return [...todayItems, ...missed.slice(0, 5), ...quarter]
+}

@@ -2,7 +2,7 @@ package com.tdtd.batch;
 
 import com.tdtd.batch.dao.DatabaseFactory;
 import com.tdtd.batch.job.AttendancePdfJob;
-import com.tdtd.batch.job.AttendanceReminderJob;
+import com.tdtd.batch.job.DepEdReportJob;
 import com.tdtd.batch.service.AttendanceReminderService;
 import com.tdtd.batch.util.BatchConfig;
 import com.tdtd.batch.util.TimeZones;
@@ -99,6 +99,22 @@ public final class BatchApplication {
         return;
       } catch (Exception e) {
         LOG.error("Attendance PDF failed", e);
+        System.exit(1);
+        return;
+      }
+      System.exit(0);
+      return;
+    }
+
+    if (m.endsWith("_PDF") && (m.startsWith("SF") || m.equals("DEPED_PDF"))) {
+      try {
+        DepEdReportJob.run(config);
+      } catch (IllegalArgumentException e) {
+        LOG.error("DepEd PDF failed: {}", e.getMessage());
+        System.exit(2);
+        return;
+      } catch (Exception e) {
+        LOG.error("DepEd PDF failed", e);
         System.exit(1);
         return;
       }

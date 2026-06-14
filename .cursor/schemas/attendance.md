@@ -32,7 +32,7 @@ attendance_records: {
   id: string (uuid, primary key)
   sessionId: string // FK → attendance_sessions.id
   studentId: string // FK → students.id
-  status: string // "present"
+  status: string // present | absent | late | excused (DepEd codes)
   timestamp: number
 }
 ```
@@ -50,10 +50,27 @@ attendance_records: {
 ### attendance_records
 
 - One record per student per session (`UNIQUE(session_id, student_id)`).
-- `status` for MVP:
-  - Only **`present`**
-  - Absence = no record OR unchecked in UI
+- `status` values (GAP-088):
+  - **`present`**, **`absent`**, **`late`**, **`excused`**
+  - Legacy: absence = no record OR unchecked in UI (treated as absent)
 - Must reference valid session and student.
+
+### daily_attendance_records
+
+One coded mark per learner per school day — see [deped-forms.md](./deped-forms.md).
+
+```
+daily_attendance_records: {
+  id: string (uuid, primary key)
+  studentId: string
+  date: string // YYYY-MM-DD
+  status: string // present | absent | late | excused
+  classId: string
+  updatedAt: number (timestamp)
+}
+```
+
+**Unique:** `(student_id, date)`
 
 ---
 
@@ -124,4 +141,6 @@ Roster setup rules (do not duplicate the same children under both shifts): [core
 
 Do not implement yet:
 
-- Additional `status` values: **`absent`**, **`late`**.
+- Cutting class / on_leave status codes (optional v2).
+
+**DepEd daily register and SF2/SF4 exports** — shipped; see [deped-forms.md](./deped-forms.md).

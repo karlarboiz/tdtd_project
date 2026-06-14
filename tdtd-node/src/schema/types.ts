@@ -12,8 +12,17 @@ export type ClassShift = 'MRNG' | 'AFTNN'
 /** Stored gender code for students. */
 export type StudentGenderCode = 'M' | 'F' | 'O'
 
-/** MVP: only "present"; absence = no record. */
-export type AttendanceRecordStatus = 'present'
+/** DepEd attendance status codes (GAP-088). */
+export type AttendanceRecordStatus = 'present' | 'absent' | 'late' | 'excused'
+
+/** DepEd assessment bucket for grading (GAP-081). */
+export type AssessmentBucket = 'WW' | 'PT' | 'QA'
+
+/** Learner enrollment status. */
+export type LearnerStatus = 'NEW' | 'TRANSFEREE' | 'CONTINUING'
+
+/** Promotion decision for SF5/SF10. */
+export type PromotionStatus = 'PROMOTED' | 'CONDITIONAL' | 'RETAINED'
 
 /** Calendar date key: YYYY-MM-DD */
 export type IsoDateString = string
@@ -26,6 +35,9 @@ export interface ClassRow {
   id: string
   name: string
   shift: ClassShift
+  gradeLevel?: string
+  sectionName?: string
+  classAdviserName?: string
   createdAt: number
   updatedAt?: number
 }
@@ -41,14 +53,75 @@ export interface StudentRow {
   lastName: string
   birthDate: IsoDateString
   gender: StudentGenderCode
-  /** FK → ClassRow.id */
   classId: string
+  lrn?: string
+  learnerStatus?: LearnerStatus
+  houseNo?: string
+  street?: string
+  barangay?: string
+  cityMunicipality?: string
+  province?: string
+  fatherName?: string
+  motherName?: string
+  guardianName?: string
+  parentContact?: string
+  motherTongue?: string
+  religion?: string
+  is4ps?: boolean
+  isIp?: boolean
+  dateEnrolled?: IsoDateString
+  previousSchool?: string
+  lastGradeCompleted?: string
   createdAt: number
 }
 
-/**
- * attendance_sessions — one global session per date + period (no classId).
- */
+export interface SchoolSettingsRow {
+  id: string
+  schoolName: string
+  schoolId?: string
+  district?: string
+  division?: string
+  region?: string
+  schoolAddress?: string
+  schoolHeadName?: string
+  defaultSchoolYearId?: string
+  updatedAt: number
+}
+
+export interface DailyAttendanceRecordRow {
+  id: string
+  studentId: string
+  date: IsoDateString
+  status: AttendanceRecordStatus
+  classId: string
+  updatedAt: number
+}
+
+export interface ComputedSubjectGradeRow {
+  id: string
+  studentId: string
+  subjectId: string
+  classId: string
+  schoolYearId: string
+  quarter: number
+  transmutedGrade?: number
+  descriptor?: string
+  finalGrade?: number
+  manualOverride: boolean
+  computedAt: number
+}
+
+export interface EnrollmentHistoryRow {
+  id: string
+  studentId: string
+  schoolYearId: string
+  gradeLevel: string
+  sectionName?: string
+  schoolName: string
+  gradesSnapshotJson?: string
+  promotionStatus?: PromotionStatus
+  archivedAt: number
+}
 export interface AttendanceSessionRow {
   id: string
   date: IsoDateString
@@ -113,6 +186,8 @@ export interface ScoreEventRow {
   classId: string
   subjectId: string
   kind: ScoreEventKind
+  quarter?: number
+  assessmentBucket?: AssessmentBucket
   title: string
   date?: IsoDateString
   maxScore?: number
@@ -153,7 +228,7 @@ export interface ActivityLogRow {
 }
 
 /** Student Lab — attendance row in session list. */
-export type StudentLabAttendanceStatus = 'present' | 'absent'
+export type StudentLabAttendanceStatus = AttendanceRecordStatus | 'absent'
 
 export interface StudentLabAttendanceSessionRow {
   date: IsoDateString
@@ -201,7 +276,7 @@ export interface TeacherReminderRow {
 }
 
 /** DueList row shown to teachers (maps from teacher_reminders in v1). */
-export type DueItemKind = 'ATTENDANCE_DUE'
+export type DueItemKind = 'ATTENDANCE_DUE' | 'QUARTER_DEADLINE'
 
 export interface DueItem {
   id: string

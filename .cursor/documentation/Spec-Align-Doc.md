@@ -97,11 +97,13 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 
 | Spec item | Status | Evidence in TDTD |
 |-----------|--------|------------------|
-| One-click SF1, SF9, SF10 generation | **Not started** | Listed as future in [core.md](../schemas/core.md), [quiz.md](../schemas/quiz.md) |
-| Auto-fill report cards from encoded data | **Not started** | — |
-| Quarter-based grading automation | **Not started** | — |
-| Built-in DepEd grading logic (WW/PT/QA weights) | **Not started** | — |
-| Export-ready PDF/Excel (DepEd formats) | **Not started** | — |
+| One-click SF1, SF2, SF4, SF5, SF9, SF10 generation | **Shipped** | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md); batch jobs REP-004–REP-010; `GET /api/reports/*` |
+| Auto-fill report cards from encoded data | **Shipped** | GAP-085 — Reports page pre-fills from `computed_subject_grades` |
+| Quarter-based grading automation | **Shipped** | GAP-082 — [deped-grading.md](../schemas/deped-grading.md), grade computation API |
+| Built-in DepEd grading logic (WW/PT/QA weights) | **Shipped** | GAP-080–081 — `score_events.quarter`, `assessment_bucket`, transmutation |
+| Export-ready PDF/Excel (DepEd formats) | **Shipped** | [Report-Generation-Function-Doc.md](./Report-Generation-Function-Doc.md) REP-004–REP-010 |
+| LRN, address, parent info, school metadata | **Shipped** | GAP-087 — extended `students`, `school_settings`, [deped-forms.md](../schemas/deped-forms.md) |
+| DepEd attendance codes (absent/late/excused) | **Shipped** | GAP-088 — `daily_attendance_records` |
 
 ---
 

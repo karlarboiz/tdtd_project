@@ -20,6 +20,8 @@ score_events: {
   classId: string // FK → classes.id
   subjectId: string // FK → subjects.id
   kind: string // "QUIZ" | "EXAM" | "PARTICIPATION"
+  quarter?: number // 1–4 (DepEd quarter)
+  assessmentBucket?: string // "WW" | "PT" | "QA"
   title: string // e.g. "Quarter 2 Long Test"
   date?: string // "YYYY-MM-DD", optional
   maxScore?: number // optional ceiling for validation / UI
@@ -107,9 +109,34 @@ See `tdtd-node/src/db/migrate.ts`:
 
 ---
 
+---
+
+## computed_subject_grades
+
+DepEd quarter/final grades — see [deped-grading.md](./deped-grading.md).
+
+```
+computed_subject_grades: {
+  id: string (uuid, primary key)
+  studentId: string
+  subjectId: string
+  classId: string
+  schoolYearId: string
+  quarter: number // 1–4, or 0 for final
+  transmutedGrade?: number
+  descriptor?: string
+  finalGrade?: number
+  manualOverride?: boolean
+  computedAt: number (timestamp)
+}
+```
+
+---
+
 ## Future extensions
 
 Do not implement yet:
 
-- Weighted grading / term averages (built on `score_events` + `score_entries`).
-- DepEd report generation from normalized score history.
+- Conduct/values grades on report cards.
+
+**Weighted grading and DepEd report generation** — shipped; see [deped-grading.md](./deped-grading.md), [deped-forms.md](./deped-forms.md).

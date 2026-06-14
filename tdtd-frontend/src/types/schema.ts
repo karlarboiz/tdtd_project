@@ -10,6 +10,9 @@ export interface ClassRow {
   id: string
   name: string
   shift: ClassShift
+  gradeLevel?: string
+  sectionName?: string
+  classAdviserName?: string
   createdAt: number
   updatedAt?: number
 }
@@ -22,6 +25,24 @@ export interface StudentRow {
   birthDate: string
   gender: StudentGenderCode
   classId: string
+  lrn?: string
+  learnerStatus?: string
+  houseNo?: string
+  street?: string
+  barangay?: string
+  cityMunicipality?: string
+  province?: string
+  fatherName?: string
+  motherName?: string
+  guardianName?: string
+  parentContact?: string
+  motherTongue?: string
+  religion?: string
+  is4ps?: boolean
+  isIp?: boolean
+  dateEnrolled?: string
+  previousSchool?: string
+  lastGradeCompleted?: string
   createdAt: number
 }
 
@@ -32,6 +53,24 @@ export type StudentUpsertPayload = {
   lastName: string
   birthDate: string
   gender: string
+  lrn?: string
+  learnerStatus?: string
+  houseNo?: string
+  street?: string
+  barangay?: string
+  cityMunicipality?: string
+  province?: string
+  fatherName?: string
+  motherName?: string
+  guardianName?: string
+  parentContact?: string
+  motherTongue?: string
+  religion?: string
+  is4ps?: boolean
+  isIp?: boolean
+  dateEnrolled?: string
+  previousSchool?: string
+  lastGradeCompleted?: string
 }
 
 export interface AttendanceSessionRow {
