@@ -675,6 +675,24 @@ export function migrateDepEdTables(db: SqliteDatabase): void {
   if (!scoreCols.has('assessment_bucket')) {
     db.exec(`ALTER TABLE score_events ADD COLUMN assessment_bucket TEXT CHECK (assessment_bucket IN ('WW', 'PT', 'QA'))`)
   }
+  if (!scoreCols.has('subtype')) {
+    db.exec(`ALTER TABLE score_events ADD COLUMN subtype TEXT`)
+  }
+
+  const gradeCols = db
+    .prepare(`PRAGMA table_info(computed_subject_grades)`)
+    .all() as { name: string }[]
+  const gradeColNames = new Set(gradeCols.map((r) => r.name))
+  if (!gradeColNames.has('raw_score')) {
+    db.exec(`ALTER TABLE computed_subject_grades ADD COLUMN raw_score REAL`)
+  }
+
+  // Best-effort backfill for events created before quarter/bucket wiring (GAP-081).
+  db.exec(`
+    UPDATE score_events
+    SET quarter = 1, assessment_bucket = 'WW'
+    WHERE quarter IS NULL AND assessment_bucket IS NULL
+  `)
 
   migrateAttendanceStatusCodes(db)
 }

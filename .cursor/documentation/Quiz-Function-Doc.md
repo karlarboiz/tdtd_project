@@ -2,18 +2,41 @@
 
 **Quiz**, **exam**, and **participation** scoring via normalized events and per-student entries. UI labels this area “Scores”; storage uses `score_events` and `score_entries`.
 
-**Canonical schema:** [quiz.md](../schemas/quiz.md) · **Prerequisites:** [subjects.md](../schemas/subjects.md), [core.md](../schemas/core.md)
+**Canonical schema:** [quiz.md](../schemas/quiz.md) · **DepEd grading:** [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md) · **Prerequisites:** [subjects.md](../schemas/subjects.md), [core.md](../schemas/core.md)
 
 ## API overview
 
 | Area | Base path | Notes |
 |------|-----------|--------|
 | Class subjects | `/api/classes/:classId/subjects` | Required before creating events |
-| Score events | `/api/classes/:classId/score-events` | Optional `?subjectId=` filter |
+| Score events | `/api/classes/:classId/score-events` | Requires `quarter` (1–4); optional `subtype`, `assessmentBucket`; optional `?subjectId=` filter |
 | Event detail | `/api/score-events/:eventId` | GET single event |
 | Entries | `/api/score-events/:eventId/entries` | GET list; PUT bulk upsert |
 
 `kind` must be `QUIZ` | `EXAM` | `PARTICIPATION`. Creating an event requires an existing `class_subjects` row and active-year subject registration.
+
+---
+
+## Entry QUIZ-005 — Quarter and DepEd bucket on score event create (GAP-081)
+
+**Date:** 2026-06-18
+
+**Summary:** Score event creation requires a DepEd quarter (Q1–Q4) and persists assessment bucket (WW/PT/QA) derived from kind/subtype with optional teacher override.
+
+**Reason:** Quarter grade computation filters events by `quarter`; without it the compute path returned no rows. DepEd compliance requires WW/PT/QA classification on every assessment.
+
+**What changed:**
+- **Backend:** `CreateScoreEventInput` accepts `quarter`, `subtype`, `assessmentBucket`; `resolveAssessmentBucket()` maps kind+subtype; DAO/queries read/write DepEd columns.
+- **Frontend:** Scores create form — quarter select, optional bucket override; event list shows Q and bucket badges.
+- **Migration:** Backfill legacy events to `quarter=1`, `assessment_bucket=WW`.
+
+**Files involved:**
+- `tdtd-node/src/services/score.service.ts`, `dao/scoreEvent.dao.ts`, `queries/scoreEvent.queries.ts`, `lib/assessmentBucket.ts`
+- `tdtd-frontend/src/pages/Scores/Scores.tsx`, `api/scoreApi.ts`, `constants/TDTDConstants.ts`
+
+**Schemas involved:**
+- [quiz.md](../schemas/quiz.md) — `score_events.quarter`, `assessment_bucket`, `subtype`
+- [deped-grading.md](../schemas/deped-grading.md)
 
 ---
 

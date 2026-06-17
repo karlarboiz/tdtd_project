@@ -20,8 +20,9 @@ score_events: {
   classId: string // FK → classes.id
   subjectId: string // FK → subjects.id
   kind: string // "QUIZ" | "EXAM" | "PARTICIPATION"
-  quarter?: number // 1–4 (DepEd quarter)
+  quarter: number // 1–4 (DepEd quarter, required on create)
   assessmentBucket?: string // "WW" | "PT" | "QA"
+  subtype?: string // UI code: RZ, WZ, QZ, QE
   title: string // e.g. "Quarter 2 Long Test"
   date?: string // "YYYY-MM-DD", optional
   maxScore?: number // optional ceiling for validation / UI

@@ -14,6 +14,8 @@ import type { ClassSubjectListRow } from '../dao/classSubject.dao.js'
 import * as scoreEventDao from '../dao/scoreEvent.dao.js'
 import * as scoreEntryDao from '../dao/scoreEntry.dao.js'
 import { SCORE_EVENT_KIND_VALUES } from '../constants/TDTDConstants.js'
+import { isAssessmentBucket, resolveAssessmentBucket } from '../lib/assessmentBucket.js'
+import type { AssessmentBucket } from '../schema/types.js'
 import { assertSubjectRegisteredForActiveYear } from './schoolYear.service.js'
 import { assertClassExists } from './subject.service.js'
 import * as classDao from '../dao/class.dao.js'
@@ -138,6 +140,32 @@ export type CreateScoreEventInput = {
   title: string
   date?: unknown
   maxScore?: unknown
+  quarter?: unknown
+  subtype?: unknown
+  assessmentBucket?: unknown
+}
+
+function parseQuarter(raw: unknown): number {
+  const q = typeof raw === 'number' ? raw : Number(raw)
+  if (!Number.isInteger(q) || q < 1 || q > 4) {
+    throw new HttpError(400, 'quarter must be an integer from 1 to 4')
+  }
+  return q
+}
+
+function parseOptionalAssessmentBucket(raw: unknown): AssessmentBucket | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined
+  if (typeof raw !== 'string' || !isAssessmentBucket(raw.trim())) {
+    throw new HttpError(400, 'assessmentBucket must be WW, PT, or QA')
+  }
+  return raw.trim() as AssessmentBucket
+}
+
+function parseOptionalSubtype(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined
+  if (typeof raw !== 'string') throw new HttpError(400, 'subtype must be a string')
+  const s = raw.trim()
+  return s || undefined
 }
 
 export function createScoreEvent(
@@ -159,6 +187,10 @@ export function createScoreEvent(
   }
 
   const kind = parseScoreKind(typeof input.kind === 'string' ? input.kind : '')
+  const quarter = parseQuarter(input.quarter)
+  const subtype = parseOptionalSubtype(input.subtype)
+  const bucketOverride = parseOptionalAssessmentBucket(input.assessmentBucket)
+  const assessmentBucket = resolveAssessmentBucket(kind, subtype, bucketOverride)
   const title = typeof input.title === 'string' ? input.title.trim() : ''
   if (!title) throw new HttpError(400, 'title is required')
   const date = parseOptionalDate(input.date)
@@ -178,6 +210,9 @@ export function createScoreEvent(
     classId: cid,
     subjectId,
     kind,
+    quarter,
+    assessmentBucket,
+    subtype,
     title,
     date,
     maxScore,
