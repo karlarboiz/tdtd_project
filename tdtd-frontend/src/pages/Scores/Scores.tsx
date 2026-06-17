@@ -17,6 +17,10 @@ import {
 } from '../../api/scoreApi'
 import {
   SCORE_EVENT_KIND,
+  QUARTER_OPTIONS,
+  ASSESSMENT_BUCKET,
+  ASSESSMENT_BUCKET_LABELS,
+  type AssessmentBucketValue,
   type ScoreEventKindValue,
 } from '@/constants/TDTDConstants'
 import { ApiError } from '../../lib/http'
@@ -53,6 +57,8 @@ export function Scores() {
 
   const [kind, setKind] = useState<ScoreEventKindValue>(SCORE_EVENT_KIND.QUIZ)
   const [subtypeCode, setSubtypeCode] = useState('')
+  const [quarter, setQuarter] = useState(1)
+  const [assessmentBucket, setAssessmentBucket] = useState<AssessmentBucketValue | ''>('')
   const [subjectId, setSubjectId] = useState('')
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(todayYmd())
@@ -192,6 +198,9 @@ export function Scores() {
         title: trimmedTitle,
         date: date.trim() || undefined,
         maxScore: max,
+        quarter,
+        subtype: subtypeCode || undefined,
+        assessmentBucket: assessmentBucket || undefined,
       })
       navigate(`/scores/event/${created.id}`)
     } catch (err) {
@@ -289,6 +298,41 @@ export function Scores() {
                 </select>
               </>
             ) : null}
+
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-quarter">
+              Quarter
+            </label>
+            <select
+              id="scores-quarter"
+              className={`mt-2 py-3 ${formInputClasses()}`}
+              value={quarter}
+              onChange={(e) => setQuarter(Number(e.target.value))}
+            >
+              {QUARTER_OPTIONS.map((q) => (
+                <option key={q.value} value={q.value}>
+                  {q.label}
+                </option>
+              ))}
+            </select>
+
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-bucket">
+              Component bucket (optional override)
+            </label>
+            <select
+              id="scores-bucket"
+              className={`mt-2 py-3 ${formInputClasses()}`}
+              value={assessmentBucket}
+              onChange={(e) =>
+                setAssessmentBucket(e.target.value as AssessmentBucketValue | '')
+              }
+            >
+              <option value="">Auto from type</option>
+              {Object.values(ASSESSMENT_BUCKET).map((b) => (
+                <option key={b} value={b}>
+                  {ASSESSMENT_BUCKET_LABELS[b]}
+                </option>
+              ))}
+            </select>
 
             <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-subject">
               Subject
@@ -431,6 +475,22 @@ export function Scores() {
                           <span className="font-medium text-slate-600">
                             {formatScoreEventKindLabel(ev.kind)}
                           </span>
+                          {ev.quarter != null ? (
+                            <>
+                              {' · '}
+                              <span className="font-medium text-slate-600">
+                                Q{ev.quarter}
+                              </span>
+                            </>
+                          ) : null}
+                          {ev.assessmentBucket ? (
+                            <>
+                              {' · '}
+                              <span className="font-medium text-slate-600">
+                                {ev.assessmentBucket}
+                              </span>
+                            </>
+                          ) : null}
                           {' · '}
                           {subjectLabel}
                           {ev.date ? ` · ${ev.date}` : ''}

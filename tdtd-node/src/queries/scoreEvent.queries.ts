@@ -5,6 +5,9 @@ export const SCORE_EVENT_QUERIES = {
       class_id,
       subject_id,
       kind,
+      quarter,
+      assessment_bucket,
+      subtype,
       title,
       date,
       max_score,
@@ -20,6 +23,9 @@ export const SCORE_EVENT_QUERIES = {
       class_id,
       subject_id,
       kind,
+      quarter,
+      assessment_bucket,
+      subtype,
       title,
       date,
       max_score,
@@ -35,10 +41,12 @@ export const SCORE_EVENT_QUERIES = {
   `,
   insert: `
     INSERT INTO score_events (
-      id, class_id, subject_id, kind, title, date, max_score, created_at, updated_at
+      id, class_id, subject_id, kind, quarter, assessment_bucket, subtype,
+      title, date, max_score, created_at, updated_at
     )
     VALUES (
-      @id, @class_id, @subject_id, @kind, @title, @date, @max_score, @created_at, @updated_at
+      @id, @class_id, @subject_id, @kind, @quarter, @assessment_bucket, @subtype,
+      @title, @date, @max_score, @created_at, @updated_at
     )
   `,
 } as const

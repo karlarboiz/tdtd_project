@@ -104,6 +104,7 @@ export interface ComputedSubjectGradeRow {
   classId: string
   schoolYearId: string
   quarter: number
+  rawScore?: number
   transmutedGrade?: number
   descriptor?: string
   finalGrade?: number
@@ -188,6 +189,7 @@ export interface ScoreEventRow {
   kind: ScoreEventKind
   quarter?: number
   assessmentBucket?: AssessmentBucket
+  subtype?: string
   title: string
   date?: IsoDateString
   maxScore?: number

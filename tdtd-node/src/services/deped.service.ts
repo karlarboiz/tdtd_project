@@ -74,6 +74,7 @@ type GradeDbRow = {
   class_id: string
   school_year_id: string
   quarter: number
+  raw_score: number | null
   transmuted_grade: number | null
   descriptor: string | null
   final_grade: number | null
@@ -89,6 +90,7 @@ function mapGrade(r: GradeDbRow): ComputedSubjectGradeRow {
     classId: r.class_id,
     schoolYearId: r.school_year_id,
     quarter: r.quarter,
+    rawScore: r.raw_score ?? undefined,
     transmutedGrade: r.transmuted_grade ?? undefined,
     descriptor: r.descriptor ?? undefined,
     finalGrade: r.final_grade ?? undefined,
@@ -168,6 +170,7 @@ export function computeGradesForClassQuarter(
       classId,
       schoolYearId,
       quarter,
+      rawScore: raw,
       transmutedGrade: transmuted,
       descriptor,
       finalGrade: transmuted,
@@ -182,6 +185,7 @@ export function computeGradesForClassQuarter(
       class_id: row.classId,
       school_year_id: row.schoolYearId,
       quarter: row.quarter,
+      raw_score: row.rawScore,
       transmuted_grade: row.transmutedGrade,
       descriptor: row.descriptor,
       final_grade: row.finalGrade,
@@ -199,11 +203,13 @@ export function listGradesByClass(
   classId: string,
   schoolYearId: string,
   quarter?: number,
+  subjectId?: string,
 ): ComputedSubjectGradeRow[] {
   const rows = db.prepare(GRADE_QUERIES.listByClass).all({
     class_id: classId,
     school_year_id: schoolYearId,
     quarter: quarter ?? null,
+    subject_id: subjectId?.trim() || null,
   }) as GradeDbRow[]
   return rows.map(mapGrade)
 }

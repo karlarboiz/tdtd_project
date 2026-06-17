@@ -1,4 +1,5 @@
 import type {
+  AssessmentBucket,
   ClassSubjectRow,
   ScoreEntryRow,
   ScoreEventKind,
@@ -76,6 +77,9 @@ export function createScoreEvent(
     title: string
     date?: string
     maxScore?: number
+    quarter: number
+    subtype?: string
+    assessmentBucket?: AssessmentBucket
   },
 ): Promise<ScoreEventRow> {
   return apiJson<ScoreEventRow>(

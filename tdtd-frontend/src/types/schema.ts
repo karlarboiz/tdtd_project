@@ -80,6 +80,8 @@ export interface AttendanceSessionRow {
   createdAt: number
 }
 
+export type AssessmentBucket = 'WW' | 'PT' | 'QA'
+
 export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
 
 export interface SchoolYearRow {
@@ -124,6 +126,9 @@ export interface ScoreEventRow {
   classId: string
   subjectId: string
   kind: ScoreEventKind
+  quarter?: number
+  assessmentBucket?: AssessmentBucket
+  subtype?: string
   title: string
   date?: string
   maxScore?: number
