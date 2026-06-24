@@ -7,7 +7,6 @@ import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listClasses } from '../../api/classesApi'
 import { listStudentsByClass } from '../../api/studentsApi'
-import { formatClassShiftLabel } from '../../lib/classShift'
 import { studentLabPath } from '../../lib/studentLabRoute'
 import { formatStudentName } from '../../lib/studentDisplay'
 import type { ClassRow, StudentRow } from '@/types/schema'
@@ -56,8 +55,6 @@ export function StudentLabPicker() {
     }
   }, [classId])
 
-  const selectedClass = classes.find((c) => c.id === classId)
-
   return (
     <PageContainer variant="wide" className="space-y-6">
       <PageContentReveal className="space-y-6">
@@ -102,16 +99,10 @@ export function StudentLabPicker() {
           >
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} ({formatClassShiftLabel(c.shift)})
+                {c.name}
               </option>
             ))}
           </select>
-
-          {selectedClass ? (
-            <p className="mt-2 text-xs text-slate-500">
-              {formatClassShiftLabel(selectedClass.shift)}
-            </p>
-          ) : null}
 
           <ContentReveal revealKey={classId}>
           <h2 className="mt-6 font-semibold text-slate-900">
