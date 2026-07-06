@@ -3,12 +3,12 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageContainer } from '@/layouts/PageContainer'
 import * as authApi from '@/api/authApi'
 import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/Button/Button'
 import {
   bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 
 export function ResetPassword() {
@@ -107,13 +107,9 @@ export function ResetPassword() {
           />
         </div>
         {error ? <p className={errorAlertClass}>{error}</p> : null}
-        <button
-          type="submit"
-          disabled={submitting}
-          className={`${primaryButtonClass} px-4 py-3`}
-        >
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Saving…' : 'Reset password'}
-        </button>
+        </Button>
       </form>
     </PageContainer>
   )

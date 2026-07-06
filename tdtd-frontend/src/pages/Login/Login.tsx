@@ -1,14 +1,15 @@
-import { FormEvent, useState } from 'react'
+import { type FormEvent, useState } from 'react'
+
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/Button/Button'
 import {
   bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 
 export function Login() {
@@ -98,13 +99,9 @@ export function Login() {
               {error}
             </p>
           ) : null}
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`w-full ${primaryButtonClass} px-4 py-3`}
-          >
+          <Button type="submit" fullWidth disabled={submitting}>
             {submitting ? 'Signing in…' : 'Sign in'}
-          </button>
+          </Button>
         </form>
 
         <p

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AppBrand } from '@/components/AppBrand/AppBrand'
+import { Button } from '@/components/Button/Button'
 import { InactivityWarningModal } from '@/components/InactivityWarningModal/InactivityWarningModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { useInactivityTimeout } from '@/hooks/useInactivityTimeout'
@@ -49,8 +50,6 @@ function SignOutIcon() {
   )
 }
 
-const iconButtonClass =
-  'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100 touch-manipulation'
 
 function NavMenuIcon({ open }: { open: boolean }) {
   if (open) {
@@ -198,25 +197,25 @@ export function AppShell() {
               <NavLink to="/recents" className={recentsLinkClass}>
                 Recents
               </NavLink>
-              <button
+              <Button
                 type="button"
-                className={iconButtonClass}
+                variant="ghost"
                 aria-label={signOutLabel}
                 title={signOutLabel}
                 onClick={handleSignOut}
               >
                 <SignOutIcon />
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={iconButtonClass}
+                variant="ghost"
                 aria-expanded={navOpen}
                 aria-controls="main-nav"
                 aria-label={navOpen ? 'Close menu' : 'Open menu'}
                 onClick={() => setNavOpen((open) => !open)}
               >
                 <NavMenuIcon open={navOpen} />
-              </button>
+              </Button>
             </div>
           </div>
 

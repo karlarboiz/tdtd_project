@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom'
+import { Button } from '@/components/Button/Button'
 import { CardSkeleton } from '@/components/LoadingSkeleton/CardSkeleton'
-import { primaryButtonClass, secondaryLinkTileClass } from '@/lib/uiClasses'
 import type { DueItem } from '@/types/schema'
 
 type TodayAttendanceCTAProps = {
@@ -20,18 +19,15 @@ export function TodayAttendanceCTA({
 
   if (firstDue) {
     return (
-      <Link
-        to={firstDue.actionPath}
-        className={`block rounded-2xl px-5 py-4 text-center text-lg ${primaryButtonClass}`}
-      >
+      <Button to={firstDue.actionPath} size="lg" fullWidth>
         {firstDue.title}
-      </Link>
+      </Button>
     )
   }
 
   return (
-    <Link to="/attendance" className={secondaryLinkTileClass}>
+    <Button to="/attendance" variant="tile">
       View attendance calendar
-    </Link>
+    </Button>
   )
 }
