@@ -12,11 +12,11 @@ import { DAILY_ATTENDANCE_QUERIES } from '../queries/dailyAttendance.queries.js'
 import { GRADE_QUERIES } from '../queries/grade.queries.js'
 import { ENROLLMENT_HISTORY_QUERIES } from '../queries/enrollmentHistory.queries.js'
 import {
-  defaultWeights,
   descriptorForGrade,
   promotionStatusForGa,
   transmuteRawPercent,
 } from '../lib/transmutation.js'
+import { resolveComponentWeights } from '../lib/gradingWeights.js'
 import * as classDao from '../dao/class.dao.js'
 import * as schoolYearDao from '../dao/schoolYear.dao.js'
 
@@ -104,7 +104,7 @@ export function computeGradesForClassQuarter(
   quarter: number,
 ): ComputedSubjectGradeRow[] {
   const classRow = classDao.getClassById(db, classId)
-  const weights = defaultWeights(classRow?.gradeLevel ?? '6')
+  const weights = resolveComponentWeights(db, classRow?.gradeLevel ?? '6')
 
   const scoreRows = db.prepare(GRADE_QUERIES.scoresForComputation).all({
     class_id: classId,

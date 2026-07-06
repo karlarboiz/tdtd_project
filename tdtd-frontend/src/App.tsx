@@ -19,6 +19,7 @@ import { Recents } from './pages/Recents/Recents'
 import { StudentLab } from './pages/StudentLab/StudentLab'
 import { StudentLabPicker } from './pages/StudentLabPicker/StudentLabPicker'
 import { DueListPage } from './pages/DueList/DueListPage'
+import { ComponentWeights } from './pages/ComponentWeights/ComponentWeights'
 import { Reports } from './pages/Reports/Reports'
 
 export default function App() {
@@ -61,6 +62,7 @@ export default function App() {
             <Route path="/recents" element={<Recents />} />
             <Route path="/student-lab" element={<StudentLabPicker />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/deped/component-weights" element={<ComponentWeights />} />
             <Route path="/student-lab/:studentId" element={<StudentLab />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -676,7 +676,63 @@ export function migrateDepEdTables(db: SqliteDatabase): void {
     db.exec(`ALTER TABLE score_events ADD COLUMN assessment_bucket TEXT CHECK (assessment_bucket IN ('WW', 'PT', 'QA'))`)
   }
 
+  migrateGradingSystems(db)
   migrateAttendanceStatusCodes(db)
+}
+
+/** Grading system profiles + WW/PT/QA component weights (GAP-103). */
+function migrateGradingSystems(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS grading_systems (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 0 CHECK (is_active IN (0, 1)),
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS grading_component_weights (
+      id TEXT PRIMARY KEY,
+      grading_system_id TEXT NOT NULL,
+      grade_band_min INTEGER NOT NULL,
+      grade_band_max INTEGER NOT NULL,
+      ww_weight REAL NOT NULL,
+      pt_weight REAL NOT NULL,
+      qa_weight REAL NOT NULL,
+      FOREIGN KEY (grading_system_id) REFERENCES grading_systems(id) ON DELETE CASCADE,
+      UNIQUE (grading_system_id, grade_band_min, grade_band_max)
+    );
+    CREATE INDEX IF NOT EXISTS idx_grading_weights_system
+      ON grading_component_weights(grading_system_id);
+  `)
+
+  const count = db
+    .prepare(`SELECT COUNT(*) AS c FROM grading_systems`)
+    .get() as { c: number }
+  if (count.c > 0) return
+
+  const systemId = randomUUID()
+  const now = Date.now()
+  db.prepare(
+    `INSERT INTO grading_systems (id, name, is_active, created_at, updated_at)
+     VALUES (?, ?, 1, ?, ?)`,
+  ).run(systemId, 'DepEd K–12 (Default)', now, now)
+
+  const insertWeight = db.prepare(
+    `INSERT INTO grading_component_weights (
+      id, grading_system_id, grade_band_min, grade_band_max,
+      ww_weight, pt_weight, qa_weight
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  )
+
+  const defaults: [number, number, number, number, number][] = [
+    [1, 6, 0.3, 0.5, 0.2],
+    [7, 10, 0.4, 0.4, 0.2],
+    [11, 12, 0.25, 0.5, 0.25],
+  ]
+  for (const [min, max, ww, pt, qa] of defaults) {
+    insertWeight.run(randomUUID(), systemId, min, max, ww, pt, qa)
+  }
 }
 
 /** Allow absent/late/excused on attendance_records (rebuild CHECK). */

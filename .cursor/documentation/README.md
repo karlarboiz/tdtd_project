@@ -29,6 +29,11 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [Spec-Align-Doc.md](./Spec-Align-Doc.md) | Product spec checklist vs shipped features; gap map and priority differentiators |
 | [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) | Prioritized `GAP-###` backlog mapped to existing plan docs and Spec-Align sections |
 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | DepEd official forms (SF1, SF2, SF4, SF5, SF9, SF10): enrollment, attendance codes, grading, PDF/Excel export |
+<<<<<<< Updated upstream
+=======
+| [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md) | DepEd K–12 grading pipeline: WW/PT/QA, transmutation, quarter grades (GAP-080–082) |
+| [Components-Weights-Function-Doc.md](./Components-Weights-Function-Doc.md) | Configurable WW/PT/QA weights per grade band; grading system profiles (GAP-103) |
+>>>>>>> Stashed changes
 
 ## Entry format
 
