@@ -23,7 +23,11 @@ Stored on `score_events.quarter` (1–4) and used when computing `computed_subje
 
 ## Assessment buckets (WW / PT / QA)
 
+<<<<<<< Updated upstream
 DepEd K–12 component weights (defaults; may vary by grade level):
+=======
+DepEd K–12 component weights (defaults; **configurable** — GAP-103 shipped; see [Components-Weights-Function-Doc.md](../documentation/Components-Weights-Function-Doc.md)):
+>>>>>>> Stashed changes
 
 | Grade band | WW | PT | QA |
 |------------|----|----|-----|
@@ -42,6 +46,30 @@ DepEd K–12 component weights (defaults; may vary by grade level):
 | EXAM (quarterly) | QA |
 
 Teachers set `assessment_bucket` explicitly: **`WW` | `PT` | `QA`**.
+
+### Grading system profiles (GAP-103)
+
+```
+grading_systems: {
+  id: string (uuid)
+  name: string
+  isActive: boolean
+  createdAt: number
+  updatedAt: number
+}
+
+grading_component_weights: {
+  id: string (uuid)
+  gradingSystemId: string
+  gradeBandMin: number   // 1, 7, 11
+  gradeBandMax: number   // 6, 10, 12
+  wwWeight: number     // fraction 0–1
+  ptWeight: number
+  qaWeight: number
+}
+```
+
+Exactly one `grading_systems` row may be active. `computeGradesForClassQuarter` reads weights from the active system via `resolveComponentWeights()`.
 
 ---
 
@@ -124,6 +152,14 @@ computed_subject_grades: {
 
 ## Future extensions
 
+<<<<<<< Updated upstream
+=======
+- `school_year_quarters` calendar config (GAP-100)
+- Final grade row (`quarter = 0`) and class rank (GAP-101)
+- Manual grade override API (GAP-102)
+- ~~Configurable WW/PT/QA weights (GAP-103)~~ — shipped ([Components-Weights-Function-Doc.md](../documentation/Components-Weights-Function-Doc.md))
+- Performance exam subtype for PT (GAP-104)
+>>>>>>> Stashed changes
 - Conduct/values grades (SF9 section)
 - Per-subject transmutation overrides
 - SHS strand-specific weights (Grades 11–12)

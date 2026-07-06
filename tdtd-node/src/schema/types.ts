@@ -88,6 +88,38 @@ export interface SchoolSettingsRow {
   updatedAt: number
 }
 
+/** Grading system profile — WW/PT/QA weights per grade band (GAP-103). */
+export interface GradingSystemRow {
+  id: string
+  name: string
+  isActive: boolean
+  createdAt: number
+  updatedAt: number
+}
+
+export interface GradingComponentWeightRow {
+  id: string
+  gradingSystemId: string
+  gradeBandMin: number
+  gradeBandMax: number
+  wwWeight: number
+  ptWeight: number
+  qaWeight: number
+}
+
+/** API payload: weights as display percents (0–100). */
+export interface GradingWeightBandInput {
+  gradeBandMin: number
+  gradeBandMax: number
+  ww: number
+  pt: number
+  qa: number
+}
+
+export interface GradingWeightBandDisplay extends GradingWeightBandInput {
+  label: string
+}
+
 export interface DailyAttendanceRecordRow {
   id: string
   studentId: string
