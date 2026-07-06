@@ -23,9 +23,54 @@ Component-Specific Design Guidelines
 Each component has specific design guidelines that must be followed:
 
 Buttons:
-Use Primary (Indigo) for primary actions
-Use Secondary (Teal) for secondary actions
-Avoid using Accent (Coral) unless absolutely necessary
+Use the shared `<Button>` component (`tdtd-frontend/src/components/Button/Button.tsx`) for all standard actions, form submits, and router-link CTAs. Do not hand-roll `primaryButtonClass` / `secondaryButtonClass` on raw `<button>` or `<Link>` elements unless documented below.
+
+Color roles:
+- **Primary (Indigo)** — main action (`variant="primary"`)
+- **Secondary (Teal)** — cancel, alternate, or lower-emphasis action (`variant="secondary"`)
+- **Accent (Coral)** — not for buttons; reserved for errors and high-emphasis warnings
+
+### `<Button>` API
+
+| Prop | Type | Default | Purpose |
+|------|------|---------|---------|
+| `variant` | `'primary' \| 'secondary' \| 'tile' \| 'ghost'` | `'primary'` | Visual style |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Padding and typography |
+| `fullWidth` | `boolean` | `false` | Full-width form submits (`w-full`) |
+| `to` | `string` | — | Renders `Link` instead of `<button>` |
+| `className` | `string` | — | Layout only (`mt-4`, `shrink-0`, etc.) |
+| `type` | `'button' \| 'submit'` | `'button'` | Native button type (ignored when `to` is set) |
+
+Variant guide:
+- **`primary`** — Save, Submit, Activate, and other main CTAs
+- **`secondary`** — Cancel, Reset, Download sample, and alternate actions
+- **`tile`** — Large secondary navigation tile (e.g. Home attendance calendar link)
+- **`ghost`** — Icon and toolbar controls (hamburger, close) with no fill or border
+
+Size guide:
+- **`sm`** — Compact rows, modals, table action columns
+- **`md`** — Default for forms and dialogs
+- **`lg`** — Prominent page CTAs (score save, attendance submit)
+
+Examples:
+
+```tsx
+import { Button } from '@/components/Button/Button'
+
+<Button type="submit" fullWidth>Sign in</Button>
+<Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
+<Button to="/attendance" variant="tile">View attendance calendar</Button>
+<Button variant="ghost" aria-label="Open menu">{icon}</Button>
+```
+
+Do **not** use `<Button>` for:
+- Segmented / toggle groups (e.g. AM/PM picker, date-range tabs)
+- Selection cards with rich multi-line content (e.g. report form picker)
+- Modal backdrop hit-targets (full-screen transparent overlay)
+- Contextual colored chips (e.g. due-list amber actions)
+- File-input `file:` pseudo styling
+
+For those patterns, use purpose-built markup and document non-obvious behavior in `.cursor/documentation/`.
 Backgrounds and Textures:
 Use Neutral (Cool Gray) as the default background color
 Use Primary (Indigo) or Secondary (Teal) for backgrounds that require attention
@@ -40,7 +85,7 @@ Color Contrast: Ensure sufficient color contrast between UI elements and their b
 Font Size and Line Height: Ensure all text is legible, with sufficient line height and font size.
 
 Form labels and shared classes
-Use the `neutral-label` theme token for form labels (`text-neutral-label`). Reuse helpers in `tdtd-frontend/src/lib/uiClasses.ts` for inputs, buttons, and error text so pages stay consistent.
+Use the `neutral-label` theme token for form labels (`text-neutral-label`). Use `<Button>` for actions. Reuse helpers in `tdtd-frontend/src/lib/uiClasses.ts` for inputs, labels, and error text so pages stay consistent.
 
 Layout (desktop)
 The app uses a shared shell (`AppShell` in `tdtd-frontend`) with a persistent **top** bar: logo (`AppBrand`), **Recents** link, and a hamburger that toggles primary routes (Home, Attendance, Classes & students, Subjects, Scores, Student Lab). See [App-Shell-Function-Doc.md](../documentation/App-Shell-Function-Doc.md). Individual screens may still use inline back links where helpful. Page content lives in the shell main region, capped at a comfortable reading width (`max-w-7xl` with horizontal padding), not a phone-width root. Heavier pages use `lg:` two-column grids (e.g. attendance session, classes); mobile remains a single column unless a specific breakpoint is documented otherwise.

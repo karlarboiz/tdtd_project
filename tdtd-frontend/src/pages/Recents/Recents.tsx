@@ -8,7 +8,8 @@ import { listRecents } from '../../api/recentsApi'
 import { activityLogHref } from '../../lib/activityLinks'
 import { formatRecordedAt, toYMD } from '../../lib/dates'
 import { ApiError } from '../../lib/http'
-import { errorAlertClass, secondaryButtonClass } from '@/lib/uiClasses'
+import { Button } from '@/components/Button/Button'
+import { errorAlertClass } from '@/lib/uiClasses'
 import type { ActivityLogRow } from '@/types/schema'
 
 type DayGroup = {
@@ -98,14 +99,16 @@ export function Recents() {
             saving attendance, registering students, recording scores, and more.
           </p>
         </div>
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
+          className="shrink-0"
           disabled={loading || refreshing}
           onClick={() => void load({ silent: true })}
-          className={`inline-flex min-h-11 shrink-0 items-center justify-center px-4 py-2 text-sm ${secondaryButtonClass}`}
         >
           {refreshing ? 'Refreshing…' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       {error ? (

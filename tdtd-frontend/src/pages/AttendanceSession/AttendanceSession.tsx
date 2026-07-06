@@ -24,11 +24,11 @@ import type {
   StudentRow,
 } from '@/types/schema'
 import { formatLongDate, isWeekendYmd, parseYMD } from '../../lib/dates'
+import { Button } from '@/components/Button/Button'
 import {
   formInputClasses,
   formLabelClass,
   formLabelInlineClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 import {
   getCurrentPeriod,
@@ -306,13 +306,9 @@ export function AttendanceSession() {
     return (
       <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
         <p className="text-slate-700">Invalid date in URL.</p>
-        <button
-          type="button"
-          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-          onClick={() => navigate('/attendance')}
-        >
+        <Button type="button" className="mt-4" onClick={() => navigate('/attendance')}>
           Choose a date
-        </button>
+        </Button>
       </div>
     )
   }
@@ -322,13 +318,9 @@ export function AttendanceSession() {
       <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
         <p className="text-sm font-medium text-slate-500">{formatLongDate(dateYmd)}</p>
         <p className="mt-2 text-slate-700">Attendance is not taken on weekends.</p>
-        <button
-          type="button"
-          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-          onClick={() => navigate('/attendance')}
-        >
+        <Button type="button" className="mt-4" onClick={() => navigate('/attendance')}>
           Choose a date
-        </button>
+        </Button>
       </div>
     )
   }
@@ -353,13 +345,9 @@ export function AttendanceSession() {
         <p className="mt-2 text-slate-700">
           Attendance is not taken on {holidayName}.
         </p>
-        <button
-          type="button"
-          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-          onClick={() => navigate('/attendance')}
-        >
+        <Button type="button" className="mt-4" onClick={() => navigate('/attendance')}>
           Choose a date
-        </button>
+        </Button>
       </div>
     )
   }
@@ -576,16 +564,18 @@ export function AttendanceSession() {
                 </ul>
               )}
 
-              <button
+              <Button
                 type="button"
+                size="lg"
+                fullWidth
+                className="mt-6"
                 onClick={() => void handleSave()}
                 disabled={
                   saving || !classId || students.length === 0 || loadingClass
                 }
-                className={`mt-6 w-full rounded-xl py-3 text-lg ${primaryButtonClass}`}
               >
                 {saving ? 'Saving…' : 'Save attendance'}
-              </button>
+              </Button>
               {saveMsg ? (
                 <p
                   className={`mt-3 text-center text-sm font-medium ${

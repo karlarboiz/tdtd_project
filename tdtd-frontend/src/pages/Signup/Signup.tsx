@@ -3,12 +3,12 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/Button/Button'
 import {
   bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 
 export function Signup() {
@@ -114,13 +114,9 @@ export function Signup() {
               {error}
             </p>
           ) : null}
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`w-full ${primaryButtonClass} px-4 py-3`}
-          >
+          <Button type="submit" fullWidth disabled={submitting}>
             {submitting ? 'Creating account…' : 'Create account'}
-          </button>
+          </Button>
         </form>
 
         <p

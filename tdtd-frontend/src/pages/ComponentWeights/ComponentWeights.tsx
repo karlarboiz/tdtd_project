@@ -14,13 +14,12 @@ import { FormPanelSkeleton } from '@/components/LoadingSkeleton/FormPanelSkeleto
 import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { ApiError } from '@/lib/http'
+import { Button } from '@/components/Button/Button'
 import {
   bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
-  secondaryButtonClass,
 } from '@/lib/uiClasses'
 
 type EditableBand = Omit<GradingWeightBand, 'ww' | 'pt' | 'qa'> & {
@@ -268,13 +267,13 @@ export function ComponentWeights() {
                 placeholder="e.g. DepEd Memo 2026"
               />
             </div>
-            <button
+            <Button
               type="submit"
-              className={secondaryButtonClass}
+              variant="secondary"
               disabled={createBusy || !createName.trim()}
             >
               {createBusy ? 'Creating…' : 'Create from defaults'}
-            </button>
+            </Button>
           </form>
 
           <div className="mt-4 overflow-x-auto">
@@ -307,21 +306,20 @@ export function ComponentWeights() {
                     </td>
                     <td className="py-3">
                       <div className="flex flex-wrap gap-2">
-                        <button
+                        <Button
                           type="button"
-                          className={secondaryButtonClass}
+                          variant="secondary"
                           onClick={() => void onSelectSystem(sys.id)}
                         >
                           Edit weights
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className={primaryButtonClass}
                           disabled={sys.isActive || activateBusy === sys.id}
                           onClick={() => void onActivate(sys.id)}
                         >
                           {activateBusy === sys.id ? 'Activating…' : 'Activate'}
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -419,21 +417,20 @@ export function ComponentWeights() {
                 ) : null}
 
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <button
+                  <Button
                     type="button"
-                    className={primaryButtonClass}
                     disabled={!canSave}
                     onClick={() => void onSave()}
                   >
                     {saveBusy ? 'Saving…' : 'Save weights'}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className={secondaryButtonClass}
+                    variant="secondary"
                     onClick={onResetDefaults}
                   >
                     Reset to DepEd defaults
-                  </button>
+                  </Button>
                 </div>
               </>
             )}

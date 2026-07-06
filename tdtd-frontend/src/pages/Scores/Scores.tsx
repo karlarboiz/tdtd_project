@@ -25,11 +25,12 @@ import {
   formatScoreEventKindLabel,
   subtypeOptionsForKind,
 } from '../../lib/scoreLabels'
+import { Button } from '@/components/Button/Button'
 import {
+  bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 import type { ClassRow, SchoolYearSubjectRow, ScoreEventRow } from '@/types/schema'
 
@@ -223,12 +224,9 @@ export function Scores() {
           <p className="text-slate-700">
             Register a class before recording scores.
           </p>
-          <Link
-            to="/classes"
-            className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
-          >
+          <Button to="/classes" className="mt-4">
             Classes &amp; Students
-          </Link>
+          </Button>
         </section>
       ) : (
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
@@ -383,13 +381,15 @@ export function Scores() {
               </p>
             ) : null}
 
-            <button
+            <Button
               type="submit"
+              size="lg"
+              fullWidth
+              className="mt-6"
               disabled={busy || !classId || !subjectId}
-              className={`mt-6 w-full rounded-2xl px-4 py-4 ${primaryButtonClass}`}
             >
               {busy ? 'Creating…' : 'Create & enter scores'}
-            </button>
+            </Button>
           </form>
           </div>
 
