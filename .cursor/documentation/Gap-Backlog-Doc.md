@@ -79,7 +79,7 @@ Target: **faster than Excel** for daily attendance and score entry on the curren
 | GAP-012 | Score sheet auto-save in edit mode (debounced `PUT` entries) | §1 | [Quiz-Function-Doc.md](./Quiz-Function-Doc.md); [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) | — | Instant auto-save |
 | GAP-013 | Keyboard-first score entry (Enter advances row; optional Tab column) | §1 | **TBD epic** — [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) | GAP-012 optional | Keyboard-first input |
 | GAP-014 | Paste column of scores from clipboard (map to roster order) | §1, §7 | **TBD epic** — reuse patterns from [`studentImportParse.ts`](../../tdtd-frontend/src/lib/studentImportParse.ts) | — | Paste-from-Excel for scores |
-| GAP-015 | Streamline attendance: skip class picker when only one class for period | §1 | [Attendance-Function-Doc.md](./Attendance-Function-Doc.md); partial auto-pick in [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) | — | One-tap attendance (partial) |
+| ~~GAP-015~~ | ~~Streamline attendance: skip class picker when only one class for period~~ | §1 | Shipped — [Attendance-Function-Doc.md](./Attendance-Function-Doc.md) ATT-009 | — | One-tap attendance (partial) |
 | GAP-016 | Reduce school-year setup friction (sensible defaults on first login wizard) | §2 | [Subject-Function-Doc.md](./Subject-Function-Doc.md); [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 0 offline scope (defer SY registration offline) | — | Zero setup |
 
 **Suggested P1 sprint order:** GAP-015 → GAP-011 → GAP-010 → GAP-012 → GAP-013 → GAP-014 → GAP-016
@@ -265,7 +265,7 @@ Focus: **Smart** (rules) then **DepEd**.
 | GAP-012 | P1 | Score auto-save | §1 | Quiz-Function-Doc |
 | GAP-013 | P1 | Keyboard-first scores | §1 | TBD epic |
 | GAP-014 | P1 | Paste scores from clipboard | §1, §7 | TBD epic |
-| GAP-015 | P1 | Skip single-class picker | §1 | Attendance-Function-Doc |
+| ~~GAP-015~~ | P1 | ~~Skip single-class picker~~ | §1 | Shipped — Attendance-Function-Doc ATT-009 |
 | GAP-016 | P1 | First-login setup wizard | §2 | Subject-Function-Doc |
 | GAP-020 | P2 | DueList: scores due | §10 | Due-List-Function-Doc |
 | GAP-021 | P2 | DueList: setup due | §2, §10 | Due-List-Function-Doc |

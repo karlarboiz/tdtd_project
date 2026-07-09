@@ -83,7 +83,39 @@ On the attendance session screen, class names are shown **without** a shift suff
 | Class list (AM and PM) | Same grade names in both periods | `listClassesForAttendancePeriod` — prefers shift matching the period (`MRNG` for AM, `AFTNN` for PM); if a grade has only one section registered, it appears in both periods |
 | Empty-state / helper copy | May still mention MRNG/AFTNN | When no classes exist at all — unchanged |
 
+### Class auto-pick
+
+When the session period has **exactly one class**, the Class dropdown is **pre-selected** and the roster loads automatically — no manual pick required. Helper copy: *"Only one class for this period — roster loaded automatically."*
+
+When **multiple classes** exist for the period, the teacher chooses from the dropdown as before. If attendance is already saved and all present students belong to **one** class, that class is auto-selected (same inference as before ATT-009).
+
+**Priority:** (1) preserve valid manual selection → (2) single class for period → (3) infer from saved present roster.
+
+**Implementation:** [`resolveAttendanceClassId`](../../tdtd-frontend/src/lib/attendanceAutoPick.ts) in [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx).
+
 **Other pages** (Classes, Scores, Register Students, Student Lab) still use `formatClassShiftLabel` with `{name} · {shift}` where morning and afternoon classes appear together.
+
+---
+
+## Entry ATT-009 — Single-class auto-pick (GAP-015)
+
+**Date:** 2026-07-10
+
+**Summary:** Auto-select the only class for the current AM/PM period; dropdown stays visible but pre-filled; roster loads without manual pick. Consolidates with saved-roster class inference.
+
+**Reason:** GAP-015 / one-tap attendance for single-class teachers — removes an extra step before marking absentees.
+
+**What changed:**
+- **`resolveAttendanceClassId`:** Priority rules — valid selection preserved, then single-class auto-pick, then saved-roster inference.
+- **`AttendanceSession`:** Consolidated auto-pick effect; single-class helper copy; reset auto-pick ref when registration adds a second class for the period.
+
+**Files involved:**
+- `tdtd-frontend/src/lib/attendanceAutoPick.ts`
+- `tdtd-frontend/src/lib/attendanceAutoPick.test.ts`
+- `tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx`
+
+**Schemas involved:**
+- None (frontend UX only)
 
 ---
 
