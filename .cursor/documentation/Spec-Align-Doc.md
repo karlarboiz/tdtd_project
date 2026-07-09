@@ -46,7 +46,7 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 | Bulk edit multiple students | **Not started** | Bulk **import** only via `POST /api/students/bulk` — [`Classes.tsx`](../../tdtd-frontend/src/pages/Classes/Classes.tsx), [`RegisterStudentsModal.tsx`](../../tdtd-frontend/src/components/RegisterStudentsModal/RegisterStudentsModal.tsx) |
 | Keyboard-first input (type → Enter → next) | **Not started** | No score or attendance keyboard navigation flow |
 | Paste-from-Excel for scores | **Not started** | Excel import exists for **students** and **subjects** only |
-| Instant auto-save (no submit buttons) | **Not started** | Explicit save on attendance and scores — [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx), [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) |
+| Instant auto-save (no submit buttons) | **Partial** | Attendance: debounced auto-save on [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) (ATT-008). Scores still explicit save on [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) until GAP-012. |
 
 **Partial wins:** [`Home.tsx`](../../tdtd-frontend/src/pages/Home/Home.tsx) **TodayAttendanceCTA** deep-links to today’s session; attendance checkboxes use `touch-manipulation`; inline roster setup from the attendance screen.
 

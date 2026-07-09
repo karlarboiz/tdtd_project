@@ -74,7 +74,7 @@ Target: **faster than Excel** for daily attendance and score entry on the curren
 
 | ID | Title | Spec § | Source doc | Depends | Closes |
 |----|-------|--------|------------|---------|--------|
-| GAP-010 | Attendance auto-save (debounced save on toggle; remove Save button or keep as fallback) | §1 | **TBD epic** — track here; touches [Attendance-Function-Doc.md](./Attendance-Function-Doc.md), [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) | — | Instant auto-save |
+| ~~GAP-010~~ | ~~Attendance auto-save (debounced save on toggle; Save button removed)~~ | §1 | Shipped — [Attendance-Function-Doc.md](./Attendance-Function-Doc.md) ATT-008 | — | Instant auto-save (attendance) |
 | GAP-011 | Default “all present” on class load (invert to uncheck absentees) | §1 | **TBD epic** — aligns with “mark all present except…” | GAP-010 optional | “Mark all present except…” |
 | GAP-012 | Score sheet auto-save in edit mode (debounced `PUT` entries) | §1 | [Quiz-Function-Doc.md](./Quiz-Function-Doc.md); [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) | — | Instant auto-save |
 | GAP-013 | Keyboard-first score entry (Enter advances row; optional Tab column) | §1 | **TBD epic** — [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) | GAP-012 optional | Keyboard-first input |
@@ -260,7 +260,7 @@ Focus: **Smart** (rules) then **DepEd**.
 | GAP-004 | P0 | Production CORS + env matrix | §12 | Mobile Phase 1 |
 | GAP-005 | P0 | Mobile secure token storage | §3, §12 | MH §A3 |
 | GAP-006 | P0 | Phase 0 product decisions locked | §3, §10 | Mobile Phase 0, MH §B |
-| GAP-010 | P1 | Attendance auto-save | §1 | TBD → Attendance-Function-Doc |
+| ~~GAP-010~~ | P1 | ~~Attendance auto-save~~ | §1 | Shipped — Attendance-Function-Doc ATT-008 |
 | GAP-011 | P1 | Default all present | §1 | TBD epic |
 | GAP-012 | P1 | Score auto-save | §1 | Quiz-Function-Doc |
 | GAP-013 | P1 | Keyboard-first scores | §1 | TBD epic |

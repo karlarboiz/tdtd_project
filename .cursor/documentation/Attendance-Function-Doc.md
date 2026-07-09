@@ -19,6 +19,25 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-o
 
 ---
 
+## Auto-save
+
+On the session page, checkbox changes **save automatically** — there is no **Save attendance** button.
+
+| Trigger | Behavior |
+|---------|----------|
+| Checkbox toggle / Select all / Clear all | Debounced save **500ms** after the last change |
+| Class change | Flush pending save for the **previous** class, then load the new roster |
+| AM/PM period toggle | Flush current class save before switching period |
+| Leave session (Calendar link, unmount) | Best-effort flush of pending changes |
+
+**Dirty detection:** Compare current `present` map to the last saved baseline (set after class load or successful save). Initial roster load does not trigger a save.
+
+**Status UI** (Students panel footer): `Saving…` while pending or in-flight; `Saved` after a successful edit; `Could not save.` + **Retry** on error.
+
+**Implementation:** [`useAttendanceAutoSave.ts`](../../tdtd-frontend/src/hooks/useAttendanceAutoSave.ts), [`attendanceAutoSaveLogic.ts`](../../tdtd-frontend/src/lib/attendanceAutoSaveLogic.ts), [`debounce.ts`](../../tdtd-frontend/src/lib/debounce.ts). Backend unchanged — still `POST /api/attendance/save`.
+
+---
+
 ## Weekend rules
 
 Attendance is **weekday-only** (Monday–Friday). Saturday and Sunday are not school days.
@@ -65,6 +84,33 @@ On the attendance session screen, class names are shown **without** a shift suff
 | Empty-state / helper copy | May still mention MRNG/AFTNN | When no classes exist at all — unchanged |
 
 **Other pages** (Classes, Scores, Register Students, Student Lab) still use `formatClassShiftLabel` with `{name} · {shift}` where morning and afternoon classes appear together.
+
+---
+
+## Entry ATT-008 — Attendance auto-save
+
+**Date:** 2026-07-10
+
+**Summary:** Debounced auto-save on checkbox changes; Save button removed; status line + retry on error; flush on class/period/navigation.
+
+**Reason:** GAP-010 / faster-than-Excel workflow — teachers should not lose work or need an extra tap to persist attendance.
+
+**What changed:**
+- **`useAttendanceAutoSave`:** Dirty tracking, 500ms debounce, single-flight coalescing, flush/retry API.
+- **`attendanceAutoSaveLogic` / `debounce`:** Reusable save runner and debounce helper (also intended for GAP-012 score auto-save).
+- **`AttendanceSession`:** Auto-save on toggle; flush before class/period/calendar navigation; status footer replaces Save button; calls `cancelAttendanceReminder` on successful save.
+
+**Files involved:**
+- `tdtd-frontend/src/hooks/useAttendanceAutoSave.ts`
+- `tdtd-frontend/src/hooks/useAttendanceAutoSave.test.ts`
+- `tdtd-frontend/src/lib/attendanceAutoSaveLogic.ts`
+- `tdtd-frontend/src/lib/attendanceAutoSaveLogic.test.ts`
+- `tdtd-frontend/src/lib/debounce.ts`
+- `tdtd-frontend/src/lib/debounce.test.ts`
+- `tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx`
+
+**Schemas involved:**
+- None (frontend UX only; existing `POST /save` API unchanged)
 
 ---
 
