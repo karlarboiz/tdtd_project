@@ -11,7 +11,6 @@ import { listClasses } from '../../api/classesApi'
 import {
   getAttendancePresentRoster,
   getAttendanceState,
-  saveAttendance as saveAttendanceRequest,
 } from '../../api/attendanceApi'
 import { getHolidayForDate } from '../../api/holidaysApi'
 import { listStudentsByClass } from '../../api/studentsApi'
@@ -35,6 +34,7 @@ import {
   otherAttendancePeriod,
   parseAttendancePeriod,
 } from '../../lib/period'
+import { useAttendanceAutoSave } from '../../hooks/useAttendanceAutoSave'
 
 export function AttendanceSession() {
   const { date: dateParam } = useParams<{ date: string }>()
@@ -125,17 +125,11 @@ export function AttendanceSession() {
     }
   }, [dateYmd, isDateValid, isNonSchoolSession, holidayLoading, periodFromUrl, setSearchParams])
 
-  function setPeriod(next: AttendancePeriod) {
-    setSearchParams({ period: next }, { replace: true })
-  }
-
   const [allClasses, setAllClasses] = useState<ClassRow[]>([])
   const [classId, setClassId] = useState('')
   const [students, setStudents] = useState<StudentRow[]>([])
   const [present, setPresent] = useState<Record<string, boolean>>({})
   const [loadingClass, setLoadingClass] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [rosterLoading, setRosterLoading] = useState(true)
   const [rosterSession, setRosterSession] = useState<AttendanceSessionRow | null>(
@@ -188,6 +182,58 @@ export function AttendanceSession() {
     void refreshPresentRoster()
   }, [refreshPresentRoster])
 
+  const autoSaveEnabled =
+    !loadingClass &&
+    !resolvingPeriod &&
+    !isNonSchoolSession &&
+    !holidayLoading &&
+    Boolean(classId) &&
+    students.length > 0
+
+  const {
+    saveStatus,
+    hasEdited,
+    notifyPresentChanged,
+    syncBaseline,
+    flush: flushAutoSave,
+    retry,
+  } = useAttendanceAutoSave({
+    dateYmd,
+    period,
+    classId,
+    students,
+    present,
+    enabled: autoSaveEnabled,
+    onSaved: refreshPresentRoster,
+  })
+
+  const handlePeriodChange = useCallback(
+    (next: AttendancePeriod) => {
+      void (async () => {
+        await flushAutoSave()
+        setSearchParams({ period: next }, { replace: true })
+      })()
+    },
+    [flushAutoSave, setSearchParams],
+  )
+
+  const handleClassChange = useCallback(
+    (nextClassId: string) => {
+      void (async () => {
+        await flushAutoSave()
+        setClassId(nextClassId)
+      })()
+    },
+    [flushAutoSave],
+  )
+
+  const handleGoToCalendar = useCallback(() => {
+    void (async () => {
+      await flushAutoSave()
+      navigate('/attendance')
+    })()
+  }, [flushAutoSave, navigate])
+
   const classesForPeriod = useMemo(
     () => listClassesForAttendancePeriod(allClasses, period),
     [allClasses, period],
@@ -214,7 +260,6 @@ export function AttendanceSession() {
     async (cid: string) => {
       if (resolvingPeriod) return
       setLoadingClass(true)
-      setSaveMsg(null)
       try {
         const list = await listStudentsByClass(cid)
         const ids = list.map((s) => s.id)
@@ -233,11 +278,12 @@ export function AttendanceSession() {
         }
         setStudents(list)
         setPresent(next)
+        syncBaseline(next)
       } finally {
         setLoadingClass(false)
       }
     },
-    [dateYmd, period, resolvingPeriod],
+    [dateYmd, period, resolvingPeriod, syncBaseline],
   )
 
   useEffect(() => {
@@ -255,37 +301,16 @@ export function AttendanceSession() {
   function toggleSelectAll() {
     if (students.length === 0) return
     const turnOn = !allChecked
-    setPresent((prev) => {
-      const next = { ...prev }
-      for (const s of students) next[s.id] = turnOn
-      return next
-    })
+    const next = { ...present }
+    for (const s of students) next[s.id] = turnOn
+    setPresent(next)
+    notifyPresentChanged(next)
   }
 
   function toggleOne(studentId: string) {
-    setPresent((prev) => ({ ...prev, [studentId]: !prev[studentId] }))
-  }
-
-  async function handleSave() {
-    if (!classId || students.length === 0) return
-    setSaving(true)
-    setSaveMsg(null)
-    try {
-      const ids = students.map((s) => s.id)
-      const presentIds = ids.filter((id) => present[id])
-      await saveAttendanceRequest({
-        date: dateYmd,
-        period,
-        classStudentIds: ids,
-        presentStudentIds: presentIds,
-      })
-      setSaveMsg('Attendance saved.')
-      await refreshPresentRoster()
-    } catch {
-      setSaveMsg('Could not save. Try again.')
-    } finally {
-      setSaving(false)
-    }
+    const next = { ...present, [studentId]: !present[studentId] }
+    setPresent(next)
+    notifyPresentChanged(next)
   }
 
   function handleRegisterSaved(createdClassId?: string) {
@@ -374,7 +399,7 @@ export function AttendanceSession() {
         <div className="mb-6 flex items-center gap-3 lg:mb-8">
           <button
             type="button"
-            onClick={() => navigate('/attendance')}
+            onClick={handleGoToCalendar}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
           >
             ← Calendar
@@ -403,7 +428,7 @@ export function AttendanceSession() {
                       type="button"
                       aria-pressed={active}
                       disabled={resolvingPeriod}
-                      onClick={() => setPeriod(p)}
+                      onClick={() => handlePeriodChange(p)}
                       className={[
                         'rounded-lg px-3 py-2.5 text-sm font-semibold transition',
                         active
@@ -482,7 +507,7 @@ export function AttendanceSession() {
               id="class-select"
               className={`mt-2 py-3 ${formInputClasses()}`}
               value={hasClassesForPeriod ? classId : ''}
-              onChange={(e) => setClassId(e.target.value)}
+              onChange={(e) => handleClassChange(e.target.value)}
               disabled={!hasClassesForPeriod}
             >
               <option value="">{selectPlaceholder}</option>
@@ -564,25 +589,24 @@ export function AttendanceSession() {
                 </ul>
               )}
 
-              <Button
-                type="button"
-                size="lg"
-                fullWidth
-                className="mt-6"
-                onClick={() => void handleSave()}
-                disabled={
-                  saving || !classId || students.length === 0 || loadingClass
-                }
-              >
-                {saving ? 'Saving…' : 'Save attendance'}
-              </Button>
-              {saveMsg ? (
-                <p
-                  className={`mt-3 text-center text-sm font-medium ${
-                    saveMsg.startsWith('Could') ? 'text-accent' : 'text-secondary'
-                  }`}
-                >
-                  {saveMsg}
+              {saveStatus === 'pending' || saveStatus === 'saving' ? (
+                <p className="mt-6 text-center text-sm font-medium text-slate-500">
+                  Saving…
+                </p>
+              ) : saveStatus === 'error' ? (
+                <p className="mt-6 text-center text-sm font-medium text-accent">
+                  Could not save.{' '}
+                  <button
+                    type="button"
+                    className="font-semibold underline"
+                    onClick={retry}
+                  >
+                    Retry
+                  </button>
+                </p>
+              ) : hasEdited && saveStatus === 'saved' ? (
+                <p className="mt-6 text-center text-sm font-medium text-secondary">
+                  Saved
                 </p>
               ) : null}
             </section>
