@@ -15,6 +15,7 @@ import {
 import { getHolidayForDate } from '../../api/holidaysApi'
 import { listStudentsByClass } from '../../api/studentsApi'
 import { listClassesForAttendancePeriod } from '../../lib/classShift'
+import { resolveAttendanceClassId } from '../../lib/attendanceAutoPick'
 import { formatStudentName } from '../../lib/studentDisplay'
 import type {
   AttendancePeriod,
@@ -246,15 +247,25 @@ export function AttendanceSession() {
   }, [classesForPeriod])
 
   useEffect(() => {
-    if (didAutoPickClassRef.current || rosterLoading) return
-    if (!rosterSession || savedPresentStudents.length === 0) return
-    const uniq = [...new Set(savedPresentStudents.map((s) => s.classId))]
-    if (uniq.length !== 1) return
-    const onlyClassId = uniq[0]
-    if (!classesForPeriod.some((c) => c.id === onlyClassId)) return
-    setClassId((prev) => (prev ? prev : onlyClassId))
+    if (didAutoPickClassRef.current || resolvingPeriod) return
+    const singleClass = classesForPeriod.length === 1
+    if (!singleClass && rosterLoading) return
+
+    const nextId = resolveAttendanceClassId({
+      classesForPeriod,
+      savedPresentStudents,
+      currentClassId: classId,
+    })
+    if (!nextId) return
+    setClassId(nextId)
     didAutoPickClassRef.current = true
-  }, [rosterLoading, rosterSession, savedPresentStudents, classesForPeriod])
+  }, [
+    classId,
+    classesForPeriod,
+    savedPresentStudents,
+    rosterLoading,
+    resolvingPeriod,
+  ])
 
   const loadClassStudents = useCallback(
     async (cid: string) => {
@@ -317,8 +328,11 @@ export function AttendanceSession() {
     void (async () => {
       const list = await listClasses()
       setAllClasses(list)
+      const available = listClassesForAttendancePeriod(list, period)
+      if (available.length > 1) {
+        didAutoPickClassRef.current = false
+      }
       if (createdClassId) {
-        const available = listClassesForAttendancePeriod(list, period)
         const match = available.some((c) => c.id === createdClassId)
         setClassId(match ? createdClassId : '')
       } else if (classId) {
@@ -524,7 +538,9 @@ export function AttendanceSession() {
                 ? 'Set up your roster first — register a class (with morning or afternoon schedule) and add students.'
                 : !hasClassesForPeriod
                   ? `Only classes scheduled for ${period === 'AM' ? 'morning (MRNG)' : 'afternoon (AFTNN)'} appear during ${period === 'AM' ? 'morning' : 'afternoon'} attendance. Manage all classes under Classes & Students.`
-                  : 'Choose a class to load its student list.'}
+                  : classesForPeriod.length === 1
+                    ? 'Only one class for this period — roster loaded automatically.'
+                    : 'Choose a class to load its student list.'}
             </p>
 
             <button

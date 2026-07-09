@@ -41,7 +41,7 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 
 | Spec item | Status | Evidence in TDTD |
 |-----------|--------|------------------|
-| One-tap attendance | **Not started** | Flow: pick class → load roster → checkboxes → **Save attendance** — [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) |
+| One-tap attendance | **Partial** | Single-class teachers: dropdown pre-selected, roster auto-loads (ATT-009 / GAP-015). Multi-class teachers still pick from dropdown. GAP-011 (default all present) not started — [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) |
 | “Mark all present except…” shortcut | **Partial** | **Select all / Clear all** marks every student present or absent (present-only model: unchecked = absent); no “all except these N” shortcut — same file |
 | Bulk edit multiple students | **Not started** | Bulk **import** only via `POST /api/students/bulk` — [`Classes.tsx`](../../tdtd-frontend/src/pages/Classes/Classes.tsx), [`RegisterStudentsModal.tsx`](../../tdtd-frontend/src/components/RegisterStudentsModal/RegisterStudentsModal.tsx) |
 | Keyboard-first input (type → Enter → next) | **Not started** | No score or attendance keyboard navigation flow |
