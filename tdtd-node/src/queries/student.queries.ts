@@ -53,7 +53,14 @@ export const STUDENT_QUERIES = {
     WHERE id = @id
   `,
   classExists: `
-    SELECT 1 AS ok FROM classes WHERE id = ? LIMIT 1
+    SELECT 1 AS ok FROM classes WHERE id = ? AND user_id = ? LIMIT 1
+  `,
+  getByIdForUser: `
+    SELECT ${STUDENT_COLS}
+    FROM students s
+    INNER JOIN classes c ON c.id = s.class_id AND c.user_id = ?
+    WHERE s.id = ?
+    LIMIT 1
   `,
   listByClass: `
     SELECT ${STUDENT_COLS}

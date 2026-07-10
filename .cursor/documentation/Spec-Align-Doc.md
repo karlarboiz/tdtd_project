@@ -60,7 +60,7 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 | Create class → start immediately | **Shipped** | `/classes` and `RegisterStudentsModal` from attendance — [Classes-Function-Doc.md](./Classes-Function-Doc.md) |
 | Flexible grading system (not rigid templates) | **Shipped** | `QUIZ` / `EXAM` / `PARTICIPATION`, custom titles, optional `maxScore` — [quiz.md](../schemas/quiz.md), [Quiz-Function-Doc.md](./Quiz-Function-Doc.md) |
 | Editable anytime without restrictions | **Shipped** | Past attendance dates; score **Edit Changes** mode — [Quiz-Function-Doc.md](./Quiz-Function-Doc.md) QUIZ-004 |
-| Personal workspace per teacher | **Not started** | `classes` / `students` have **no `userId`**; one shared SQLite DB per deployment — [core.md](../schemas/core.md) |
+| Personal workspace per teacher | **Planned** | GAP-001 in progress — [GAP-001.md](../gaps/GAP-001.md); `user_id` on domain tables |
 
 ---
 

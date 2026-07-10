@@ -27,11 +27,13 @@ export type RecordActivityInput = {
 
 export function recordActivity(
   db: SqliteDatabase,
+  userId: string,
   input: RecordActivityInput,
 ): void {
   try {
     const row: ActivityLogRow = {
       id: randomUUID(),
+      userId,
       action: input.action,
       summary: input.summary,
       metadata: input.metadata,
@@ -45,6 +47,7 @@ export function recordActivity(
 
 export function listRecents(
   db: SqliteDatabase,
+  userId: string,
   limitRaw?: unknown,
 ): ActivityLogRow[] {
   let limit = DEFAULT_LIST_LIMIT
@@ -56,7 +59,7 @@ export function listRecents(
   } else if (typeof limitRaw === 'number' && limitRaw > 0) {
     limit = Math.min(Math.floor(limitRaw), MAX_LIST_LIMIT)
   }
-  return activityLogDao.listRecentActivityLogs(db, limit)
+  return activityLogDao.listRecentActivityLogs(db, userId, limit)
 }
 
 export function formatStudentDisplayName(student: Pick<

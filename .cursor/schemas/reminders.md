@@ -13,6 +13,7 @@
 | Column (SQLite) | Type | Notes |
 |-----------------|------|--------|
 | `id` | TEXT PK | UUID |
+| `user_id` | TEXT NOT NULL | FK → `users.id` (GAP-001) |
 | `type` | TEXT | `ATTENDANCE_DUE` (v1) |
 | `date` | TEXT | `YYYY-MM-DD` |
 | `period` | TEXT | `AM` \| `PM` |
@@ -24,7 +25,7 @@
 **Indexes**
 
 - `idx_teacher_reminders_status_date` on `(status, date)`
-- `idx_teacher_reminders_open_unique` — unique `(type, date, period)` **where** `status = 'open'` (idempotent batch upsert)
+- `idx_teacher_reminders_open_unique` — unique `(user_id, type, date, period)` **where** `status = 'open'` (idempotent batch upsert per teacher)
 
 ---
 
@@ -38,7 +39,7 @@
 
 ## Lifecycle
 
-1. **Batch** (07:00 AM / 12:30 PM local): no `attendance_sessions` for `(date, period)` → insert open row (or skip if unique index blocks duplicate).
+1. **Batch** (07:00 AM / 12:30 PM local): for each active user, no `attendance_sessions` for `(user_id, date, period)` → insert open row.
 2. **Batch** (same run): session exists → `UPDATE` open row to `resolved`.
 3. **Web** loads DueList from `GET /api/due-list` (syncs AM/PM on read; maps to `DueItem`). Legacy: `GET /api/reminders/active`.
 4. **Teacher dismisses** → `POST .../dismiss` → `status = dismissed`.

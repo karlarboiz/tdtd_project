@@ -10,6 +10,7 @@ import { TEACHER_REMINDER_QUERIES } from '../queries/teacherReminder.queries.js'
 
 type ReminderDbRow = {
   id: string
+  user_id: string
   type: string
   date: string
   period: AttendancePeriod
@@ -22,6 +23,7 @@ type ReminderDbRow = {
 function mapRow(row: ReminderDbRow): TeacherReminderRow {
   return {
     id: row.id,
+    userId: row.user_id,
     type: row.type as TeacherReminderType,
     date: row.date,
     period: row.period,
@@ -34,31 +36,34 @@ function mapRow(row: ReminderDbRow): TeacherReminderRow {
 
 export function findOpenByTypeDatePeriod(
   db: SqliteDatabase,
+  userId: string,
   type: TeacherReminderType,
   date: IsoDateString,
   period: AttendancePeriod,
 ): TeacherReminderRow | undefined {
   const row = db
     .prepare(TEACHER_REMINDER_QUERIES.findOpenByTypeDatePeriod)
-    .get(type, date, period) as ReminderDbRow | undefined
+    .get(userId, type, date, period) as ReminderDbRow | undefined
   return row ? mapRow(row) : undefined
 }
 
 export function listOpenForDate(
   db: SqliteDatabase,
+  userId: string,
   date: IsoDateString,
 ): TeacherReminderRow[] {
   const rows = db
     .prepare(TEACHER_REMINDER_QUERIES.listOpenForDate)
-    .all(date) as ReminderDbRow[]
+    .all(userId, date) as ReminderDbRow[]
   return rows.map(mapRow)
 }
 
 export function findById(
   db: SqliteDatabase,
   id: string,
+  userId: string,
 ): TeacherReminderRow | undefined {
-  const row = db.prepare(TEACHER_REMINDER_QUERIES.findById).get(id) as
+  const row = db.prepare(TEACHER_REMINDER_QUERIES.findById).get(id, userId) as
     | ReminderDbRow
     | undefined
   return row ? mapRow(row) : undefined
@@ -67,6 +72,7 @@ export function findById(
 export function insertReminder(db: SqliteDatabase, row: TeacherReminderRow): void {
   db.prepare(TEACHER_REMINDER_QUERIES.insert).run({
     id: row.id,
+    user_id: row.userId,
     type: row.type,
     date: row.date,
     period: row.period,
@@ -79,12 +85,14 @@ export function insertReminder(db: SqliteDatabase, row: TeacherReminderRow): voi
 
 export function updateStatus(
   db: SqliteDatabase,
+  userId: string,
   id: string,
   status: TeacherReminderStatus,
   resolvedAt: number,
 ): void {
   db.prepare(TEACHER_REMINDER_QUERIES.updateStatus).run({
     id,
+    user_id: userId,
     status,
     resolved_at: resolvedAt,
   })
@@ -92,12 +100,14 @@ export function updateStatus(
 
 export function resolveOpenByTypeDatePeriod(
   db: SqliteDatabase,
+  userId: string,
   type: TeacherReminderType,
   date: IsoDateString,
   period: AttendancePeriod,
   resolvedAt: number,
 ): void {
   db.prepare(TEACHER_REMINDER_QUERIES.resolveOpenByDatePeriod).run({
+    user_id: userId,
     type,
     date,
     period,

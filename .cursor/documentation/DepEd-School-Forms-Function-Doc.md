@@ -173,8 +173,9 @@ Detailed column mappings: [deped-forms.md](../schemas/deped-forms.md).
 
 - DepEd LMS / BEIS upload
 - Conduct/values grades on SF9 (blank or manual override)
-- Multi-teacher school admin (GAP-001)
 - Pixel-perfect historical form revisions
+
+**Data ownership (GAP-001):** School settings and DepEd exports are per-teacher. See [GAP-001.md](../gaps/GAP-001.md).
 
 ---
 

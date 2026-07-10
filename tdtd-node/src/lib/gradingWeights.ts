@@ -35,11 +35,12 @@ export function bandForGrade(grade: number): { min: number; max: number } {
 
 export function resolveComponentWeights(
   db: SqliteDatabase,
+  userId: string,
   gradeLevel: string,
 ): ComponentWeightFractions {
   const grade = parseGradeFromLevel(gradeLevel)
   const { min, max } = bandForGrade(grade)
-  const rows = gradingDao.listWeightsForActiveSystem(db)
+  const rows = gradingDao.listWeightsForActiveSystem(db, userId)
   const match = rows.find((r) => r.gradeBandMin === min && r.gradeBandMax === max)
   if (match) {
     return { ww: match.wwWeight, pt: match.ptWeight, qa: match.qaWeight }

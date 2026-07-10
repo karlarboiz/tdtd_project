@@ -9,6 +9,7 @@ import { ATTENDANCE_QUERIES } from '../queries/attendance.queries.js'
 
 type SessionDbRow = {
   id: string
+  user_id: string
   date: string
   period: AttendancePeriod
   created_at: number
@@ -17,6 +18,7 @@ type SessionDbRow = {
 function mapSession(row: SessionDbRow): AttendanceSessionRow {
   return {
     id: row.id,
+    userId: row.user_id,
     date: row.date,
     period: row.period,
     createdAt: row.created_at,
@@ -25,18 +27,31 @@ function mapSession(row: SessionDbRow): AttendanceSessionRow {
 
 export function findSessionByDatePeriod(
   db: SqliteDatabase,
+  userId: string,
   date: string,
   period: AttendancePeriod,
 ): AttendanceSessionRow | undefined {
-  const row = db.prepare(ATTENDANCE_QUERIES.sessionByDatePeriod).get(date, period) as
-    | SessionDbRow
-    | undefined
+  const row = db
+    .prepare(ATTENDANCE_QUERIES.sessionByDatePeriod)
+    .get(userId, date, period) as SessionDbRow | undefined
+  return row ? mapSession(row) : undefined
+}
+
+export function getSessionById(
+  db: SqliteDatabase,
+  sessionId: string,
+  userId: string,
+): AttendanceSessionRow | undefined {
+  const row = db
+    .prepare(ATTENDANCE_QUERIES.sessionById)
+    .get(sessionId, userId) as SessionDbRow | undefined
   return row ? mapSession(row) : undefined
 }
 
 export function insertSession(db: SqliteDatabase, row: AttendanceSessionRow): void {
   db.prepare(ATTENDANCE_QUERIES.sessionInsert).run({
     id: row.id,
+    user_id: row.userId,
     date: row.date,
     period: row.period,
     created_at: row.createdAt,
@@ -89,23 +104,25 @@ export function insertAttendanceRecord(
 
 export function listDistinctSessionDatesInRange(
   db: SqliteDatabase,
+  userId: string,
   from: string,
   to: string,
 ): string[] {
   const rows = db
     .prepare(ATTENDANCE_QUERIES.distinctSessionDatesInRange)
-    .all(from, to) as { date: string }[]
+    .all(userId, from, to) as { date: string }[]
   return rows.map((r) => r.date)
 }
 
 export function listSessionsInRange(
   db: SqliteDatabase,
+  userId: string,
   from: string,
   to: string,
 ): { date: string; period: AttendancePeriod }[] {
   const rows = db
     .prepare(ATTENDANCE_QUERIES.sessionsInRange)
-    .all(from, to) as { date: string; period: AttendancePeriod }[]
+    .all(userId, from, to) as { date: string; period: AttendancePeriod }[]
   return rows
 }
 
@@ -122,11 +139,12 @@ type PresentStudentDbRow = {
 
 export function listPresentStudentsForSession(
   db: SqliteDatabase,
+  userId: string,
   sessionId: string,
 ): StudentRow[] {
   const rows = db
     .prepare(ATTENDANCE_QUERIES.presentStudentsForSession)
-    .all(sessionId) as PresentStudentDbRow[]
+    .all(userId, sessionId) as PresentStudentDbRow[]
   return rows.map((r) => ({
     id: r.id,
     firstName: r.first_name,

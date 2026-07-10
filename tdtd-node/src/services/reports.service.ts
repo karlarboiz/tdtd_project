@@ -44,6 +44,7 @@ function resolveDbPath(_db: SqliteDatabase): string {
 
 export function generateReport(
   db: SqliteDatabase,
+  userId: string,
   input: GenerateReportInput,
 ): { outputPath: string; form: ReportForm } {
   const form = input.form
@@ -55,7 +56,7 @@ export function generateReport(
   const studentId = input.studentId?.trim()
   const month = input.month?.trim()
   const schoolYearId =
-    input.schoolYearId?.trim() ?? deped.getActiveSchoolYearId(db)
+    input.schoolYearId?.trim() ?? deped.getActiveSchoolYearId(db, userId)
 
   if (['sf1', 'sf2', 'sf4', 'sf5'].includes(form) && !classId) {
     throw new HttpError(400, 'classId is required for this form')
@@ -76,6 +77,7 @@ export function generateReport(
     TDTD_BATCH_RUN_ONCE: FORM_TO_BATCH[form],
     TDTD_DB_PATH: dbPath,
     TDTD_REPORT_OUTPUT_DIR: path.resolve(outputDir),
+    TDTD_REPORT_USER_ID: userId,
     TDTD_REPORT_CLASS_ID: classId ?? '',
     TDTD_REPORT_STUDENT_ID: studentId ?? '',
     TDTD_REPORT_MONTH: month ?? '',
@@ -98,23 +100,25 @@ export function generateReport(
 
 export function autoFillReportCardData(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
   schoolYearId?: string,
 ) {
-  const syId = schoolYearId ?? deped.getActiveSchoolYearId(db)
+  const syId = schoolYearId ?? deped.getActiveSchoolYearId(db, userId)
   if (!syId) throw new HttpError(400, 'no active school year')
 
   for (const quarter of [1, 2, 3, 4]) {
-    deped.computeGradesForClassQuarter(db, classId, syId, quarter)
+    deped.computeGradesForClassQuarter(db, userId, classId, syId, quarter)
   }
 
-  const settings = schoolSettings.getSchoolSettings(db)
+  const settings = schoolSettings.getSchoolSettings(db, userId)
   deped.archiveEnrollmentForClass(
     db,
+    userId,
     classId,
     syId,
     settings?.schoolName ?? 'School',
   )
 
-  return deped.listGradesByClass(db, classId, syId)
+  return deped.listGradesByClass(db, userId, classId, syId)
 }

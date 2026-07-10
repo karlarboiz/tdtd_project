@@ -7,6 +7,7 @@ import { GRADING_SYSTEM_QUERIES } from '../queries/gradingSystem.queries.js'
 
 type SystemDbRow = {
   id: string
+  user_id: string
   name: string
   is_active: number
   created_at: number
@@ -26,6 +27,7 @@ type WeightDbRow = {
 function mapSystem(r: SystemDbRow): GradingSystemRow {
   return {
     id: r.id,
+    userId: r.user_id,
     name: r.name,
     isActive: r.is_active === 1,
     createdAt: r.created_at,
@@ -45,32 +47,40 @@ function mapWeight(r: WeightDbRow): GradingComponentWeightRow {
   }
 }
 
-export function listGradingSystems(db: SqliteDatabase): GradingSystemRow[] {
-  const rows = db.prepare(GRADING_SYSTEM_QUERIES.list).all() as SystemDbRow[]
+export function listGradingSystems(db: SqliteDatabase, userId: string): GradingSystemRow[] {
+  const rows = db.prepare(GRADING_SYSTEM_QUERIES.list).all(userId) as SystemDbRow[]
   return rows.map(mapSystem)
 }
 
 export function getGradingSystemById(
   db: SqliteDatabase,
   id: string,
+  userId: string,
 ): GradingSystemRow | undefined {
   const row = db
     .prepare(GRADING_SYSTEM_QUERIES.getById)
-    .get({ id }) as SystemDbRow | undefined
+    .get({ id, user_id: userId }) as SystemDbRow | undefined
   return row ? mapSystem(row) : undefined
 }
 
-export function getActiveGradingSystem(db: SqliteDatabase): GradingSystemRow | undefined {
-  const row = db.prepare(GRADING_SYSTEM_QUERIES.getActive).get() as SystemDbRow | undefined
+export function getActiveGradingSystem(
+  db: SqliteDatabase,
+  userId: string,
+): GradingSystemRow | undefined {
+  const row = db.prepare(GRADING_SYSTEM_QUERIES.getActive).get(userId) as
+    | SystemDbRow
+    | undefined
   return row ? mapSystem(row) : undefined
 }
 
 export function gradingSystemNameExists(
   db: SqliteDatabase,
+  userId: string,
   name: string,
   excludeId?: string,
 ): boolean {
   const row = db.prepare(GRADING_SYSTEM_QUERIES.nameExists).get({
+    user_id: userId,
     name,
     exclude_id: excludeId ?? null,
   })
@@ -83,6 +93,7 @@ export function insertGradingSystem(
 ): GradingSystemRow {
   db.prepare(GRADING_SYSTEM_QUERIES.insert).run({
     id: row.id,
+    user_id: row.userId,
     name: row.name,
     is_active: row.isActive ? 1 : 0,
     created_at: row.createdAt,
@@ -91,10 +102,22 @@ export function insertGradingSystem(
   return row
 }
 
-export function activateGradingSystem(db: SqliteDatabase, id: string, updatedAt: number): void {
+export function activateGradingSystem(
+  db: SqliteDatabase,
+  userId: string,
+  id: string,
+  updatedAt: number,
+): void {
   const tx = db.transaction(() => {
-    db.prepare(GRADING_SYSTEM_QUERIES.deactivateAll).run({ updated_at: updatedAt })
-    db.prepare(GRADING_SYSTEM_QUERIES.activate).run({ id, updated_at: updatedAt })
+    db.prepare(GRADING_SYSTEM_QUERIES.deactivateAll).run({
+      user_id: userId,
+      updated_at: updatedAt,
+    })
+    db.prepare(GRADING_SYSTEM_QUERIES.activate).run({
+      id,
+      user_id: userId,
+      updated_at: updatedAt,
+    })
   })
   tx()
 }
@@ -111,10 +134,11 @@ export function listWeightsBySystemId(
 
 export function listWeightsForActiveSystem(
   db: SqliteDatabase,
+  userId: string,
 ): GradingComponentWeightRow[] {
   const rows = db
     .prepare(GRADING_SYSTEM_QUERIES.listWeightsForActiveSystem)
-    .all() as WeightDbRow[]
+    .all(userId) as WeightDbRow[]
   return rows.map(mapWeight)
 }
 
@@ -141,4 +165,17 @@ export function replaceWeightsForSystem(
     }
   })
   tx()
+}
+
+export function touchGradingSystemUpdatedAt(
+  db: SqliteDatabase,
+  userId: string,
+  id: string,
+  updatedAt: number,
+): void {
+  db.prepare(GRADING_SYSTEM_QUERIES.touchUpdatedAt).run({
+    id,
+    user_id: userId,
+    updated_at: updatedAt,
+  })
 }

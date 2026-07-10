@@ -1,12 +1,13 @@
-import type { Request, Response } from 'express'
+import type { Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { HttpError } from '../errors/http-error.js'
+import type { AuthenticatedRequest } from '../middleware/authenticate.js'
 import { listRecents } from '../services/activityLog.service.js'
 
 export function listRecentsHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
-      res.json(listRecents(db, req.query.limit))
+      res.json(listRecents(db, req.auth!.id, req.query.limit))
     } catch (e) {
       if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })

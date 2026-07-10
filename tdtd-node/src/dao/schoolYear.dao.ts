@@ -4,6 +4,7 @@ import { SCHOOL_YEAR_QUERIES } from '../queries/schoolYear.queries.js'
 
 type SchoolYearDbRow = {
   id: string
+  user_id: string
   label: string
   start_date: string | null
   end_date: string | null
@@ -15,6 +16,7 @@ type SchoolYearDbRow = {
 export function mapSchoolYearRow(row: SchoolYearDbRow): SchoolYearRow {
   return {
     id: row.id,
+    userId: row.user_id,
     label: row.label,
     startDate: row.start_date ?? undefined,
     endDate: row.end_date ?? undefined,
@@ -24,23 +26,27 @@ export function mapSchoolYearRow(row: SchoolYearDbRow): SchoolYearRow {
   }
 }
 
-export function listSchoolYears(db: SqliteDatabase): SchoolYearRow[] {
-  const rows = db.prepare(SCHOOL_YEAR_QUERIES.listAll).all() as SchoolYearDbRow[]
+export function listSchoolYears(db: SqliteDatabase, userId: string): SchoolYearRow[] {
+  const rows = db.prepare(SCHOOL_YEAR_QUERIES.listAll).all(userId) as SchoolYearDbRow[]
   return rows.map(mapSchoolYearRow)
 }
 
 export function getSchoolYearById(
   db: SqliteDatabase,
   id: string,
+  userId: string,
 ): SchoolYearRow | undefined {
-  const row = db.prepare(SCHOOL_YEAR_QUERIES.getById).get(id) as
+  const row = db.prepare(SCHOOL_YEAR_QUERIES.getById).get(id, userId) as
     | SchoolYearDbRow
     | undefined
   return row ? mapSchoolYearRow(row) : undefined
 }
 
-export function getActiveSchoolYear(db: SqliteDatabase): SchoolYearRow | undefined {
-  const row = db.prepare(SCHOOL_YEAR_QUERIES.getActive).get() as
+export function getActiveSchoolYear(
+  db: SqliteDatabase,
+  userId: string,
+): SchoolYearRow | undefined {
+  const row = db.prepare(SCHOOL_YEAR_QUERIES.getActive).get(userId) as
     | SchoolYearDbRow
     | undefined
   return row ? mapSchoolYearRow(row) : undefined
@@ -49,6 +55,7 @@ export function getActiveSchoolYear(db: SqliteDatabase): SchoolYearRow | undefin
 export function insertSchoolYear(db: SqliteDatabase, row: SchoolYearRow): void {
   db.prepare(SCHOOL_YEAR_QUERIES.insert).run({
     id: row.id,
+    user_id: row.userId,
     label: row.label,
     start_date: row.startDate ?? null,
     end_date: row.endDate ?? null,
@@ -58,10 +65,15 @@ export function insertSchoolYear(db: SqliteDatabase, row: SchoolYearRow): void {
   })
 }
 
-export function setActiveSchoolYear(db: SqliteDatabase, id: string, now: number): void {
+export function setActiveSchoolYear(
+  db: SqliteDatabase,
+  userId: string,
+  id: string,
+  now: number,
+): void {
   const run = db.transaction(() => {
-    db.prepare(SCHOOL_YEAR_QUERIES.clearActive).run({ updated_at: now })
-    db.prepare(SCHOOL_YEAR_QUERIES.setActive).run({ id, updated_at: now })
+    db.prepare(SCHOOL_YEAR_QUERIES.clearActive).run({ user_id: userId, updated_at: now })
+    db.prepare(SCHOOL_YEAR_QUERIES.setActive).run({ id, user_id: userId, updated_at: now })
   })
   run()
 }
@@ -88,11 +100,12 @@ type SchoolYearSubjectDbRow = {
 
 export function listSchoolYearSubjects(
   db: SqliteDatabase,
+  userId: string,
   schoolYearId: string,
 ): SchoolYearSubjectListRow[] {
   const rows = db
     .prepare(SCHOOL_YEAR_QUERIES.listRegisteredSubjects)
-    .all(schoolYearId) as SchoolYearSubjectDbRow[]
+    .all({ user_id: userId, school_year_id: schoolYearId }) as SchoolYearSubjectDbRow[]
   return rows.map((r) => ({
     id: r.id,
     schoolYearId: r.school_year_id,
@@ -162,20 +175,22 @@ export function deleteSchoolYearSubjectById(
 
 export function subjectUsedInClassOrScores(
   db: SqliteDatabase,
+  userId: string,
   subjectId: string,
 ): boolean {
   const row = db
     .prepare(SCHOOL_YEAR_QUERIES.subjectUsedInClassOrScores)
-    .get(subjectId, subjectId) as { ok: 1 } | undefined
+    .get(userId, subjectId, userId, subjectId) as { ok: 1 } | undefined
   return row !== undefined
 }
 
 export function isSubjectRegisteredForActiveYear(
   db: SqliteDatabase,
+  userId: string,
   subjectId: string,
 ): boolean {
   const row = db
     .prepare(SCHOOL_YEAR_QUERIES.isSubjectRegisteredForActiveYear)
-    .get(subjectId) as { ok: 1 } | undefined
+    .get(userId, subjectId) as { ok: 1 } | undefined
   return row !== undefined
 }

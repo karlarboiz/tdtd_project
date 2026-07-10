@@ -102,9 +102,19 @@ Allowed while password is expired: `change-password`, `me`, `logout`, `refresh`.
 
 ---
 
+## Domain ownership (GAP-001)
+
+Teacher-mutable domain tables carry `user_id` FK → `users.id`. Personal workspace per teacher — see [GAP-001.md](../gaps/GAP-001.md).
+
+| Table | `user_id` |
+|-------|-----------|
+| `classes`, `attendance_sessions`, `subjects`, `school_years`, `school_settings`, `grading_systems`, `teacher_reminders`, `activity_logs` | Direct column |
+| `students`, `score_events`, `class_subjects`, etc. | Scoped via `classes.user_id` join |
+
+---
+
 ## Future (not shipped)
 
 - Admin user management (`POST /users`, role/active patches)
 - HttpOnly refresh cookie
 - 2FA, lockout, rate limiting
-- Per-tenant / school scoping on rows
