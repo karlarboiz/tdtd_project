@@ -18,6 +18,7 @@ import type {
 
 } from '../schema/types.js'
 
+import { HttpError } from '../errors/http-error.js'
 import { DAILY_ATTENDANCE_QUERIES } from '../queries/dailyAttendance.queries.js'
 
 import { GRADE_QUERIES } from '../queries/grade.queries.js'
@@ -36,7 +37,7 @@ import {
 
 import { resolveComponentWeights } from '../lib/gradingWeights.js'
 
-import { assertClassOwned, assertStudentOwned } from '../lib/ownership.js'
+import { assertClassOwned, assertStudentOwned, assertSchoolYearOwned } from '../lib/ownership.js'
 import * as schoolYearDao from '../dao/schoolYear.dao.js'
 
 
@@ -70,6 +71,10 @@ export function upsertDailyAttendance(
 ): DailyAttendanceRecordRow {
 
   assertClassOwned(db, row.classId, userId)
+  const student = assertStudentOwned(db, row.studentId, userId)
+  if (student.classId !== row.classId) {
+    throw new HttpError(400, 'student does not belong to class')
+  }
 
   const id = row.id ?? randomUUID()
 
@@ -218,6 +223,8 @@ export function computeGradesForClassQuarter(
 ): ComputedSubjectGradeRow[] {
 
   const classRow = assertClassOwned(db, classId, userId)
+
+  assertSchoolYearOwned(db, schoolYearId, userId)
 
   const weights = resolveComponentWeights(db, userId, classRow.gradeLevel ?? '6')
 
@@ -414,6 +421,7 @@ export function listGradesByClass(
 ): ComputedSubjectGradeRow[] {
 
   assertClassOwned(db, classId, userId)
+  assertSchoolYearOwned(db, schoolYearId, userId)
 
   const rows = db.prepare(GRADE_QUERIES.listByClass).all({
 
@@ -445,6 +453,9 @@ export function archiveEnrollmentForClass(
 
 ): EnrollmentHistoryRow[] {
 
+  const classRow = assertClassOwned(db, classId, userId)
+  assertSchoolYearOwned(db, schoolYearId, userId)
+
   const grades = listGradesByClass(db, userId, classId, schoolYearId, 0)
 
   const students = db
@@ -458,8 +469,6 @@ export function archiveEnrollmentForClass(
     .all(classId) as { id: string; class_id: string }[]
 
 
-
-  const classRow = assertClassOwned(db, classId, userId)
 
   const archived: EnrollmentHistoryRow[] = []
 

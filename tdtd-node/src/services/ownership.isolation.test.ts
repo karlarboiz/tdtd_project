@@ -9,6 +9,10 @@ import { signup } from './auth.service.js'
 import { createClass, listClasses } from './class.service.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
 import { HttpError } from '../errors/http-error.js'
+import { registerStudent } from './student.service.js'
+import { saveAttendance } from './attendance.service.js'
+import { createSchoolYear } from './schoolYear.service.js'
+import { listGradesByClass } from './deped.service.js'
 
 let db: SqliteDatabase
 let dbPath: string
@@ -143,5 +147,69 @@ describe('per-teacher data isolation (GAP-001)', () => {
     })
 
     expect(() => assertClassOwned(db, created.id, userB.user.id)).toThrow(HttpError)
+  })
+
+  it('user B cannot save attendance with user A student ids', async () => {
+    const userA = await signup(db, {
+      firstName: 'Alice',
+      lastName: 'One',
+      email: 'alice5@example.com',
+      password: 'password123',
+    })
+    const userB = await signup(db, {
+      firstName: 'Bob',
+      lastName: 'Two',
+      email: 'bob5@example.com',
+      password: 'password123',
+    })
+
+    const classA = createClass(db, userA.user.id, {
+      name: 'Grade 8-A',
+      shift: 'MRNG',
+    })
+    const student = registerStudent(db, userA.user.id, {
+      classId: classA.id,
+      firstName: 'Pat',
+      lastName: 'Learner',
+      birthDate: '2014-06-15',
+      gender: 'F',
+    })
+
+    expect(() =>
+      saveAttendance(db, userB.user.id, {
+        date: '2026-05-28',
+        period: 'AM',
+        classStudentIds: [student.id],
+        presentStudentIds: [student.id],
+      }),
+    ).toThrow(HttpError)
+  })
+
+  it('user B cannot list grades with user A school year on owned class', async () => {
+    const userA = await signup(db, {
+      firstName: 'Alice',
+      lastName: 'One',
+      email: 'alice6@example.com',
+      password: 'password123',
+    })
+    const userB = await signup(db, {
+      firstName: 'Bob',
+      lastName: 'Two',
+      email: 'bob6@example.com',
+      password: 'password123',
+    })
+
+    const classB = createClass(db, userB.user.id, {
+      name: 'Grade 4-B',
+      shift: 'AFTNN',
+    })
+    const syA = createSchoolYear(db, userA.user.id, {
+      label: '2024-2025',
+      setActive: true,
+    })
+
+    expect(() =>
+      listGradesByClass(db, userB.user.id, classB.id, syA.id),
+    ).toThrow(HttpError)
   })
 })

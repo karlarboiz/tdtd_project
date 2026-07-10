@@ -50,6 +50,7 @@ public final class AttendancePdfService {
 
   public Path generate(
       Connection conn,
+      String userId,
       LocalDate date,
       String period,
       Path outputDir,
@@ -58,17 +59,17 @@ public final class AttendancePdfService {
     Files.createDirectories(outputDir);
 
     String dateYmd = date.toString();
-    Optional<String> sessionId = reportDao.findSessionId(conn, dateYmd, period);
+    Optional<String> sessionId = reportDao.findSessionId(conn, userId, dateYmd, period);
     if (sessionId.isEmpty()) {
-      LOG.warn("No attendance session saved for {} {}", dateYmd, period);
+      LOG.warn("No attendance session saved for user={} {} {}", userId, dateYmd, period);
     }
 
     Set<String> presentIds =
         sessionId.isPresent()
-            ? reportDao.listPresentStudentIds(conn, sessionId.get())
+            ? reportDao.listPresentStudentIds(conn, userId, sessionId.get())
             : Set.of();
     List<ClassRow> classes =
-        ClassPeriodFilter.forPeriod(reportDao.listAllClasses(conn), period);
+        ClassPeriodFilter.forPeriod(reportDao.listClassesByUser(conn, userId), period);
 
     String fileName = "attendance-" + dateYmd + "-" + period + ".pdf";
     Path finalPath = outputDir.resolve(fileName);
@@ -82,7 +83,7 @@ public final class AttendancePdfService {
       int sessionTotal = 0;
 
       for (ClassRow clazz : classes) {
-        List<StudentRow> roster = reportDao.listStudentsByClass(conn, clazz.id());
+        List<StudentRow> roster = reportDao.listStudentsByClass(conn, userId, clazz.id());
         if (roster.isEmpty()) {
           continue;
         }

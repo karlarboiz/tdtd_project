@@ -24,6 +24,7 @@ public final class BatchConfig {
   private final Optional<LocalDate> pdfDate;
   private final Optional<String> pdfPeriod;
   private final Path pdfOutputDir;
+  private final Optional<String> reportUserId;
 
   public BatchConfig(
       Path dbPath,
@@ -33,7 +34,8 @@ public final class BatchConfig {
       Optional<String> runOnceMode,
       Optional<LocalDate> pdfDate,
       Optional<String> pdfPeriod,
-      Path pdfOutputDir) {
+      Path pdfOutputDir,
+      Optional<String> reportUserId) {
     this.dbPath = dbPath;
     this.timeZone = timeZone;
     this.cronAm = cronAm;
@@ -42,6 +44,7 @@ public final class BatchConfig {
     this.pdfDate = pdfDate;
     this.pdfPeriod = pdfPeriod;
     this.pdfOutputDir = pdfOutputDir;
+    this.reportUserId = reportUserId;
   }
 
   public static BatchConfig fromEnvironment() {
@@ -67,8 +70,18 @@ public final class BatchConfig {
     Optional<LocalDate> pdfDate = parsePdfDateEnv(tz);
     Optional<String> pdfPeriod = parsePdfPeriodEnv();
     Path pdfOutputDir = resolvePdfOutputDir();
+    Optional<String> reportUserId = parseReportUserIdEnv();
 
-    return new BatchConfig(dbPath, tz, cronAm, cronPm, runOnce, pdfDate, pdfPeriod, pdfOutputDir);
+    return new BatchConfig(
+        dbPath, tz, cronAm, cronPm, runOnce, pdfDate, pdfPeriod, pdfOutputDir, reportUserId);
+  }
+
+  private static Optional<String> parseReportUserIdEnv() {
+    String raw = System.getenv("TDTD_REPORT_USER_ID");
+    if (raw == null || raw.isBlank()) {
+      return Optional.empty();
+    }
+    return Optional.of(raw.trim());
   }
 
   private static Optional<LocalDate> parsePdfDateEnv(String timeZone) {
@@ -96,7 +109,10 @@ public final class BatchConfig {
   }
 
   private static Path resolvePdfOutputDir() {
-    String raw = System.getenv("TDTD_PDF_OUTPUT_DIR");
+    String raw = System.getenv("TDTD_REPORT_OUTPUT_DIR");
+    if (raw == null || raw.isBlank()) {
+      raw = System.getenv("TDTD_PDF_OUTPUT_DIR");
+    }
     if (raw == null || raw.isBlank()) {
       return Paths.get(DEFAULT_PDF_OUTPUT_DIR).toAbsolutePath().normalize();
     }
@@ -147,6 +163,18 @@ public final class BatchConfig {
 
   public Path getPdfOutputDir() {
     return pdfOutputDir;
+  }
+
+  /** Authenticated teacher id for per-user PDF/report generation. */
+  public Optional<String> getReportUserId() {
+    return reportUserId;
+  }
+
+  public String requireReportUserId() {
+    return reportUserId.orElseThrow(
+        () ->
+            new IllegalArgumentException(
+                "TDTD_REPORT_USER_ID is required for per-teacher report generation"));
   }
 
   public LocalDate resolvePdfDateOrToday() {
