@@ -26,6 +26,15 @@ vi.mock('../dao/student.dao.js', () => ({
 
 vi.mock('../lib/ownership.js', () => ({
   assertClassOwned: vi.fn(),
+  assertStudentOwned: vi.fn((...args: unknown[]) => ({
+    id: args[1],
+    classId: 'class-1',
+    firstName: 'Test',
+    lastName: 'Student',
+    birthDate: '2015-01-01',
+    gender: 'M',
+    createdAt: 1,
+  })),
 }))
 
 vi.mock('./activityLog.service.js', () => ({

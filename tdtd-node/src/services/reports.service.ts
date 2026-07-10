@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { HttpError } from '../errors/http-error.js'
+import { assertClassOwned, assertStudentOwned, assertSchoolYearOwned } from '../lib/ownership.js'
 import * as deped from './deped.service.js'
 import * as schoolSettings from './schoolSettings.service.js'
 
@@ -68,6 +69,16 @@ export function generateReport(
     throw new HttpError(400, 'month (YYYY-MM) is required for SF2/SF4')
   }
 
+  if (classId) {
+    assertClassOwned(db, classId, userId)
+  }
+  if (studentId) {
+    assertStudentOwned(db, studentId, userId)
+  }
+  if (input.schoolYearId?.trim()) {
+    assertSchoolYearOwned(db, input.schoolYearId.trim(), userId)
+  }
+
   const outputDir = process.env.TDTD_REPORT_OUTPUT_DIR ?? 'data/reports'
   const jar = resolveBatchJar()
   const dbPath = resolveDbPath(db)
@@ -104,8 +115,12 @@ export function autoFillReportCardData(
   classId: string,
   schoolYearId?: string,
 ) {
+  assertClassOwned(db, classId, userId)
   const syId = schoolYearId ?? deped.getActiveSchoolYearId(db, userId)
   if (!syId) throw new HttpError(400, 'no active school year')
+  if (schoolYearId) {
+    assertSchoolYearOwned(db, schoolYearId, userId)
+  }
 
   for (const quarter of [1, 2, 3, 4]) {
     deped.computeGradesForClassQuarter(db, userId, classId, syId, quarter)

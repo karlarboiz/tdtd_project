@@ -24,6 +24,7 @@ public final class AttendancePdfJob {
                         "TDTD_PDF_PERIOD is required when TDTD_BATCH_RUN_ONCE=ATTENDANCE_PDF"));
 
     var date = config.resolvePdfDateOrToday();
+    String userId = config.requireReportUserId();
     try (Connection conn = DatabaseFactory.open(config.getDbPath())) {
       if (!SchoolDays.isSchoolDay(conn, date)) {
         throw new IllegalArgumentException(
@@ -34,7 +35,7 @@ public final class AttendancePdfJob {
       AttendancePdfService service = new AttendancePdfService();
 
       Path written =
-          service.generate(conn, date, period, outputDir, config.getTimeZone());
+          service.generate(conn, userId, date, period, outputDir, config.getTimeZone());
       LOG.info(
           "Attendance PDF written for {} {} → {}",
           date,

@@ -8,6 +8,14 @@ const STUDENT_COLS = `
   date_enrolled, previous_school, last_grade_completed, created_at
 `
 
+const STUDENT_COLS_FROM_ALIAS = `
+  s.id, s.first_name, s.middle_name, s.last_name, s.birth_date, s.gender, s.class_id,
+  s.lrn, s.learner_status, s.house_no, s.street, s.barangay, s.city_municipality, s.province,
+  s.father_name, s.mother_name, s.guardian_name, s.parent_contact,
+  s.mother_tongue, s.religion, s.is_4ps, s.is_ip,
+  s.date_enrolled, s.previous_school, s.last_grade_completed, s.created_at
+`
+
 export const STUDENT_QUERIES = {
   insert: `
     INSERT INTO students (
@@ -56,7 +64,7 @@ export const STUDENT_QUERIES = {
     SELECT 1 AS ok FROM classes WHERE id = ? AND user_id = ? LIMIT 1
   `,
   getByIdForUser: `
-    SELECT ${STUDENT_COLS}
+    SELECT ${STUDENT_COLS_FROM_ALIAS}
     FROM students s
     INNER JOIN classes c ON c.id = s.class_id AND c.user_id = ?
     WHERE s.id = ?
