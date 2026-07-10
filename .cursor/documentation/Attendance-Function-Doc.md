@@ -17,6 +17,8 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-o
 
 **Related:** Server-side PDF export (run-once batch) — [Report-Generation-Function-Doc.md](./Report-Generation-Function-Doc.md).
 
+**Data ownership (GAP-001):** Attendance sessions are per-teacher (`attendance_sessions.user_id`); `UNIQUE(user_id, date, period)`. Each teacher has separate AM/PM sessions for the same calendar date. See [GAP-001.md](../gaps/GAP-001.md).
+
 ---
 
 ## Auto-save

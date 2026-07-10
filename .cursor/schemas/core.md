@@ -17,6 +17,7 @@ Represents a group of students (e.g., Grade 5).
 ```
 classes: {
   id: string (uuid, primary key)
+  userId: string // FK → users.id — owning teacher (GAP-001)
   name: string // e.g. "Grade 5"
   shift: string // "MRNG" | "AFTNN" — morning vs afternoon section schedule
   gradeLevel?: string // e.g. "5", "7", "11" — DepEd grade band
@@ -69,6 +70,7 @@ students: {
 ### classes
 
 - `id` must be unique (UUID).
+- `userId` is required — FK to `users.id`; all list/create/update scoped to authenticated teacher.
 - `name` is required.
 - `shift` is required: **`MRNG`** (morning section) or **`AFTNN`** (afternoon section).
 - **Attendance UI:** when taking attendance for **AM**, only classes with **`shift = MRNG`** are offered; for **PM**, only **`shift = AFTNN`** (maps to `attendance_sessions.period` in [attendance.md](./attendance.md)).
@@ -77,7 +79,8 @@ students: {
 ### students
 
 - Each student belongs to ONE class.
-- `classId` must reference an existing class.
+- `classId` must reference an existing class **owned by the same teacher** (`classes.user_id`).
+- Students have no direct `userId` column — ownership is via `classId` → `classes.user_id`.
 - `firstName`, `lastName`, `birthDate`, and `gender` are required.
 - Display name in UI: combine `firstName` + optional `middleName` + `lastName`.
 - Do NOT store attendance or score data on this row.
@@ -162,6 +165,7 @@ Class
 See `tdtd-node/src/db/migrate.ts`:
 
 - Primary keys on `classes.id`, `students.id`.
+- `idx_classes_user_id` on `classes(user_id)`.
 - `idx_students_class_id` on `students(class_id)`.
 - `idx_students_sort` on `(class_id, last_name, first_name)` for roster ordering.
 

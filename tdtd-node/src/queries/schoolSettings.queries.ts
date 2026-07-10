@@ -4,6 +4,7 @@ export const SCHOOL_SETTINGS_QUERIES = {
   get: `
     SELECT
       id,
+      user_id,
       school_name,
       school_id,
       district,
@@ -14,19 +15,19 @@ export const SCHOOL_SETTINGS_QUERIES = {
       default_school_year_id,
       updated_at
     FROM school_settings
-    ORDER BY updated_at DESC
+    WHERE user_id = ?
     LIMIT 1
   `,
   upsert: `
     INSERT INTO school_settings (
-      id, school_name, school_id, district, division, region,
+      id, user_id, school_name, school_id, district, division, region,
       school_address, school_head_name, default_school_year_id, updated_at
     )
     VALUES (
-      @id, @school_name, @school_id, @district, @division, @region,
+      @id, @user_id, @school_name, @school_id, @district, @division, @region,
       @school_address, @school_head_name, @default_school_year_id, @updated_at
     )
-    ON CONFLICT(id) DO UPDATE SET
+    ON CONFLICT(user_id) DO UPDATE SET
       school_name = excluded.school_name,
       school_id = excluded.school_id,
       district = excluded.district,

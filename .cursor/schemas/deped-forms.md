@@ -8,11 +8,12 @@ Field mappings from DepEd form sections to TDTD tables/API. Used by [DepEd-Schoo
 
 ## school_settings
 
-Singleton (v1) school identity for form headers.
+Per-teacher school identity for form headers (GAP-001).
 
 ```
 school_settings: {
   id: string (uuid, primary key)
+  userId: string // FK → users.id — one row per teacher
   schoolName: string
   schoolId: string // BEIS ID
   district: string
@@ -20,10 +21,12 @@ school_settings: {
   region: string
   schoolAddress?: string
   schoolHeadName?: string
-  defaultSchoolYearId?: string // FK → school_years.id
+  defaultSchoolYearId?: string // FK → school_years.id (same teacher)
   updatedAt: number (timestamp)
 }
 ```
+
+**Unique:** `(user_id)` — one settings row per teacher.
 
 ---
 

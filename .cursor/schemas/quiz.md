@@ -6,6 +6,8 @@ Defines recording **quiz**, **exam**, and **participation** scores. Scores are a
 
 Depends on [core.md](./core.md) (`classes`, `students`) and [subjects.md](./subjects.md) (`subjects`, `class_subjects`). Do not embed score data on `students` or `classes` rows.
 
+**Ownership (GAP-001):** `score_events` and `score_entries` are scoped via `score_events.class_id` → `classes.user_id`. See [GAP-001.md](../gaps/GAP-001.md).
+
 ---
 
 ## Tables

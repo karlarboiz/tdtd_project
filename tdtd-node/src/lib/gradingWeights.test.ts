@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import Database from 'better-sqlite3'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { migrate } from '../db/migrate.js'
+import { createTestUser } from '../test/testUser.js'
 import {
   DEFAULT_WEIGHT_BANDS,
   bandForGrade,
@@ -14,11 +15,13 @@ import { HttpError } from '../errors/http-error.js'
 
 describe('gradingWeights', () => {
   let db: SqliteDatabase
+  let userId: string
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db = new Database(':memory:') as SqliteDatabase
     db.pragma('foreign_keys = ON')
     migrate(db)
+    userId = await createTestUser(db, `grading-${Date.now()}@example.com`)
   })
 
   afterEach(() => {
@@ -71,17 +74,17 @@ describe('gradingWeights', () => {
 
   describe('resolveComponentWeights', () => {
     it('returns seeded active system weights for grade 7', () => {
-      const w = resolveComponentWeights(db, 'Grade 7')
+      const w = resolveComponentWeights(db, userId, 'Grade 7')
       expect(w).toEqual({ ww: 0.4, pt: 0.4, qa: 0.2 })
     })
 
     it('returns grade 11 band weights', () => {
-      const w = resolveComponentWeights(db, '11')
+      const w = resolveComponentWeights(db, userId, '11')
       expect(w).toEqual({ ww: 0.25, pt: 0.5, qa: 0.25 })
     })
 
     it('uses custom weights after save on active system', () => {
-      const systems = gradingService.listGradingSystems(db)
+      const systems = gradingService.listGradingSystems(db, userId)
       const active = systems.find((s) => s.isActive)!
       const custom = DEFAULT_WEIGHT_BANDS.map((b) => ({
         ...b,
@@ -89,24 +92,26 @@ describe('gradingWeights', () => {
         pt: b.gradeBandMin === 7 ? 30 : b.pt,
         qa: b.gradeBandMin === 7 ? 20 : b.qa,
       }))
-      gradingService.saveGradingSystemWeights(db, active.id, custom)
-      const w = resolveComponentWeights(db, 'Grade 8')
+      gradingService.saveGradingSystemWeights(db, userId, active.id, custom)
+      const w = resolveComponentWeights(db, userId, 'Grade 8')
       expect(w).toEqual({ ww: 0.5, pt: 0.3, qa: 0.2 })
     })
   })
 
   describe('gradingSystem.service validation', () => {
     it('rejects save when sum is not 100', () => {
-      const systems = gradingService.listGradingSystems(db)
+      const systems = gradingService.listGradingSystems(db, userId)
       const active = systems[0]!
       const bad = DEFAULT_WEIGHT_BANDS.map((b) => ({ ...b, ww: 30, pt: 30, qa: 30 }))
-      expect(() => gradingService.saveGradingSystemWeights(db, active.id, bad)).toThrow(HttpError)
+      expect(() =>
+        gradingService.saveGradingSystemWeights(db, userId, active.id, bad),
+      ).toThrow(HttpError)
     })
 
     it('creates a new inactive system with default weights', () => {
-      const created = gradingService.createGradingSystem(db, 'Custom 2026')
+      const created = gradingService.createGradingSystem(db, userId, 'Custom 2026')
       expect(created.isActive).toBe(false)
-      const weights = gradingService.getGradingSystemWeights(db, created.id)
+      const weights = gradingService.getGradingSystemWeights(db, userId, created.id)
       expect(weights).toHaveLength(3)
       expect(weights[0]!.ww).toBe(30)
     })

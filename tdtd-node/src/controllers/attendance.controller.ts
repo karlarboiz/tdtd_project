@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express'
+import type { Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import {
   getAttendanceState,
@@ -7,15 +7,16 @@ import {
   saveAttendance,
 } from '../services/attendance.service.js'
 import { HttpError } from '../errors/http-error.js'
+import type { AuthenticatedRequest } from '../middleware/authenticate.js'
 
 export function attendancePresentRosterHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const date =
         typeof req.query.date === 'string' ? req.query.date : ''
       const period =
         typeof req.query.period === 'string' ? req.query.period : ''
-      const roster = getPresentAttendanceRoster(db, date, period)
+      const roster = getPresentAttendanceRoster(db, req.auth!.id, date, period)
       res.json(roster)
     } catch (e) {
       if (e instanceof HttpError) {
@@ -29,7 +30,7 @@ export function attendancePresentRosterHandler(db: SqliteDatabase) {
 }
 
 export function attendanceStateHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const date =
         typeof req.query.date === 'string' ? req.query.date : ''
@@ -37,7 +38,7 @@ export function attendanceStateHandler(db: SqliteDatabase) {
         typeof req.query.period === 'string' ? req.query.period : ''
       const classId =
         typeof req.query.classId === 'string' ? req.query.classId : ''
-      const state = getAttendanceState(db, date, period, classId)
+      const state = getAttendanceState(db, req.auth!.id, date, period, classId)
       res.json(state)
     } catch (e) {
       if (e instanceof HttpError) {
@@ -51,12 +52,17 @@ export function attendanceStateHandler(db: SqliteDatabase) {
 }
 
 export function attendanceSessionDatesHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const from =
         typeof req.query.from === 'string' ? req.query.from : ''
       const to = typeof req.query.to === 'string' ? req.query.to : ''
-      const dates = listAttendanceSessionDatesInRange(db, from, to)
+      const dates = listAttendanceSessionDatesInRange(
+        db,
+        req.auth!.id,
+        from,
+        to,
+      )
       res.json({ dates })
     } catch (e) {
       if (e instanceof HttpError) {
@@ -70,7 +76,7 @@ export function attendanceSessionDatesHandler(db: SqliteDatabase) {
 }
 
 export function attendanceSaveHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const body = req.body as {
         date?: unknown
@@ -87,7 +93,7 @@ export function attendanceSaveHandler(db: SqliteDatabase) {
         ? body.presentStudentIds.map((x) => String(x ?? ''))
         : []
 
-      const session = saveAttendance(db, {
+      const session = saveAttendance(db, req.auth!.id, {
         date,
         period,
         classStudentIds,

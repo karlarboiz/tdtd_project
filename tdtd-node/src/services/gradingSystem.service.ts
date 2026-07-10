@@ -65,21 +65,29 @@ function bandsToRows(
   }))
 }
 
-export function listGradingSystems(db: SqliteDatabase): GradingSystemSummary[] {
-  return dao.listGradingSystems(db).map(toSummary)
+export function listGradingSystems(
+  db: SqliteDatabase,
+  userId: string,
+): GradingSystemSummary[] {
+  return dao.listGradingSystems(db, userId).map(toSummary)
 }
 
-export function createGradingSystem(db: SqliteDatabase, name: string): GradingSystemSummary {
+export function createGradingSystem(
+  db: SqliteDatabase,
+  userId: string,
+  name: string,
+): GradingSystemSummary {
   const trimmed = name?.trim()
   if (!trimmed) throw new HttpError(400, 'name is required')
   if (trimmed.length > 120) throw new HttpError(400, 'name must be at most 120 characters')
-  if (dao.gradingSystemNameExists(db, trimmed)) {
+  if (dao.gradingSystemNameExists(db, userId, trimmed)) {
     throw new HttpError(409, 'A grading system with this name already exists')
   }
 
   const now = Date.now()
   const row: GradingSystemRow = {
     id: randomUUID(),
+    userId,
     name: trimmed,
     isActive: false,
     createdAt: now,
@@ -90,8 +98,12 @@ export function createGradingSystem(db: SqliteDatabase, name: string): GradingSy
   return toSummary(row)
 }
 
-export function activateGradingSystem(db: SqliteDatabase, id: string): GradingSystemSummary {
-  const system = dao.getGradingSystemById(db, id)
+export function activateGradingSystem(
+  db: SqliteDatabase,
+  userId: string,
+  id: string,
+): GradingSystemSummary {
+  const system = dao.getGradingSystemById(db, id, userId)
   if (!system) throw new HttpError(404, 'grading system not found')
 
   const weights = dao.listWeightsBySystemId(db, id)
@@ -105,15 +117,16 @@ export function activateGradingSystem(db: SqliteDatabase, id: string): GradingSy
   assertValidBands(display)
 
   const now = Date.now()
-  dao.activateGradingSystem(db, id, now)
+  dao.activateGradingSystem(db, userId, id, now)
   return toSummary({ ...system, isActive: true, updatedAt: now })
 }
 
 export function getGradingSystemWeights(
   db: SqliteDatabase,
+  userId: string,
   id: string,
 ): GradingWeightBandDisplay[] {
-  const system = dao.getGradingSystemById(db, id)
+  const system = dao.getGradingSystemById(db, id, userId)
   if (!system) throw new HttpError(404, 'grading system not found')
   const weights = dao.listWeightsBySystemId(db, id)
   if (weights.length === 0) {
@@ -127,17 +140,18 @@ export function getGradingSystemWeights(
 
 export function saveGradingSystemWeights(
   db: SqliteDatabase,
+  userId: string,
   id: string,
   bands: GradingWeightBandInput[],
 ): GradingWeightBandDisplay[] {
-  const system = dao.getGradingSystemById(db, id)
+  const system = dao.getGradingSystemById(db, id, userId)
   if (!system) throw new HttpError(404, 'grading system not found')
 
   assertValidBands(bands)
   dao.replaceWeightsForSystem(db, id, bandsToRows(id, bands))
 
   const now = Date.now()
-  db.prepare(`UPDATE grading_systems SET updated_at = ? WHERE id = ?`).run(now, id)
+  dao.touchGradingSystemUpdatedAt(db, userId, id, now)
 
-  return getGradingSystemWeights(db, id)
+  return getGradingSystemWeights(db, userId, id)
 }

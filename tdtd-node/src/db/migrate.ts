@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { SqliteDatabase } from './sqlite-types.js'
+import { migrateUserOwnershipTables } from './migrate-user-ownership.js'
 
 function tableExists(db: SqliteDatabase, name: string): boolean {
   const row = db
@@ -357,6 +358,7 @@ export function migrate(db: SqliteDatabase): void {
   migrateSyncTables(db)
   migrateGovernmentHolidaysTable(db)
   migrateDepEdTables(db)
+  migrateUserOwnershipTables(db)
 }
 
 /** Cached PH nationwide holidays scraped from Official Gazette proclamations. */

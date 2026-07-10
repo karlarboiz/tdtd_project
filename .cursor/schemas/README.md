@@ -12,6 +12,8 @@ Canonical table definitions for **Teacher's Dilemma Today** live in this folder.
 
 Do not change schema structure unless explicitly instructed.
 
+**Multi-teacher ownership:** [GAP-001.md](../gaps/GAP-001.md) — per-teacher `user_id` on domain tables.
+
 **Feature change history** (what was built, when, why): [`.cursor/documentation/`](../documentation/).
 
 ## Schema files

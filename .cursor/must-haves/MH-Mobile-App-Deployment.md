@@ -74,7 +74,7 @@ Server auth exists; **web storage is not sufficient for native apps.**
 ### A4. API security (public internet)
 
 - [ ] Replace `cors({ origin: true })` in `tdtd-node` with an **allowlist** of known origins (web app URL(s); Capacitor may use `capacitor://` / `https://localhost` — verify and document)
-- [ ] **IDOR review**: every class/student/attendance/score route scoped to the authenticated teacher (no cross-user access by ID guessing)
+- [ ] **IDOR review**: every class/student/attendance/score route scoped to the authenticated teacher (no cross-user access by ID guessing) — requires GAP-001 schema + GAP-002 route audit; see [GAP-001.md](../gaps/GAP-001.md)
 - [ ] Rate-limit login (and optionally signup) — called out as not in auth v1
 - [ ] Strong `JWT` / refresh secret configuration in production (rotate procedure documented)
 - [ ] TLS only for API; no cleartext production endpoints

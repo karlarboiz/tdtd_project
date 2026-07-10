@@ -34,7 +34,7 @@ public class AttendanceReminderJob implements Job {
     AttendanceReminderService service = new AttendanceReminderService();
 
     try (Connection conn = DatabaseFactory.open(config.getDbPath())) {
-      String result = service.sync(conn, dateYmd, period, config.getTimeZone());
+      String result = service.syncAll(conn, dateYmd, period, config.getTimeZone());
       LOG.info("AttendanceReminderJob {} {} → {}", dateYmd, period, result);
     } catch (Exception e) {
       throw new JobExecutionException(e);

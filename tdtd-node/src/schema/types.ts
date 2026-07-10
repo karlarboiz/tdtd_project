@@ -33,6 +33,7 @@ export type IsoDateString = string
  */
 export interface ClassRow {
   id: string
+  userId: string
   name: string
   shift: ClassShift
   gradeLevel?: string
@@ -77,6 +78,7 @@ export interface StudentRow {
 
 export interface SchoolSettingsRow {
   id: string
+  userId: string
   schoolName: string
   schoolId?: string
   district?: string
@@ -91,6 +93,7 @@ export interface SchoolSettingsRow {
 /** Grading system profile — WW/PT/QA weights per grade band (GAP-103). */
 export interface GradingSystemRow {
   id: string
+  userId: string
   name: string
   isActive: boolean
   createdAt: number
@@ -156,6 +159,7 @@ export interface EnrollmentHistoryRow {
 }
 export interface AttendanceSessionRow {
   id: string
+  userId: string
   date: IsoDateString
   period: AttendancePeriod
   createdAt: number
@@ -179,6 +183,7 @@ export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
 
 export interface SchoolYearRow {
   id: string
+  userId: string
   label: string
   startDate?: IsoDateString
   endDate?: IsoDateString
@@ -189,6 +194,7 @@ export interface SchoolYearRow {
 
 export interface SubjectRow {
   id: string
+  userId: string
   name: string
   shortCode?: string
   createdAt: number
@@ -253,6 +259,7 @@ export type ActivityLogMetadata = {
  */
 export interface ActivityLogRow {
   id: string
+  userId: string
   action: string
   summary: string
   metadata?: ActivityLogMetadata
@@ -298,6 +305,7 @@ export type TeacherReminderStatus = 'open' | 'dismissed' | 'resolved'
 
 export interface TeacherReminderRow {
   id: string
+  userId: string
   type: TeacherReminderType
   date: IsoDateString
   period: AttendancePeriod

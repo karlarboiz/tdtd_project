@@ -1,6 +1,7 @@
-import type { Request, Response } from 'express'
+import type { Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { HttpError } from '../errors/http-error.js'
+import type { AuthenticatedRequest } from '../middleware/authenticate.js'
 import {
   assignSubjectToClass,
   createScoreEvent,
@@ -12,14 +13,14 @@ import {
   replaceScoreEntries,
 } from '../services/score.service.js'
 
-function classIdParam(req: Request): string {
+function classIdParam(req: AuthenticatedRequest): string {
   return typeof req.params.classId === 'string' ? req.params.classId : ''
 }
 
 export function listClassSubjectsHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
-      res.json(listClassSubjects(db, classIdParam(req)))
+      res.json(listClassSubjects(db, req.auth!.id, classIdParam(req)))
     } catch (e) {
       if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })
@@ -32,12 +33,17 @@ export function listClassSubjectsHandler(db: SqliteDatabase) {
 }
 
 export function assignClassSubjectHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const body = req.body as { subjectId?: unknown }
       const subjectId =
         typeof body.subjectId === 'string' ? body.subjectId : ''
-      const row = assignSubjectToClass(db, classIdParam(req), subjectId)
+      const row = assignSubjectToClass(
+        db,
+        req.auth!.id,
+        classIdParam(req),
+        subjectId,
+      )
       res.status(201).json(row)
     } catch (e) {
       if (e instanceof HttpError) {
@@ -51,11 +57,11 @@ export function assignClassSubjectHandler(db: SqliteDatabase) {
 }
 
 export function removeClassSubjectHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const subjectId =
         typeof req.params.subjectId === 'string' ? req.params.subjectId : ''
-      removeSubjectFromClass(db, classIdParam(req), subjectId)
+      removeSubjectFromClass(db, req.auth!.id, classIdParam(req), subjectId)
       res.status(204).end()
     } catch (e) {
       if (e instanceof HttpError) {
@@ -69,12 +75,14 @@ export function removeClassSubjectHandler(db: SqliteDatabase) {
 }
 
 export function listClassScoreEventsHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const q = req.query.subjectId
       const subjectIdFilter =
         typeof q === 'string' && q.trim() ? q.trim() : undefined
-      res.json(listScoreEvents(db, classIdParam(req), subjectIdFilter))
+      res.json(
+        listScoreEvents(db, req.auth!.id, classIdParam(req), subjectIdFilter),
+      )
     } catch (e) {
       if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })
@@ -87,10 +95,10 @@ export function listClassScoreEventsHandler(db: SqliteDatabase) {
 }
 
 export function createClassScoreEventHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const body = req.body as Record<string, unknown>
-      const created = createScoreEvent(db, classIdParam(req), {
+      const created = createScoreEvent(db, req.auth!.id, classIdParam(req), {
         subjectId:
           typeof body.subjectId === 'string' ? body.subjectId : '',
         kind: typeof body.kind === 'string' ? body.kind : '',
@@ -110,14 +118,14 @@ export function createClassScoreEventHandler(db: SqliteDatabase) {
   }
 }
 
-function eventIdParam(req: Request): string {
+function eventIdParam(req: AuthenticatedRequest): string {
   return typeof req.params.eventId === 'string' ? req.params.eventId : ''
 }
 
 export function getScoreEventHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
-      res.json(getScoreEventOrThrow(db, eventIdParam(req)))
+      res.json(getScoreEventOrThrow(db, req.auth!.id, eventIdParam(req)))
     } catch (e) {
       if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })
@@ -130,9 +138,9 @@ export function getScoreEventHandler(db: SqliteDatabase) {
 }
 
 export function listScoreEntriesHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
-      res.json(listScoreEntries(db, eventIdParam(req)))
+      res.json(listScoreEntries(db, req.auth!.id, eventIdParam(req)))
     } catch (e) {
       if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })
@@ -145,7 +153,7 @@ export function listScoreEntriesHandler(db: SqliteDatabase) {
 }
 
 export function putScoreEntriesHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const body = req.body as { entries?: unknown }
       const raw = body.entries
@@ -155,7 +163,9 @@ export function putScoreEntriesHandler(db: SqliteDatabase) {
           ? (x as { studentId?: unknown; score?: unknown; note?: unknown })
           : {},
       )
-      res.json(replaceScoreEntries(db, eventIdParam(req), normalized))
+      res.json(
+        replaceScoreEntries(db, req.auth!.id, eventIdParam(req), normalized),
+      )
     } catch (e) {
       if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })

@@ -38,6 +38,17 @@ export function getScoreEventById(
   return row ? mapScoreEventRow(row) : undefined
 }
 
+export function getScoreEventByIdForUser(
+  db: SqliteDatabase,
+  id: string,
+  userId: string,
+): ScoreEventRow | undefined {
+  const row = db.prepare(SCORE_EVENT_QUERIES.getByIdForUser).get(userId, id) as
+    | ScoreEventDbRow
+    | undefined
+  return row ? mapScoreEventRow(row) : undefined
+}
+
 export function listScoreEventsByClass(
   db: SqliteDatabase,
   classId: string,

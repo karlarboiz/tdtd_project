@@ -4,6 +4,7 @@ import { CLASS_QUERIES } from '../queries/class.queries.js'
 
 type ClassDbRow = {
   id: string
+  user_id: string
   name: string
   shift: ClassShift
   grade_level: string | null
@@ -16,6 +17,7 @@ type ClassDbRow = {
 export function mapClassRow(row: ClassDbRow): ClassRow {
   return {
     id: row.id,
+    userId: row.user_id,
     name: row.name,
     shift: row.shift,
     gradeLevel: row.grade_level ?? undefined,
@@ -26,22 +28,24 @@ export function mapClassRow(row: ClassDbRow): ClassRow {
   }
 }
 
-export function listClasses(db: SqliteDatabase): ClassRow[] {
-  const rows = db.prepare(CLASS_QUERIES.listByName).all() as ClassDbRow[]
+export function listClasses(db: SqliteDatabase, userId: string): ClassRow[] {
+  const rows = db.prepare(CLASS_QUERIES.listByName).all(userId) as ClassDbRow[]
   return rows.map(mapClassRow)
 }
 
 export function getClassById(
   db: SqliteDatabase,
   id: string,
+  userId: string,
 ): ClassRow | undefined {
-  const row = db.prepare(CLASS_QUERIES.getById).get(id) as ClassDbRow | undefined
+  const row = db.prepare(CLASS_QUERIES.getById).get(id, userId) as ClassDbRow | undefined
   return row ? mapClassRow(row) : undefined
 }
 
 export function insertClass(db: SqliteDatabase, row: ClassRow): void {
   db.prepare(CLASS_QUERIES.insert).run({
     id: row.id,
+    user_id: row.userId,
     name: row.name,
     shift: row.shift,
     grade_level: row.gradeLevel ?? null,
@@ -54,11 +58,13 @@ export function insertClass(db: SqliteDatabase, row: ClassRow): void {
 
 export function updateClassMetadata(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
   meta: Pick<ClassRow, 'gradeLevel' | 'sectionName' | 'classAdviserName'>,
 ): void {
   db.prepare(CLASS_QUERIES.updateMetadata).run({
     id: classId,
+    user_id: userId,
     grade_level: meta.gradeLevel ?? null,
     section_name: meta.sectionName ?? null,
     class_adviser_name: meta.classAdviserName ?? null,

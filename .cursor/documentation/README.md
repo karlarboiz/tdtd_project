@@ -4,7 +4,7 @@ Change history and feature notes for **Teacher's Dilemma Today**, organized by p
 
 Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These files record **what we built, when, why**, and which files/schemas were involved.
 
-**Planning** (not yet shipped): [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md). **Strategic alignment** (living): [Spec-Align-Doc.md](./Spec-Align-Doc.md) · [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) — checklist audit and prioritized execution backlog.
+**Planning** (not yet shipped): [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md). **Strategic alignment** (living): [Spec-Align-Doc.md](./Spec-Align-Doc.md) · [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) — checklist audit and prioritized execution backlog. **Gap epics:** [`.cursor/gaps/`](../gaps/) — detailed implementation specs (e.g. [GAP-001.md](../gaps/GAP-001.md)).
 
 ## Documents
 
