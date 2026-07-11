@@ -38,6 +38,26 @@ Email/password **signup** and **login** with **JWT access tokens** and **opaque 
 
 ---
 
+## Environment variables
+
+Copy [`tdtd-node/.env.example`](../../tdtd-node/.env.example) for local dev. Production matrix: [GAP-003.md](../gaps-p0/GAP-003.md).
+
+| Variable | Purpose |
+|----------|---------|
+| `TDTD_JWT_ACCESS_SECRET` | JWT signing key — **required** in production (32+ chars) |
+| `TDTD_REFRESH_TOKEN_PEPPER` | HMAC pepper for refresh token hashes — **required** in production |
+| `TDTD_ACCESS_TOKEN_TTL_MINUTES` | Access token lifetime (default 15) |
+| `TDTD_REFRESH_TOKEN_TTL_DAYS` | Refresh token lifetime (default 14) |
+| `TDTD_PASSWORD_MAX_AGE_DAYS` | Password expiration (default 60) |
+| `TDTD_PASSWORD_RESET_TTL_MINUTES` | Reset link TTL (default 60) |
+| `TDTD_APP_URL` | Base URL for password-reset emails |
+| `TDTD_SMTP_*` | SMTP for forgot-password (optional in dev) |
+| `TDTD_ENV` | Set `production` to enable secret + CORS fail-fast |
+
+When `TDTD_ENV=production`, the server refuses to start with dev placeholder secrets or missing `TDTD_CORS_ORIGINS` — see [`auth-config.ts`](../../tdtd-node/src/lib/auth-config.ts) and [`cors-config.ts`](../../tdtd-node/src/lib/cors-config.ts).
+
+---
+
 ## Data model
 
 See [auth.md](../schemas/auth.md) — tables `users`, `refresh_tokens`, `password_reset_tokens`.

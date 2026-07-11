@@ -136,6 +136,8 @@ tdtd-frontend ◄──────── REST /api/due-list, /api/reminders ─
 
 **Run batch daemon:** `java -jar tdtd-batch-app/target/tdtd-batch-app.jar` with `TDTD_DB_PATH` set.
 
+**Production reference stack:** [deploy/docker-compose.yml](../../deploy/docker-compose.yml) runs `batch` alongside `api` with a shared volume at `/data/teacher_app.sqlite` — see [GAP-003.md](../gaps-p0/GAP-003.md).
+
 ---
 
 ## Future jobs (not in BATCH-001)

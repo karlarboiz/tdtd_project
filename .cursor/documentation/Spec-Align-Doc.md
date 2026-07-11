@@ -73,7 +73,7 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 | Sync when online | **Scaffold** | `GET /api/sync/pull`, `POST /api/sync/push`; client [`syncClient.ts`](../../tdtd-frontend/src/mobile/sync/syncClient.ts) — [sync.md](../schemas/sync.md) |
 | Conflict resolution | **Planned** | Last-write-wins documented in [sync.md](../schemas/sync.md); not wired to domain tables |
 
-**Note:** [`sync.service.ts`](../../tdtd-node/src/services/sync.service.ts) `pullSync` returns **empty `changes`**; `pushSync` accepts idempotency keys but does **not apply** mutations. See [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phases 4–5 and [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §D.
+**Note:** [`sync.service.ts`](../../tdtd-node/src/services/sync.service.ts) `pullSync` returns **empty `changes`**; `pushSync` accepts idempotency keys but does **not apply** mutations. See [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phases 4–5 and [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §D. **Hosted HTTPS API** (prerequisite for sync when online) — [GAP-003.md](../gaps-p0/GAP-003.md) in progress.
 
 ---
 

@@ -87,7 +87,7 @@ MOBILE:  App UI → Local SQLite → (when online) Sync ↔ Server SQLite
 - [ ] No local SQLite on client (DDL + outbox scaffold only; plugin not wired)
 - [x] Sync protocol scaffold (`GET /api/sync/pull`, `POST /api/sync/push`; row-level fan-out TBD)
 - [ ] No authentication or per-device identity
-- [ ] No production deploy story (HTTPS, single API URL for mobile builds)
+- [ ] No production deploy story (HTTPS, single API URL for mobile builds) — **in progress** — [GAP-003.md](../gaps-p0/GAP-003.md) · [deploy/README.md](../../deploy/README.md)
 - [ ] `tdtd-node` does not serve SPA; no documented hosted stack
 - [ ] Excel import via `xlsx` — heavy; needs mobile file UX review
 - [x] Mobile-only feature flags (`VITE_APP_TARGET`, `src/mobile/appTarget.ts`)
@@ -115,13 +115,15 @@ Complete before heavy implementation.
 
 ## Phase 1 — Hosting and API (needed even for hybrid-online v1)
 
+Epic: [GAP-003.md](../gaps-p0/GAP-003.md) · Runbook: [deploy/README.md](../../deploy/README.md)
+
 Mobile offline still needs a **sync endpoint** when online.
 
-- [ ] Deploy `tdtd-node` to HTTPS host (VPS, Railway, Fly.io, school server, etc.).
-- [ ] Persistent volume for `teacher_app.sqlite` + automated backup.
+- [ ] Deploy `tdtd-node` to HTTPS host (VPS, Railway, Fly.io, school server, etc.) — reference stack shipped; live host deferred
+- [ ] Persistent volume for `teacher_app.sqlite` + automated backup — see `deploy/docker-compose.yml`
 - [ ] Build `tdtd-frontend` for web with `VITE_API_URL` / same-origin `/api`.
-- [ ] Optionally: serve `dist/` from Express or CDN; CORS locked to known origins (not `origin: true` in production).
-- [ ] Environment matrix documented: `dev` (LAN), `staging`, `production`.
+- [ ] Optionally: serve `dist/` from Express or CDN; CORS locked to known origins — `TDTD_CORS_ORIGINS` when `TDTD_ENV=production`
+- [ ] Environment matrix documented: `dev` (LAN), `staging`, `production` — GAP-003 env matrix
 - [x] Health check route `GET /api/health`.
 
 ---

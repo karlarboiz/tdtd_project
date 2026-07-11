@@ -44,10 +44,12 @@ Ship Capacitor wrapping the React UI; all data via REST to a **public HTTPS API*
 
 ### A1. Hosting and API
 
-- [ ] Deploy `tdtd-node` to a **HTTPS** host (VPS, Railway, Fly.io, school server, etc.)
-- [ ] **Persistent volume** for SQLite (`TDTD_DB_PATH` / `data/teacher_app.sqlite`) — not ephemeral container disk
-- [ ] **Automated backups** of `teacher_app.sqlite` (schedule + restore tested)
-- [ ] Document environment matrix: `dev` (LAN), `staging`, `production`
+See epic [GAP-003.md](../gaps-p0/GAP-003.md) and [deploy/README.md](../../deploy/README.md) for the reference Docker Compose stack.
+
+- [ ] Deploy `tdtd-node` to a **HTTPS** host (VPS, Railway, Fly.io, school server, etc.) — **reference stack in repo; live host deferred**
+- [ ] **Persistent volume** for SQLite (`TDTD_DB_PATH` / `data/teacher_app.sqlite`) — not ephemeral container disk — see [deploy/docker-compose.yml](../../deploy/docker-compose.yml)
+- [ ] **Automated backups** of `teacher_app.sqlite` (schedule + restore tested) — [scripts/backup-sqlite.sh](../../scripts/backup-sqlite.sh)
+- [ ] Document environment matrix: `dev` (LAN), `staging`, `production` — [GAP-003.md](../gaps-p0/GAP-003.md) · [tdtd-node/.env.example](../../tdtd-node/.env.example)
 - [ ] Production secrets: JWT signing keys, DB path, `PORT` — not committed to git
 - [ ] Deploy **`tdtd-batch`** (or equivalent cron) if server-driven AM/PM reminders are required in production
 - [ ] Confirm batch and API share the same DB file path on the host (see [TDTD-Batch-Function.md](../documentation/TDTD-Batch-Function.md))
@@ -73,7 +75,7 @@ Server auth exists; **web storage is not sufficient for native apps.**
 
 ### A4. API security (public internet)
 
-- [ ] Replace `cors({ origin: true })` in `tdtd-node` with an **allowlist** of known origins (web app URL(s); Capacitor may use `capacitor://` / `https://localhost` — verify and document)
+- [ ] Replace `cors({ origin: true })` in `tdtd-node` with an **allowlist** of known origins (web app URL(s); Capacitor may use `capacitor://` / `https://localhost` — verify and document) — **shipped in dev-reflect mode; production requires `TDTD_CORS_ORIGINS`** — [GAP-003.md](../gaps-p0/GAP-003.md) §GAP-004
 - [ ] **IDOR review**: every class/student/attendance/score route scoped to the authenticated teacher (no cross-user access by ID guessing) — requires GAP-001 schema + GAP-002 route audit; see [GAP-001.md](../gaps/GAP-001.md)
 - [ ] Rate-limit login (and optionally signup) — called out as not in auth v1
 - [ ] Strong `JWT` / refresh secret configuration in production (rotate procedure documented)
@@ -105,9 +107,9 @@ Server auth exists; **web storage is not sufficient for native apps.**
 
 ### A8. CI / release pipeline
 
-- [ ] CI job: `npm run build:mobile` (in addition to web `npm run build`)
+- [ ] CI job: `npm run build:mobile` (in addition to web `npm run build`) — deferred; see [GAP-003.md](../gaps-p0/GAP-003.md)
 - [ ] Optional: automated `cap sync` + signed AAB/IPA on release tags
-- [ ] `tdtd-node` deploy pipeline separate from frontend (tests + migrate on deploy)
+- [ ] `tdtd-node` deploy pipeline separate from frontend (tests + migrate on deploy) — reference stack in [deploy/](../../deploy/); GitHub deploy workflows remain placeholders
 
 ### A9. Web vs mobile messaging
 
@@ -116,7 +118,7 @@ Server auth exists; **web storage is not sufficient for native apps.**
 
 ### A10. Operational readiness
 
-- [ ] Monitoring / alerts on `GET /api/health` and disk space for DB volume
+- [ ] Monitoring / alerts on `GET /api/health` and disk space for DB volume — healthcheck in [deploy/docker-compose.yml](../../deploy/docker-compose.yml)
 - [ ] Incident runbook: restore DB backup, rotate JWT secrets, disable compromised accounts
 - [ ] Support contact or feedback channel for store listing
 
@@ -214,7 +216,7 @@ npx cap open android   # or ios on macOS
 | # | Question | Decision |
 |---|----------|----------|
 | 1 | Ship **online-only** v1 to Play Store first, or wait for offline + sync? | |
-| 2 | Hosting provider for `tdtd-node` + DB volume? | |
+| 2 | Hosting provider for `tdtd-node` + DB volume? | Deferred — reference Docker Compose stack in [deploy/](../../deploy/) ([GAP-003](../gaps-p0/GAP-003.md)) |
 | 3 | Production API URL (baked into `VITE_API_URL`)? | |
 | 4 | Encrypt local SQLite in v1 or v2? | |
 | 5 | iOS in scope for v1 or Android-only first? | |

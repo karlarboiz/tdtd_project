@@ -1,0 +1,14 @@
+**/.git
+**/.cursor
+**/node_modules
+**/dist
+**/target
+**/data
+**/*.sqlite
+**/*.sqlite-*
+**/.env
+**/.env.local
+**/android
+**/ios
+**/.vite
+**/coverage
