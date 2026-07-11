@@ -1,5 +1,9 @@
-const DEV_ACCESS_SECRET = 'tdtd-dev-access-secret-change-in-production'
-const DEV_REFRESH_PEPPER = 'tdtd-dev-refresh-pepper-change-in-production'
+import { isProductionEnv } from './cors-config.js'
+
+export const DEV_ACCESS_SECRET = 'tdtd-dev-access-secret-change-in-production'
+export const DEV_REFRESH_PEPPER = 'tdtd-dev-refresh-pepper-change-in-production'
+
+const MIN_SECRET_LENGTH = 32
 
 export function getAccessTokenSecret(): string {
   return process.env.TDTD_JWT_ACCESS_SECRET?.trim() || DEV_ACCESS_SECRET
@@ -45,4 +49,26 @@ export function getAppUrl(): string {
 
 export function isSmtpConfigured(): boolean {
   return Boolean(process.env.TDTD_SMTP_HOST?.trim())
+}
+
+function isWeakSecret(value: string | undefined, devFallback: string): boolean {
+  const trimmed = value?.trim()
+  if (!trimmed) return true
+  if (trimmed === devFallback) return true
+  return trimmed.length < MIN_SECRET_LENGTH
+}
+
+export function assertProductionSecrets(): void {
+  if (!isProductionEnv()) return
+
+  if (isWeakSecret(process.env.TDTD_JWT_ACCESS_SECRET, DEV_ACCESS_SECRET)) {
+    throw new Error(
+      'TDTD_JWT_ACCESS_SECRET must be set to a unique value (32+ chars) when TDTD_ENV=production',
+    )
+  }
+  if (isWeakSecret(process.env.TDTD_REFRESH_TOKEN_PEPPER, DEV_REFRESH_PEPPER)) {
+    throw new Error(
+      'TDTD_REFRESH_TOKEN_PEPPER must be set to a unique value (32+ chars) when TDTD_ENV=production',
+    )
+  }
 }

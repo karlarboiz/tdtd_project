@@ -28,6 +28,7 @@ const FORM_TO_BATCH: Record<ReportForm, string> = {
 
 function resolveBatchJar(): string {
   const candidates = [
+    '/opt/tdtd/tdtd-batch-app.jar',
     path.join(process.cwd(), '..', 'tdtd-batch', 'tdtd-batch-app', 'target', 'tdtd-batch-app.jar'),
     path.join(process.cwd(), 'tdtd-batch', 'tdtd-batch-app', 'target', 'tdtd-batch-app.jar'),
   ]

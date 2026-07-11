@@ -135,7 +135,7 @@ ngrok start --config "$env:LOCALAPPDATA\ngrok\ngrok.yml" --config ngrok.tdtd.exa
 ### How it works in code
 
 - [`tdtd-frontend/src/lib/http.ts`](../../tdtd-frontend/src/lib/http.ts) uses `VITE_API_URL` when set (strips trailing slashes).
-- [`tdtd-node/src/app.ts`](../../tdtd-node/src/app.ts) enables `cors({ origin: true })`, so the UI ngrok origin may call the API ngrok origin.
+- [`tdtd-node/src/lib/cors-config.ts`](../../tdtd-node/src/lib/cors-config.ts): when `TDTD_CORS_ORIGINS` is **unset** (dev), CORS reflects any origin so the UI ngrok origin may call the API ngrok origin. In **production** (`TDTD_ENV=production`), set `TDTD_CORS_ORIGINS` to an explicit allowlist — see [GAP-003.md](../gaps-p0/GAP-003.md).
 
 ---
 
