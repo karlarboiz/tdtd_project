@@ -194,6 +194,17 @@ Overrides are ignored in production builds. Changing timeout values restarts the
 
 ---
 
+## Token storage (`authStorage.ts`)
+
+| Build | Backend | Persistence |
+|-------|---------|-------------|
+| Web (`VITE_APP_TARGET` unset) | `sessionStorage` | Tab session only |
+| Capacitor native (`Capacitor.isNativePlatform()`) | `@aparajita/capacitor-secure-storage` | iOS Keychain / Android Keystore |
+
+On native, `AuthContext` calls `hydrateTokens()` at bootstrap to load secure storage into an in-memory cache; `getAccessToken()` / `getRefreshToken()` read the cache synchronously for `http.ts`. See [GAP-004.md](../gaps-p0/GAP-004.md) §Track A.
+
+---
+
 ## Security notes
 
 - Passwords: scrypt via `node:crypto`

@@ -55,13 +55,15 @@ Prerequisites for public hosting, per-teacher isolation, and safe mobile sync.
 | GAP-001 | Scope domain data to authenticated teacher (`userId` on classes, students, attendance, scores) | §2, §12 | [GAP-001.md](../gaps/GAP-001.md) · [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A4 | AUTH-001 shipped | Personal workspace; teacher owns data |
 | GAP-002 | Enforce IDOR on all read/write routes (filter by `req.auth.id`) | §12 | [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A4; [Role-Based-Function.md](./Role-Based-Function.md) §2 middleware | GAP-001 | Data ownership; safe hosting |
 | GAP-003 | Deploy `tdtd-node` to HTTPS with persistent SQLite volume + backups | §3, §12 | [GAP-003.md](../gaps-p0/GAP-003.md) · [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 1; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A1 | GAP-002 recommended | Sync endpoint reachable; production auth |
-| GAP-004 | Production CORS allowlist + secrets matrix (`dev` / `staging` / `prod`) | §12 | [GAP-003.md](../gaps-p0/GAP-003.md) §GAP-004 · [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 1; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A1, §A4 | GAP-003 | Safe public API |
-| GAP-005 | Mobile secure token storage (replace `sessionStorage` on Capacitor) | §3, §12 | [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A3; [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 2 | GAP-003 | Play Store online-only v1 |
+| GAP-004 | Production CORS allowlist + secrets matrix (`dev` / `staging` / `prod`) | §12 | [GAP-004.md](../gaps-p0/GAP-004.md) §Track B · [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 1; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A1, §A4 | GAP-003 | Safe public API |
+| GAP-005 | Mobile secure token storage (replace `sessionStorage` on Capacitor) | §3, §12 | [GAP-004.md](../gaps-p0/GAP-004.md) §Track A · [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A3; [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 2 | GAP-003 | Play Store online-only v1 |
 | GAP-006 | Lock Phase 0 product decisions (offline scope, conflict policy, notification policy) | §3, §10 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 0; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §B | — | Unblocks offline implementation |
 
 **GAP-001:** See epic [GAP-001.md](../gaps/GAP-001.md) for schema, migration, DAO/service threading, and acceptance criteria. Next: GAP-002 route-level IDOR audit.
 
-**GAP-003:** See epic [GAP-003.md](../gaps-p0/GAP-003.md) for Docker Compose reference stack, env matrix (partial GAP-004), backups, and deferred CI deploy wiring.
+**GAP-003:** See epic [GAP-003.md](../gaps-p0/GAP-003.md) for Docker Compose reference stack, backups, and deferred CI deploy wiring. Env matrix → [GAP-004.md](../gaps-p0/GAP-004.md) §Track B.
+
+**GAP-004 / GAP-005:** See epic [GAP-004.md](../gaps-p0/GAP-004.md) — Track A (mobile secure tokens) + Track B (CORS/secrets closure).
 
 ---
 

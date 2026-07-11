@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { PageContainer } from '@/layouts/PageContainer'
 import * as authApi from '@/api/authApi'
@@ -39,7 +39,7 @@ export function ChangePassword() {
 
     setSubmitting(true)
     try {
-      applySession(
+      await applySession(
         await authApi.changePassword({ currentPassword, newPassword }),
       )
       navigate(from, { replace: true })

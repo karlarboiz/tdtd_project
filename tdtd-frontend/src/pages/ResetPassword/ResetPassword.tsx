@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageContainer } from '@/layouts/PageContainer'
 import * as authApi from '@/api/authApi'
@@ -58,7 +58,7 @@ export function ResetPassword() {
 
     setSubmitting(true)
     try {
-      applySession(await authApi.resetPassword({ token, password }))
+      await applySession(await authApi.resetPassword({ token, password }))
       navigate('/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not reset password')
