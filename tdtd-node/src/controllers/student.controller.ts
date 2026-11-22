@@ -2,9 +2,11 @@ import type { Request, Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import type { StudentPayloadInput } from '../services/student.service.js'
 import {
+  deleteStudent,
   listStudentsByClass,
   registerStudent,
   registerStudentsBulk,
+  updateStudent,
 } from '../services/student.service.js'
 import { HttpError } from '../errors/http-error.js'
 
@@ -97,6 +99,47 @@ export function bulkRegisterHandler(db: SqliteDatabase) {
     } catch (e) {
       if (e instanceof HttpError) {
         console.warn('[tdtd register] POST /api/students/bulk rejected', e.message)
+        res.status(e.statusCode).json({ error: e.message })
+        return
+      }
+      console.error(e)
+      res.status(500).json({ error: 'internal server error' })
+    }
+  }
+}
+
+function studentIdParam(req: Request): string {
+  return typeof req.params.studentId === 'string' ? req.params.studentId : ''
+}
+
+export function updateStudentHandler(db: SqliteDatabase) {
+  return (req: Request, res: Response): void => {
+    try {
+      const body = req.body as Record<string, unknown>
+      const classId = typeof body.classId === 'string' ? body.classId : ''
+      const student = updateStudent(db, studentIdParam(req), {
+        ...parseStudentPayload(body),
+        classId,
+      })
+      res.json(student)
+    } catch (e) {
+      if (e instanceof HttpError) {
+        res.status(e.statusCode).json({ error: e.message })
+        return
+      }
+      console.error(e)
+      res.status(500).json({ error: 'internal server error' })
+    }
+  }
+}
+
+export function deleteStudentHandler(db: SqliteDatabase) {
+  return (req: Request, res: Response): void => {
+    try {
+      deleteStudent(db, studentIdParam(req))
+      res.status(204).end()
+    } catch (e) {
+      if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })
         return
       }

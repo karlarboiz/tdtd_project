@@ -26,3 +26,17 @@ export async function createClass(input: {
     throw e
   }
 }
+
+export function updateClass(
+  classId: string,
+  input: { name: string; shift: ClassShift },
+): Promise<ClassRow> {
+  return apiJson<ClassRow>(`/api/classes/${classId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteClass(classId: string): Promise<void> {
+  return apiJson<void>(`/api/classes/${classId}`, { method: 'DELETE' })
+}

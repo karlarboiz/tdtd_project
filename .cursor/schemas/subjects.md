@@ -83,6 +83,8 @@ class_subjects: {
 - Do not embed classes, students, or school years.
 - **`name`:** unique per deployment, **case-insensitive** (enforced in API; DB unique index when no legacy duplicates).
 - **`shortCode`:** when present, unique per deployment, **case-insensitive** (enforced in API; partial unique index when no legacy duplicates).
+- **Update** (`PATCH /api/subjects/:subjectId`): same trimmed `name` and optional `shortCode` rules as create, including case-insensitive uniqueness. The row being edited is excluded. An empty `shortCode` clears it. Grade level is not a catalog field.
+- **Delete** (`DELETE /api/subjects/:subjectId`): **409** when `school_year_subjects`, `class_subjects`, or `score_events` still reference the subject. Those rows are not removed automatically.
 - Registration by `name` **reuses** an existing catalog row (same name, different `gradeLevel` allowed on `school_year_subjects`).
 
 ### school_year_subjects
@@ -158,7 +160,9 @@ See `tdtd-node/src/db/migrate.ts`:
 - `GET /api/school-years/active` — current active year or 404.
 - `GET/POST /api/school-years/:schoolYearId/subjects` — list registrations (with subject details), register by `subjectId` or create+register via `name` / `shortCode`.
 - `DELETE /api/school-years/:schoolYearId/subjects/:registrationId` — unregister by registration row id (if allowed).
-- `GET/POST /api/subjects` — catalog list, create.
+- `GET/POST /api/subjects` — catalog list, create (`name` required, `shortCode` optional).
+- `PATCH /api/subjects/:subjectId` — update that catalog row (`name`, optional `shortCode`) with the same checks as create.
+- `DELETE /api/subjects/:subjectId` — delete that catalog row. **409** when a school-year registration, class assignment, or score event still uses it. This is not the school-year unregister route.
 - `GET/POST/DELETE /api/classes/:classId/subjects` — class assignment (requires active-year registration).
 
 ---

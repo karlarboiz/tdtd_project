@@ -55,6 +55,53 @@ export function insertSubject(db: SqliteDatabase, row: SubjectRow): void {
   })
 }
 
+export function getSubjectById(
+  db: SqliteDatabase,
+  id: string,
+): SubjectRow | undefined {
+  const row = db.prepare(SUBJECT_QUERIES.getById).get(id) as
+    | SubjectDbRow
+    | undefined
+  return row ? mapSubjectRow(row) : undefined
+}
+
+export function updateSubject(db: SqliteDatabase, row: SubjectRow): number {
+  const result = db.prepare(SUBJECT_QUERIES.update).run({
+    id: row.id,
+    name: row.name,
+    short_code: row.shortCode ?? null,
+    updated_at: row.updatedAt ?? null,
+  })
+  return Number(result.changes)
+}
+
+export function deleteSubjectById(db: SqliteDatabase, id: string): number {
+  const result = db.prepare(SUBJECT_QUERIES.deleteById).run(id)
+  return Number(result.changes)
+}
+
+export type SubjectDeleteUsage = {
+  schoolYearSubjects: number
+  classSubjects: number
+  scoreEvents: number
+}
+
+export function getSubjectDeleteUsage(
+  db: SqliteDatabase,
+  id: string,
+): SubjectDeleteUsage {
+  const row = db.prepare(SUBJECT_QUERIES.deleteUsage).get(id, id, id) as {
+    school_year_subjects: number
+    class_subjects: number
+    score_events: number
+  }
+  return {
+    schoolYearSubjects: Number(row.school_year_subjects),
+    classSubjects: Number(row.class_subjects),
+    scoreEvents: Number(row.score_events),
+  }
+}
+
 export function subjectExists(db: SqliteDatabase, id: string): boolean {
   const row = db
     .prepare(`SELECT 1 AS ok FROM subjects WHERE id = ? LIMIT 1`)

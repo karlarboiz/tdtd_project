@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { AddSubjectModal } from '../../components/AddSubjectModal/AddSubjectModal'
@@ -6,8 +6,10 @@ import {
   createSchoolYear,
   getActiveSchoolYear,
   listSchoolYearSubjects,
+  deleteSubject,
   registerSchoolYearSubject,
   unregisterSchoolYearSubject,
+  updateSubject,
 } from '../../api/schoolYearApi'
 import { ApiError } from '../../lib/http'
 import { defaultSchoolYearLabel } from '../../lib/schoolYearLabel'
@@ -16,6 +18,7 @@ import { downloadSubjectImportSample } from '../../lib/subjectImportSampleXlsx'
 import {
   errorAlertClass,
   formInputClasses,
+  formLabelClass,
   formLabelInlineClass,
   primaryButtonClass,
   secondaryButtonClass,
@@ -33,6 +36,14 @@ export function Subjects() {
   const [addOpen, setAddOpen] = useState(false)
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [gradeFilter, setGradeFilter] = useState<'all' | string>('all')
+  const [catalogEdit, setCatalogEdit] = useState<{
+    subjectId: string
+    name: string
+    shortCode: string
+  } | null>(null)
+  const [catalogEditError, setCatalogEditError] = useState<string | null>(null)
+  const [catalogBusy, setCatalogBusy] = useState(false)
+  const [deletingSubjectId, setDeletingSubjectId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const gradeLevels = useMemo(() => {
@@ -182,6 +193,65 @@ export function Subjects() {
     }
   }
 
+  function beginCatalogEdit(row: SchoolYearSubjectRow) {
+    setCatalogEdit({
+      subjectId: row.subjectId,
+      name: row.subjectName,
+      shortCode: row.subjectShortCode ?? '',
+    })
+    setCatalogEditError(null)
+    setPageError(null)
+  }
+
+  async function saveCatalog(e: FormEvent) {
+    e.preventDefault()
+    if (!catalogEdit || !schoolYear) return
+    const name = catalogEdit.name.trim()
+    if (!name) {
+      setCatalogEditError('Subject name is required.')
+      return
+    }
+    setCatalogBusy(true)
+    setCatalogEditError(null)
+    setPageError(null)
+    try {
+      await updateSubject(catalogEdit.subjectId, {
+        name,
+        shortCode: catalogEdit.shortCode.trim() || undefined,
+      })
+      await refreshSubjects(schoolYear.id)
+      setCatalogEdit(null)
+    } catch (err) {
+      setCatalogEditError(
+        err instanceof ApiError ? err.message : 'Could not update subject.',
+      )
+    } finally {
+      setCatalogBusy(false)
+    }
+  }
+
+  async function deleteCatalogSubject(subjectId: string, subjectName: string) {
+    if (!schoolYear) return
+    const ok = window.confirm(
+      `Delete catalog subject "${subjectName}"? This removes the subject itself, not only this school-year registration.`,
+    )
+    if (!ok) return
+    setDeletingSubjectId(subjectId)
+    setPageError(null)
+    setCatalogEditError(null)
+    try {
+      await deleteSubject(subjectId)
+      if (catalogEdit?.subjectId === subjectId) setCatalogEdit(null)
+      await refreshSubjects(schoolYear.id)
+    } catch (err) {
+      setPageError(
+        err instanceof ApiError ? err.message : 'Could not delete subject.',
+      )
+    } finally {
+      setDeletingSubjectId(null)
+    }
+  }
+
   const hasSubjects = subjects.length > 0
   const hasGradeFilter = gradeFilter !== 'all'
   const showGradeFilter = hasSubjects && gradeLevels.length > 0
@@ -318,10 +388,82 @@ export function Subjects() {
               ) : null}
             </div>
 
+            {catalogEdit ? (
+              <form
+                onSubmit={(e) => void saveCatalog(e)}
+                className="space-y-3 border-b border-slate-100 px-5 py-4"
+              >
+                <h3 className="font-semibold text-slate-900">Edit catalog subject</h3>
+                <p className="text-sm text-slate-600">
+                  Updates the shared name and short code. Grade level stays on each
+                  school-year registration.
+                </p>
+                {catalogEditError ? (
+                  <p className={errorAlertClass} role="alert">
+                    {catalogEditError}
+                  </p>
+                ) : null}
+                <div>
+                  <label htmlFor="catalog-name" className={formLabelClass}>
+                    Name
+                  </label>
+                  <input
+                    id="catalog-name"
+                    value={catalogEdit.name}
+                    onChange={(e) =>
+                      setCatalogEdit((current) =>
+                        current ? { ...current, name: e.target.value } : current,
+                      )
+                    }
+                    disabled={catalogBusy}
+                    className={`mt-1 py-2 ${formInputClasses({ error: Boolean(catalogEditError) })}`}
+                    aria-invalid={Boolean(catalogEditError)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="catalog-code" className={formLabelClass}>
+                    Short code (optional)
+                  </label>
+                  <input
+                    id="catalog-code"
+                    value={catalogEdit.shortCode}
+                    onChange={(e) =>
+                      setCatalogEdit((current) =>
+                        current ? { ...current, shortCode: e.target.value } : current,
+                      )
+                    }
+                    disabled={catalogBusy}
+                    className={`mt-1 py-2 ${formInputClasses()}`}
+                    placeholder="e.g. MATH"
+                  />
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="submit"
+                    disabled={catalogBusy}
+                    className={`px-4 py-2.5 text-sm ${primaryButtonClass}`}
+                  >
+                    {catalogBusy ? 'Saving…' : 'Save subject'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={catalogBusy}
+                    onClick={() => {
+                      setCatalogEdit(null)
+                      setCatalogEditError(null)
+                    }}
+                    className={`px-4 py-2.5 text-sm ${secondaryButtonClass}`}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : null}
+
             {hasSubjects ? (
               filteredSubjects.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[32rem] text-left text-sm">
+                <table className="w-full min-w-[44rem] text-left text-sm">
                   <thead>
                     <tr className="border-b border-slate-100 bg-neutral-bg/80 text-slate-600">
                       <th scope="col" className="px-5 py-3 font-semibold">
@@ -347,16 +489,36 @@ export function Subjects() {
                           {s.subjectShortCode ?? '—'}
                         </td>
                         <td className="px-5 py-3 text-right">
-                          <button
-                            type="button"
-                            disabled={removingId === s.id}
-                            onClick={() =>
-                              void removeSubject(s.id, s.subjectName, s.gradeLevel)
-                            }
-                            className="rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50"
-                          >
-                            {removingId === s.id ? 'Removing…' : 'Remove'}
-                          </button>
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={catalogBusy || deletingSubjectId === s.subjectId}
+                              onClick={() => beginCatalogEdit(s)}
+                              className="min-h-10 rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              disabled={catalogBusy || deletingSubjectId === s.subjectId}
+                              onClick={() =>
+                                void deleteCatalogSubject(s.subjectId, s.subjectName)
+                              }
+                              className="min-h-10 rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {deletingSubjectId === s.subjectId ? 'Deleting…' : 'Delete'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={removingId === s.id}
+                              onClick={() =>
+                                void removeSubject(s.id, s.subjectName, s.gradeLevel)
+                              }
+                              className="min-h-10 rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {removingId === s.id ? 'Removing…' : 'Remove'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

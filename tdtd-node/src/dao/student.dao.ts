@@ -33,6 +33,43 @@ export function insertStudent(db: SqliteDatabase, row: StudentRow): void {
   })
 }
 
+export function updateStudent(db: SqliteDatabase, row: StudentRow): number {
+  const result = db.prepare(STUDENT_QUERIES.update).run({
+    id: row.id,
+    first_name: row.firstName,
+    middle_name: row.middleName ?? null,
+    last_name: row.lastName,
+    birth_date: row.birthDate,
+    gender: row.gender,
+    class_id: row.classId,
+  })
+  return Number(result.changes)
+}
+
+export function deleteStudentById(db: SqliteDatabase, id: string): number {
+  const result = db.prepare(STUDENT_QUERIES.deleteById).run(id)
+  return Number(result.changes)
+}
+
+export type StudentDeleteUsage = {
+  attendanceRecords: number
+  scoreEntries: number
+}
+
+export function getStudentDeleteUsage(
+  db: SqliteDatabase,
+  id: string,
+): StudentDeleteUsage {
+  const row = db.prepare(STUDENT_QUERIES.deleteUsage).get(id, id) as {
+    attendance_records: number
+    score_entries: number
+  }
+  return {
+    attendanceRecords: Number(row.attendance_records),
+    scoreEntries: Number(row.score_entries),
+  }
+}
+
 export function getClassIdForStudent(
   db: SqliteDatabase,
   studentId: string,

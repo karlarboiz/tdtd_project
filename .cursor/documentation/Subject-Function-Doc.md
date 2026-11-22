@@ -10,8 +10,40 @@ Subject **catalog**, **school year** setup, per-year **registration** (with grad
 |------|------|
 | School years | `GET/POST /api/school-years`, `GET /active`, `PATCH /:id/active` |
 | SY registrations | `GET/POST /api/school-years/:schoolYearId/subjects`, `DELETE .../:registrationId` |
-| Catalog | `GET/POST /api/subjects` |
+| Catalog | `GET/POST /api/subjects`, `PATCH/DELETE /api/subjects/:subjectId` |
 | Class assignment | `GET/POST/DELETE /api/classes/:classId/subjects` |
+
+---
+
+## Entry SUB-005 — Edit and delete a catalog subject
+
+**Date:** 2026-11-22
+
+**Summary:** A teacher can correct a catalog subject’s name and short code, and can delete that catalog row when nothing else still uses it.
+
+**Reason:** Catalog subjects could be created and registered for a school year, but a wrong name or short code had no correction path, and an unused catalog row could not be removed.
+
+**What changed:**
+- **`PATCH /api/subjects/:subjectId`** updates `name` and optional `shortCode` with the same checks as create (trimmed name required; case-insensitive uniqueness, excluding this row). An empty short code clears it. Grade level stays on `school_year_subjects`.
+- **`DELETE /api/subjects/:subjectId`** deletes the catalog row only. **409** when `school_year_subjects`, `class_subjects`, or `score_events` still reference it. Those rows are not removed. This is separate from unregistering a school-year registration.
+- **Activity log:** one row on success, `SUBJECT_UPDATED` or `SUBJECT_DELETED`. A logging failure does not roll back the mutation.
+- **Subjects page:** Edit and Delete on each registered row. Edit saves the catalog name and short code. Delete asks for confirmation. A 409 is shown with `errorAlertClass`. Remove still unregisters the school-year row only.
+
+**Files involved:**
+- `tdtd-node/src/routes/subject.routes.ts`
+- `tdtd-node/src/controllers/subject.controller.ts`
+- `tdtd-node/src/services/subject.service.ts`
+- `tdtd-node/src/dao/subject.dao.ts`
+- `tdtd-node/src/queries/subject.queries.ts`
+- `tdtd-node/src/constants/ActivityActions.ts`
+- `tdtd-frontend/src/api/schoolYearApi.ts`
+- `tdtd-frontend/src/pages/Subjects/Subjects.tsx`
+- `.cursor/schemas/subjects.md`
+- `.cursor/schemas/recents.md`
+
+**Schemas involved:**
+- [subjects.md](../schemas/subjects.md) — `subjects` catalog update and guarded delete
+- [recents.md](../schemas/recents.md) — `SUBJECT_UPDATED`, `SUBJECT_DELETED`
 
 ---
 

@@ -103,6 +103,20 @@ See `tdtd-node/src/db/migrate.ts`:
 - Do NOT duplicate students unnecessarily.
 - Do NOT store nested objects in tables.
 - API business logic in **tdtd-node** should enforce the same rules when accepting writes.
+- Deleting a class is rejected when students, class–subject links, or score events still reference it.
+- Deleting a student is rejected when attendance records or score entries still reference them.
+
+---
+
+## API
+
+- `GET/POST /api/classes` — list classes; create with required `name` and `shift` (`MRNG` | `AFTNN`).
+- `PATCH /api/classes/:classId` — update `name` and `shift` with the same validation as create.
+- `DELETE /api/classes/:classId` — delete the class. **409** when students, `class_subjects`, or `score_events` still reference it. Those rows are not removed automatically.
+- `GET /api/students?classId=` — roster for one class.
+- `POST /api/students` and `POST /api/students/bulk` — register one student or import many (`firstName`, `lastName`, `birthDate` `YYYY-MM-DD`, `gender` `M` | `F` | `O` or Male / Female / Other, `classId`; `middleName` optional).
+- `PATCH /api/students/:studentId` — update the same fields as create.
+- `DELETE /api/students/:studentId` — delete the student. **409** when `attendance_records` or `score_entries` still reference them. Those rows are not removed automatically.
 
 ---
 

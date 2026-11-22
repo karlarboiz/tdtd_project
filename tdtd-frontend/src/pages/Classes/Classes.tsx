@@ -1,12 +1,15 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as XLSX from 'xlsx'
-import { createClass, listClasses } from '../../api/classesApi'
+import { createClass, deleteClass, listClasses, updateClass } from '../../api/classesApi'
 import {
+  deleteStudent,
   listStudentsByClass,
   registerStudent,
   registerStudentsBulk,
+  updateStudent,
 } from '../../api/studentsApi'
+import { ApiError } from '../../lib/http'
 import { formatClassShiftLabel } from '../../lib/classShift'
 import { formatStudentName } from '../../lib/studentDisplay'
 import { studentLabPath } from '../../lib/studentLabRoute'
@@ -25,6 +28,9 @@ import type {
   StudentGenderCode,
   StudentRow,
 } from '@/types/schema'
+
+const rowActionClass =
+  'min-h-10 self-center rounded-lg border border-secondary px-3 py-1.5 text-xs font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:cursor-not-allowed disabled:opacity-50'
 
 const emptyDraft = (): {
   firstName: string
@@ -48,6 +54,15 @@ export function Classes() {
   const [classShift, setClassShift] = useState<ClassShift>('MRNG')
   const [stu, setStu] = useState(emptyDraft)
   const [importError, setImportError] = useState<string | null>(null)
+  const [editClassName, setEditClassName] = useState('')
+  const [editClassShift, setEditClassShift] = useState<ClassShift>('MRNG')
+  const [classActionError, setClassActionError] = useState<string | null>(null)
+  const [classBusy, setClassBusy] = useState(false)
+  const [studentActionError, setStudentActionError] = useState<string | null>(null)
+  const [studentBusy, setStudentBusy] = useState(false)
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null)
+  const [editStu, setEditStu] = useState(emptyDraft)
+  const [editStudentClassId, setEditStudentClassId] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const refreshClasses = useCallback(async () => {
@@ -80,6 +95,22 @@ export function Classes() {
     return () => {
       cancelled = true
     }
+  }, [selectedClassId])
+
+  useEffect(() => {
+    const selected = classes.find((c) => c.id === selectedClassId)
+    if (!selected) {
+      setEditClassName('')
+      setEditClassShift('MRNG')
+      return
+    }
+    setEditClassName(selected.name)
+    setEditClassShift(selected.shift)
+  }, [classes, selectedClassId])
+
+  useEffect(() => {
+    setEditingStudentId(null)
+    setStudentActionError(null)
   }, [selectedClassId])
 
   async function addClass(e: FormEvent) {
@@ -132,7 +163,123 @@ export function Classes() {
       console.log('[tdtd register] Classes page: roster refreshed', list.length)
     } catch (err) {
       console.warn('[tdtd register] Classes page: add student failed', err)
-      throw err
+      setStudentActionError(
+        err instanceof ApiError ? err.message : 'Could not add student.',
+      )
+    }
+  }
+
+  async function saveClass(e: FormEvent) {
+    e.preventDefault()
+    if (!selectedClassId) return
+    const name = editClassName.trim()
+    if (!name) {
+      setClassActionError('Name is required.')
+      return
+    }
+    setClassBusy(true)
+    setClassActionError(null)
+    try {
+      await updateClass(selectedClassId, { name, shift: editClassShift })
+      await refreshClasses()
+    } catch (err) {
+      setClassActionError(
+        err instanceof ApiError ? err.message : 'Could not update class.',
+      )
+    } finally {
+      setClassBusy(false)
+    }
+  }
+
+  async function removeSelectedClass() {
+    const selected = classes.find((c) => c.id === selectedClassId)
+    if (!selected) return
+    const ok = window.confirm(
+      `Delete class "${selected.name}"? This cannot be undone.`,
+    )
+    if (!ok) return
+    setClassBusy(true)
+    setClassActionError(null)
+    try {
+      await deleteClass(selected.id)
+      await refreshClasses()
+    } catch (err) {
+      setClassActionError(
+        err instanceof ApiError ? err.message : 'Could not delete class.',
+      )
+    } finally {
+      setClassBusy(false)
+    }
+  }
+
+  function beginEditStudent(student: StudentRow) {
+    setEditingStudentId(student.id)
+    setEditStu({
+      firstName: student.firstName,
+      middleName: student.middleName ?? '',
+      lastName: student.lastName,
+      birthDate: student.birthDate,
+      gender: student.gender,
+    })
+    setEditStudentClassId(student.classId)
+    setStudentActionError(null)
+  }
+
+  async function saveStudent(e: FormEvent) {
+    e.preventDefault()
+    if (!editingStudentId) return
+    const payload = {
+      firstName: editStu.firstName.trim(),
+      middleName: editStu.middleName.trim() || undefined,
+      lastName: editStu.lastName.trim(),
+      birthDate: editStu.birthDate,
+      gender: editStu.gender,
+      classId: editStudentClassId,
+    }
+    if (!payload.firstName || !payload.lastName || !payload.birthDate || !payload.classId) {
+      setStudentActionError('First name, last name, birth date, and class are required.')
+      return
+    }
+    setStudentBusy(true)
+    setStudentActionError(null)
+    try {
+      await updateStudent(editingStudentId, payload)
+      setEditingStudentId(null)
+      setEditStu(emptyDraft())
+      if (selectedClassId) {
+        setStudents(await listStudentsByClass(selectedClassId))
+      }
+    } catch (err) {
+      setStudentActionError(
+        err instanceof ApiError ? err.message : 'Could not update student.',
+      )
+    } finally {
+      setStudentBusy(false)
+    }
+  }
+
+  async function removeStudent(student: StudentRow) {
+    const ok = window.confirm(
+      `Delete ${formatStudentName(student)}? This cannot be undone.`,
+    )
+    if (!ok) return
+    setStudentBusy(true)
+    setStudentActionError(null)
+    try {
+      await deleteStudent(student.id)
+      if (editingStudentId === student.id) {
+        setEditingStudentId(null)
+        setEditStu(emptyDraft())
+      }
+      if (selectedClassId) {
+        setStudents(await listStudentsByClass(selectedClassId))
+      }
+    } catch (err) {
+      setStudentActionError(
+        err instanceof ApiError ? err.message : 'Could not delete student.',
+      )
+    } finally {
+      setStudentBusy(false)
     }
   }
 
@@ -254,8 +401,62 @@ export function Classes() {
               )}
             </select>
 
+            <form onSubmit={(e) => void saveClass(e)} className="mt-6 space-y-3">
+              <h2 className="font-semibold text-slate-900">Edit class</h2>
+              {classActionError ? (
+                <p className={errorAlertClass} role="alert">
+                  {classActionError}
+                </p>
+              ) : null}
+              <label className={formLabelClass} htmlFor="edit-cname">
+                Name
+              </label>
+              <input
+                id="edit-cname"
+                value={editClassName}
+                onChange={(e) => setEditClassName(e.target.value)}
+                disabled={!selectedClassId || classBusy}
+                className={`py-2 ${formInputClasses({ error: Boolean(classActionError) })}`}
+                aria-invalid={Boolean(classActionError)}
+              />
+              <label className={formLabelClass} htmlFor="edit-class-shift">
+                Schedule
+              </label>
+              <select
+                id="edit-class-shift"
+                value={editClassShift}
+                onChange={(e) => setEditClassShift(e.target.value as ClassShift)}
+                disabled={!selectedClassId || classBusy}
+                className={`py-3 ${formInputClasses({ error: Boolean(classActionError) })}`}
+                aria-invalid={Boolean(classActionError)}
+              >
+                <option value="MRNG">Morning (MRNG)</option>
+                <option value="AFTNN">Afternoon (AFTNN)</option>
+              </select>
+              <button
+                type="submit"
+                disabled={!selectedClassId || classBusy}
+                className={`w-full py-3 ${primaryButtonClass}`}
+              >
+                {classBusy ? 'Saving…' : 'Save class'}
+              </button>
+              <button
+                type="button"
+                disabled={!selectedClassId || classBusy}
+                onClick={() => void removeSelectedClass()}
+                className={`w-full py-3 ${secondaryButtonClass}`}
+              >
+                Delete class
+              </button>
+            </form>
+
             <form onSubmit={addStudent} className="mt-6 space-y-3">
               <h2 className="font-semibold text-slate-900">Add student</h2>
+              {studentActionError && !editingStudentId ? (
+                <p className={errorAlertClass} role="alert">
+                  {studentActionError}
+                </p>
+              ) : null}
               <input
                 value={stu.firstName}
                 onChange={(e) => setStu((s) => ({ ...s, firstName: e.target.value }))}
@@ -311,6 +512,110 @@ export function Classes() {
                 Add student
               </button>
             </form>
+
+            {editingStudentId ? (
+              <form onSubmit={(e) => void saveStudent(e)} className="mt-6 space-y-3">
+                <h2 className="font-semibold text-slate-900">Edit student</h2>
+                {studentActionError ? (
+                  <p className={errorAlertClass} role="alert">
+                    {studentActionError}
+                  </p>
+                ) : null}
+                <input
+                  value={editStu.firstName}
+                  onChange={(e) =>
+                    setEditStu((s) => ({ ...s, firstName: e.target.value }))
+                  }
+                  disabled={studentBusy}
+                  className={`py-2 ${formInputClasses({ error: Boolean(studentActionError) })}`}
+                  placeholder="First name"
+                  aria-invalid={Boolean(studentActionError)}
+                />
+                <input
+                  value={editStu.middleName}
+                  onChange={(e) =>
+                    setEditStu((s) => ({ ...s, middleName: e.target.value }))
+                  }
+                  disabled={studentBusy}
+                  className={`py-2 ${formInputClasses()}`}
+                  placeholder="Middle name (optional)"
+                />
+                <input
+                  value={editStu.lastName}
+                  onChange={(e) =>
+                    setEditStu((s) => ({ ...s, lastName: e.target.value }))
+                  }
+                  disabled={studentBusy}
+                  className={`py-2 ${formInputClasses({ error: Boolean(studentActionError) })}`}
+                  placeholder="Last name"
+                  aria-invalid={Boolean(studentActionError)}
+                />
+                <input
+                  type="date"
+                  value={editStu.birthDate}
+                  onChange={(e) =>
+                    setEditStu((s) => ({ ...s, birthDate: e.target.value }))
+                  }
+                  disabled={studentBusy}
+                  className={`py-2 ${formInputClasses({ error: Boolean(studentActionError) })}`}
+                  aria-invalid={Boolean(studentActionError)}
+                />
+                <label className={formLabelClass} htmlFor="edit-stu-gender">
+                  Gender
+                </label>
+                <select
+                  id="edit-stu-gender"
+                  value={editStu.gender}
+                  onChange={(e) =>
+                    setEditStu((s) => ({
+                      ...s,
+                      gender: e.target.value as StudentGenderCode,
+                    }))
+                  }
+                  disabled={studentBusy}
+                  className={`py-3 ${formInputClasses()}`}
+                >
+                  <option value="M">Male (M)</option>
+                  <option value="F">Female (F)</option>
+                  <option value="O">Other (O)</option>
+                </select>
+                <label className={formLabelClass} htmlFor="edit-stu-class">
+                  Class
+                </label>
+                <select
+                  id="edit-stu-class"
+                  value={editStudentClassId}
+                  onChange={(e) => setEditStudentClassId(e.target.value)}
+                  disabled={studentBusy}
+                  className={`py-3 ${formInputClasses()}`}
+                >
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} · {formatClassShiftLabel(c.shift)}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={studentBusy}
+                  className={`w-full py-3 ${primaryButtonClass}`}
+                >
+                  {studentBusy ? 'Saving…' : 'Save student'}
+                </button>
+                <button
+                  type="button"
+                  disabled={studentBusy}
+                  onClick={() => {
+                    setEditingStudentId(null)
+                    setEditStu(emptyDraft())
+                    setStudentActionError(null)
+                  }}
+                  className={`w-full py-3 ${secondaryButtonClass}`}
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : null}
           </section>
         </div>
 
@@ -352,14 +657,19 @@ export function Classes() {
               <h2 className="shrink-0 font-semibold text-slate-900">
                 Students ({students.length})
               </h2>
+              {studentActionError ? (
+                <p className={`mt-2 ${errorAlertClass}`} role="alert">
+                  {studentActionError}
+                </p>
+              ) : null}
               <ul className="mt-3 min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-100 lg:max-h-none">
                 {students.map((s) => (
-                  <li key={s.id}>
+                  <li key={s.id} className="flex items-center gap-2 px-2 py-1">
                     <Link
                       to={studentLabPath(s.id)}
-                      className="flex min-h-11 items-center justify-between gap-2 px-3 py-2 text-left text-slate-800 transition hover:bg-slate-50 active:bg-slate-100"
+                      className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 px-1 py-2 text-left text-slate-800 transition hover:bg-slate-50 active:bg-slate-100"
                     >
-                      <span>
+                      <span className="min-w-0">
                         <span className="font-medium">{formatStudentName(s)}</span>
                         <span className="mt-0.5 block text-xs text-slate-500">
                           {s.birthDate} · {s.gender}
@@ -369,6 +679,21 @@ export function Classes() {
                         ›
                       </span>
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => beginEditStudent(s)}
+                      className={rowActionClass}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      disabled={studentBusy}
+                      onClick={() => void removeStudent(s)}
+                      className={rowActionClass}
+                    >
+                      Delete
+                    </button>
                   </li>
                 ))}
                 {students.length === 0 && (

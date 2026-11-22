@@ -61,3 +61,17 @@ export async function registerStudentsBulk(
     throw e
   }
 }
+
+export function updateStudent(
+  studentId: string,
+  input: StudentUpsertPayload & { classId: string },
+): Promise<StudentRow> {
+  return apiJson<StudentRow>(`/api/students/${studentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteStudent(studentId: string): Promise<void> {
+  return apiJson<void>(`/api/students/${studentId}`, { method: 'DELETE' })
+}

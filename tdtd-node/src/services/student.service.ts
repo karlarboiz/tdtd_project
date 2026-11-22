@@ -171,3 +171,85 @@ export function registerStudentsBulk(
   })
   return created
 }
+
+function countLabel(count: number, singular: string, plural: string): string | null {
+  if (count <= 0) return null
+  return `${count} ${count === 1 ? singular : plural}`
+}
+
+function joinLabels(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? ''
+  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`
+  return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`
+}
+
+export function updateStudent(
+  db: SqliteDatabase,
+  studentId: string,
+  input: RegisterStudentInput,
+): StudentRow {
+  const id = studentId.trim()
+  if (!id) throw new HttpError(400, 'studentId is required')
+  const existing = studentDao.getStudentById(db, id)
+  if (!existing) throw new HttpError(404, 'student not found')
+
+  const classId = input.classId.trim()
+  if (!classId) throw new HttpError(400, 'classId is required')
+  if (!studentDao.classExists(db, classId)) {
+    throw new HttpError(404, 'class not found')
+  }
+
+  const row = toStudentRow(
+    classId,
+    {
+      firstName: input.firstName,
+      middleName: input.middleName,
+      lastName: input.lastName,
+      birthDate: input.birthDate,
+      gender: input.gender,
+    },
+    existing.id,
+    existing.createdAt,
+  )
+  const changes = studentDao.updateStudent(db, row)
+  if (changes === 0) throw new HttpError(404, 'student not found')
+
+  const classRow = classDao.getClassById(db, classId)
+  const classLabel = classRow?.name ?? 'class'
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.STUDENT_UPDATED,
+    summary: `Updated student ${formatStudentDisplayName(row)} in ${classLabel}`,
+    metadata: { classId, studentId: row.id },
+  })
+  return row
+}
+
+export function deleteStudent(db: SqliteDatabase, studentId: string): void {
+  const id = studentId.trim()
+  if (!id) throw new HttpError(400, 'studentId is required')
+  const existing = studentDao.getStudentById(db, id)
+  if (!existing) throw new HttpError(404, 'student not found')
+
+  const run = db.transaction(() => {
+    const usage = studentDao.getStudentDeleteUsage(db, id)
+    const parts = [
+      countLabel(usage.attendanceRecords, 'attendance record', 'attendance records'),
+      countLabel(usage.scoreEntries, 'score entry', 'score entries'),
+    ].filter((part): part is string => part !== null)
+    if (parts.length > 0) {
+      throw new HttpError(
+        409,
+        `cannot delete student: it still has ${joinLabels(parts)}`,
+      )
+    }
+    const changes = studentDao.deleteStudentById(db, id)
+    if (changes === 0) throw new HttpError(404, 'student not found')
+  })
+  run()
+
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.STUDENT_DELETED,
+    summary: `Deleted student ${formatStudentDisplayName(existing)}`,
+    metadata: { classId: existing.classId, studentId: existing.id },
+  })
+}

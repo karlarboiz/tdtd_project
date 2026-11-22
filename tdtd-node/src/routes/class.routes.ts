@@ -1,6 +1,11 @@
 import { Router } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
-import { createClassHandler, listClassesHandler } from '../controllers/class.controller.js'
+import {
+  createClassHandler,
+  deleteClassHandler,
+  listClassesHandler,
+  updateClassHandler,
+} from '../controllers/class.controller.js'
 import {
   assignClassSubjectHandler,
   createClassScoreEventHandler,
@@ -13,6 +18,8 @@ export function classRouter(db: SqliteDatabase): Router {
   const router = Router()
   router.get('/', listClassesHandler(db))
   router.post('/', createClassHandler(db))
+  router.patch('/:classId', updateClassHandler(db))
+  router.delete('/:classId', deleteClassHandler(db))
   router.get('/:classId/subjects', listClassSubjectsHandler(db))
   router.post('/:classId/subjects', assignClassSubjectHandler(db))
   router.delete('/:classId/subjects/:subjectId', removeClassSubjectHandler(db))

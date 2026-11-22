@@ -42,3 +42,40 @@ export function insertClass(db: SqliteDatabase, row: ClassRow): void {
     updated_at: row.updatedAt ?? null,
   })
 }
+
+export function updateClass(db: SqliteDatabase, row: ClassRow): number {
+  const result = db.prepare(CLASS_QUERIES.update).run({
+    id: row.id,
+    name: row.name,
+    shift: row.shift,
+    updated_at: row.updatedAt ?? null,
+  })
+  return Number(result.changes)
+}
+
+export function deleteClassById(db: SqliteDatabase, id: string): number {
+  const result = db.prepare(CLASS_QUERIES.deleteById).run(id)
+  return Number(result.changes)
+}
+
+export type ClassDeleteUsage = {
+  students: number
+  classSubjects: number
+  scoreEvents: number
+}
+
+export function getClassDeleteUsage(
+  db: SqliteDatabase,
+  id: string,
+): ClassDeleteUsage {
+  const row = db.prepare(CLASS_QUERIES.deleteUsage).get(id, id, id) as {
+    students: number
+    class_subjects: number
+    score_events: number
+  }
+  return {
+    students: Number(row.students),
+    classSubjects: Number(row.class_subjects),
+    scoreEvents: Number(row.score_events),
+  }
+}

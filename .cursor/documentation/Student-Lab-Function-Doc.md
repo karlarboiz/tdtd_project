@@ -19,6 +19,50 @@ Per-student **read-only** dashboard: profile, shift-aware attendance (summary + 
 
 ---
 
+## Class and student roster
+
+Edit and delete for classes and students live on `/classes`. Student Lab stays read-only.
+
+## Entry CORE-001 — Edit and delete classes and students
+
+**Date:** 2026-11-22
+
+**Summary:** A teacher can correct a class or a student, and can delete either when no child rows still depend on it.
+
+**Reason:** Classes and students could be created, but a wrong name, shift, or student detail had no correction path, and an empty class or unused student could not be removed without leaving attendance or scores behind.
+
+**What changed:**
+- **`PATCH /api/classes/:classId`** updates `name` and `shift` (`MRNG` | `AFTNN`) with the same checks as create.
+- **`DELETE /api/classes/:classId`** deletes the class. **409** when students, `class_subjects`, or `score_events` still reference it. Those rows are not removed.
+- **`PATCH /api/students/:studentId`** updates `firstName`, `lastName`, `birthDate` (`YYYY-MM-DD`), `gender` (`M` | `F` | `O`, or Male / Female / Other), `classId`, and optional `middleName`, with the same checks as create.
+- **`DELETE /api/students/:studentId`** deletes the student. **409** when attendance records or score entries still reference them. Those rows are not removed.
+- **Activity log:** one row on success (`CLASS_UPDATED`, `CLASS_DELETED`, `STUDENT_UPDATED`, `STUDENT_DELETED`). A logging failure does not roll back the mutation.
+- **Classes page:** edit and delete the selected class; edit and delete a student, with a confirm step before delete. The roster link to Student Lab stays. A 409 is shown with `errorAlertClass`.
+
+**Files involved:**
+- `tdtd-node/src/routes/class.routes.ts`
+- `tdtd-node/src/routes/student.routes.ts`
+- `tdtd-node/src/controllers/class.controller.ts`
+- `tdtd-node/src/controllers/student.controller.ts`
+- `tdtd-node/src/services/class.service.ts`
+- `tdtd-node/src/services/student.service.ts`
+- `tdtd-node/src/dao/class.dao.ts`
+- `tdtd-node/src/dao/student.dao.ts`
+- `tdtd-node/src/queries/class.queries.ts`
+- `tdtd-node/src/queries/student.queries.ts`
+- `tdtd-node/src/constants/ActivityActions.ts`
+- `tdtd-frontend/src/api/classesApi.ts`
+- `tdtd-frontend/src/api/studentsApi.ts`
+- `tdtd-frontend/src/pages/Classes/Classes.tsx`
+- `.cursor/schemas/core.md`
+- `.cursor/schemas/recents.md`
+
+**Schemas involved:**
+- [core.md](../schemas/core.md) — `classes`, `students`
+- [recents.md](../schemas/recents.md) — `CLASS_UPDATED`, `CLASS_DELETED`, `STUDENT_UPDATED`, `STUDENT_DELETED`
+
+---
+
 ## Entry LAB-001 — Student Lab v1 (view-only dashboard)
 
 **Date:** 2026-05-26

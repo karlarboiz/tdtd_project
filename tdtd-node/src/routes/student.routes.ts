@@ -2,8 +2,10 @@ import { Router } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import {
   bulkRegisterHandler,
+  deleteStudentHandler,
   listStudentsHandler,
   registerStudentHandler,
+  updateStudentHandler,
 } from '../controllers/student.controller.js'
 import {
   getStudentLabHandler,
@@ -17,5 +19,7 @@ export function studentRouter(db: SqliteDatabase): Router {
   router.post('/', registerStudentHandler(db))
   router.get('/:studentId/lab', getStudentLabHandler(db))
   router.get('/:studentId', getStudentProfileHandler(db))
+  router.patch('/:studentId', updateStudentHandler(db))
+  router.delete('/:studentId', deleteStudentHandler(db))
   return router
 }

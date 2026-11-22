@@ -29,6 +29,26 @@ export const STUDENT_QUERIES = {
   classIdByStudentId: `
     SELECT class_id AS class_id FROM students WHERE id = ? LIMIT 1
   `,
+  update: `
+    UPDATE students
+    SET
+      first_name = @first_name,
+      middle_name = @middle_name,
+      last_name = @last_name,
+      birth_date = @birth_date,
+      gender = @gender,
+      class_id = @class_id
+    WHERE id = @id
+  `,
+  deleteById: `
+    DELETE FROM students
+    WHERE id = ?
+  `,
+  deleteUsage: `
+    SELECT
+      (SELECT COUNT(*) FROM attendance_records WHERE student_id = ?) AS attendance_records,
+      (SELECT COUNT(*) FROM score_entries WHERE student_id = ?) AS score_entries
+  `,
   getById: `
     SELECT
       id,

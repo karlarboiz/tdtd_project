@@ -76,3 +76,17 @@ export function createSubject(input: {
     body: JSON.stringify(input),
   })
 }
+
+export function updateSubject(
+  subjectId: string,
+  input: { name: string; shortCode?: string },
+): Promise<SubjectRow> {
+  return apiJson<SubjectRow>(`/api/subjects/${subjectId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteSubject(subjectId: string): Promise<void> {
+  return apiJson<void>(`/api/subjects/${subjectId}`, { method: 'DELETE' })
+}

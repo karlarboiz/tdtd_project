@@ -27,12 +27,18 @@ activity_logs: {
 | action | When logged |
 |--------|-------------|
 | `CLASS_CREATED` | Class created |
+| `CLASS_UPDATED` | Class name or shift updated |
+| `CLASS_DELETED` | Class deleted |
 | `STUDENT_REGISTERED` | Single student registered |
+| `STUDENT_UPDATED` | Student details updated |
+| `STUDENT_DELETED` | Student deleted |
 | `STUDENTS_IMPORTED` | Bulk student import |
 | `ATTENDANCE_SAVED` | Attendance session save |
 | `SCHOOL_YEAR_CREATED` | School year created |
 | `SCHOOL_YEAR_ACTIVATED` | Active school year set |
 | `SUBJECT_REGISTERED` | Subject registered for SY |
+| `SUBJECT_UPDATED` | Catalog subject name or short code updated |
+| `SUBJECT_DELETED` | Catalog subject deleted |
 | `SUBJECT_UNREGISTERED` | SY registration removed |
 | `SUBJECT_ASSIGNED_TO_CLASS` | Subject linked to class |
 | `SUBJECT_UNASSIGNED_FROM_CLASS` | Class–subject link removed |
