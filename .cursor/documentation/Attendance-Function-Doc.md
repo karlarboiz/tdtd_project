@@ -58,33 +58,6 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster with pr
 
 ---
 
-## Entry ATT-005 — In-app attendance reminders on Home and calendar
-
-**Date:** 2026-11-22
-
-**Summary:** Show a warning banner on Home and the attendance calendar when today's AM session is not saved, and another when today's PM session is not saved. Each banner links to that period's session route. No Web Push, local notifications, or new API route.
-
-**Reason:** The mobile plan already calls for an in-app nudge (“No AM session saved today” / “No PM session saved today”) before any push or device notification. Teachers should see the missing period without opening the session screen first.
-
-**What changed:**
-- **`ReminderBanners`** loads today's AM and PM via existing `GET /api/attendance/present-roster`. A null `session` means that period is not saved, so the matching banner is shown. Copy is generic (no student names).
-- **`GET /api/attendance/session-dates` is not enough on its own:** it returns dates that have any saved session, not which period. Present-roster is the existing read that distinguishes AM from PM, so no backend route was added.
-- **Links** use `attendanceSessionPath(today, period)` (`/attendance/session/:date?period=AM|PM`). Weekends still show the banner when no session exists and do not block calendar or other navigation.
-- **Failed loads** hide the banners (they do not claim a session is missing).
-- **Style:** accent (coral) warning link class in `uiClasses.ts`; pointer and focus stay on the global rules. No new CSS file.
-
-**Files involved:**
-- `tdtd-frontend/src/components/ReminderBanners/ReminderBanners.tsx`
-- `tdtd-frontend/src/pages/Home/Home.tsx`
-- `tdtd-frontend/src/pages/AttendanceCalendar/AttendanceCalendar.tsx`
-- `tdtd-frontend/src/lib/uiClasses.ts`
-- Reused: `tdtd-frontend/src/api/attendanceApi.ts` (`getAttendancePresentRoster`), `tdtd-frontend/src/lib/attendanceSessionRoute.ts` (`attendanceSessionPath`), `tdtd-frontend/src/lib/period.ts` (`otherAttendancePeriod` to pair AM with PM). Clock time does not hide a banner.
-
-**Schemas involved:**
-- None (read-only use of existing `attendance_sessions` through present-roster; no DDL or table-doc change)
-
----
-
 ## Entry ATT-004 — Session period in URL, AM/PM toggle, calendar auto-resolve
 
 **Date:** 2026-05-26

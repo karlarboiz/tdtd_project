@@ -252,7 +252,7 @@ export function migrateSchoolYearTables(db: SqliteDatabase): void {
   const subjectIds = db
     .prepare(
       `
-      SELECT id AS id FROM subjects
+      SELECT subject_id AS id FROM subjects
       UNION
       SELECT subject_id AS id FROM class_subjects
       UNION
@@ -413,21 +413,6 @@ export function migrateActivityLogsTable(db: SqliteDatabase): void {
     CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at
       ON activity_logs(created_at DESC);
   `)
-  migrateActivityLogsDropLegacyUserId(db)
-}
-
-/**
- * A local database briefly had `user_id NOT NULL` with no writer.
- * Recents inserts omit that column, so drop it when present.
- */
-function migrateActivityLogsDropLegacyUserId(db: SqliteDatabase): void {
-  if (!tableExists(db, 'activity_logs')) return
-  const columns = db.prepare(`PRAGMA table_info(activity_logs)`).all() as {
-    name: string
-  }[]
-  if (!columns.some((column) => column.name === 'user_id')) return
-  db.exec(`DROP INDEX IF EXISTS idx_activity_logs_user_created`)
-  db.exec(`ALTER TABLE activity_logs DROP COLUMN user_id`)
 }
 
 /** Unique indexes on subject name / short code when no legacy duplicates exist. */
