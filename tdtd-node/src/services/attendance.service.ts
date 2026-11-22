@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import type {
   AttendancePeriod,
+  AttendanceRecordStatus,
   AttendanceSessionRow,
   IsoDateString,
-  StudentRow,
 } from '../schema/types.js'
 import { HttpError } from '../errors/http-error.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
@@ -65,30 +65,35 @@ export function listAttendanceSessionDatesInRange(
   return attendanceDao.listDistinctSessionDatesInRange(db, from, to)
 }
 
-export type PresentAttendanceRosterResult = {
+export type AttendanceRosterResult = {
   session: AttendanceSessionRow | null
-  /** Students with a present record in this session (date + period). */
-  presentStudents: StudentRow[]
+  /** Every student with a stored status in this session (date + period). */
+  students: attendanceDao.AttendanceRosterStudentRow[]
 }
 
-export function getPresentAttendanceRoster(
+export function getAttendanceRoster(
   db: SqliteDatabase,
   dateRaw: string,
   periodRaw: string,
-): PresentAttendanceRosterResult {
+): AttendanceRosterResult {
   const date = assertValidDate(dateRaw)
   const period = assertPeriod(periodRaw)
   const session = attendanceDao.findSessionByDatePeriod(db, date, period)
   if (!session) {
-    return { session: null, presentStudents: [] }
+    return { session: null, students: [] }
   }
-  const presentStudents = attendanceDao.listPresentStudentsForSession(db, session.id)
-  return { session, presentStudents }
+  const students = attendanceDao.listRosterStudentsForSession(db, session.id)
+  return { session, students }
+}
+
+export type AttendanceMark = {
+  studentId: string
+  status: AttendanceRecordStatus
 }
 
 export type AttendanceStateResult = {
   session: AttendanceSessionRow | null
-  presentStudentIds: string[]
+  marks: AttendanceMark[]
 }
 
 export function getAttendanceState(
@@ -109,17 +114,30 @@ export function getAttendanceState(
   const ids = students.map((s) => s.id)
   const session = attendanceDao.findSessionByDatePeriod(db, date, period)
   if (!session) {
-    return { session: null, presentStudentIds: [] }
+    return { session: null, marks: [] }
   }
-  const present = attendanceDao.selectPresentStudentIds(db, session.id, ids)
-  return { session, presentStudentIds: [...present] }
+  const marks = attendanceDao.selectAttendanceMarks(db, session.id, ids)
+  return { session, marks }
+}
+
+export type SaveAttendanceMarkInput = {
+  studentId: string
+  status: string
 }
 
 export type SaveAttendanceInput = {
   date: string
   period: string
   classStudentIds: string[]
-  presentStudentIds: string[]
+  marks: SaveAttendanceMarkInput[]
+}
+
+function assertStatus(raw: string): AttendanceRecordStatus {
+  const status = raw.trim()
+  if (status === 'present' || status === 'absent' || status === 'late') {
+    return status
+  }
+  throw new HttpError(400, 'status must be present, absent, or late')
 }
 
 export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): AttendanceSessionRow {
@@ -128,12 +146,28 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
   const classIds = [...new Set(input.classStudentIds.map((id) => id.trim()))].filter(
     Boolean,
   )
-  const presentRequested = [...new Set(input.presentStudentIds.map((id) => id.trim()))].filter(
-    Boolean,
-  )
-
   const allowed = new Set(classIds)
-  const presentFiltered = presentRequested.filter((id) => allowed.has(id))
+  const byStudent = new Map<string, AttendanceRecordStatus>()
+
+  for (const mark of input.marks) {
+    const studentId = mark.studentId.trim()
+    if (!studentId || !allowed.has(studentId)) continue
+    const status = assertStatus(mark.status)
+    const previous = byStudent.get(studentId)
+    if (previous && previous !== status) {
+      throw new HttpError(400, 'each student must have one status')
+    }
+    byStudent.set(studentId, status)
+  }
+
+  for (const studentId of classIds) {
+    if (!byStudent.has(studentId)) {
+      throw new HttpError(
+        400,
+        'every student in the class needs a status of present, absent, or late',
+      )
+    }
+  }
 
   let session = attendanceDao.findSessionByDatePeriod(db, date, period)
   if (!session) {
@@ -156,25 +190,35 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
   const run = db.transaction(() => {
     attendanceDao.deleteRecordsForStudentsInSession(db, session!.id, classIds)
     const ts = Date.now()
-    for (const studentId of presentFiltered) {
+    for (const studentId of classIds) {
       attendanceDao.insertAttendanceRecord(
         db,
         randomUUID(),
         session!.id,
         studentId,
+        byStudent.get(studentId)!,
         ts,
       )
     }
   })
   run()
 
+  let presentCount = 0
+  let absentCount = 0
+  let lateCount = 0
+  for (const status of byStudent.values()) {
+    if (status === 'present') presentCount += 1
+    else if (status === 'absent') absentCount += 1
+    else lateCount += 1
+  }
+
   recordActivity(db, {
     action: ACTIVITY_ACTION.ATTENDANCE_SAVED,
-    summary: `Saved ${period} attendance for ${date} (${presentFiltered.length} present)`,
+    summary: `Saved ${period} attendance for ${date} (${presentCount} present, ${absentCount} absent, ${lateCount} late)`,
     metadata: {
       date,
       period,
-      count: presentFiltered.length,
+      count: classIds.length,
     },
   })
 

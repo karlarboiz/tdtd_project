@@ -1,6 +1,6 @@
 # Attendance — function documentation
 
-Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-off, and global session + present records in SQLite.
+Daily **AM/PM** attendance: calendar of saved sessions, per-class roster with present, absent, and late, and global session records in SQLite.
 
 **Canonical schema:** [attendance.md](../schemas/attendance.md) · **Shared entities:** [core.md](../schemas/core.md)
 
@@ -9,11 +9,79 @@ Daily **AM/PM** attendance: calendar of saved sessions, per-class roster check-o
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/session-dates?from=&to=` | Dates that have any saved session in range (max 366 days) |
-| GET | `/state?date=&period=&classId=` | Session + present student ids for one class |
-| GET | `/present-roster?date=&period=` | Session + full present student rows (all classes) |
-| POST | `/save` | Create/reuse session; replace present records for submitted ids |
+| GET | `/state?date=&period=&classId=` | Session + per-student status marks for one class |
+| GET | `/present-roster?date=&period=` | Session + student rows with status (all classes) |
+| POST | `/save` | Create/reuse session; replace class records with explicit present, absent, or late |
 
 **Session URL:** `/attendance/session/:date?period=AM|PM` — `period` query selects morning vs afternoon; omit on calendar open to auto-resolve (see ATT-004).
+
+---
+
+## Entry ATT-006 — Explicit absent and late attendance statuses
+
+**Date:** 2026-11-22
+
+**Summary:** Store `present`, `absent`, and `late` on each saved student row, and count those statuses separately in Student Lab.
+
+**Reason:** Teachers need to record who was absent or late, not only who was present. A missing row could not represent late, and it mixed unmarked students into the absent total.
+
+**What changed:**
+- **CHECK** on `attendance_records.status` is `IN ('present', 'absent', 'late')`. Existing databases rebuild `attendance_records` and keep current `present` rows. Fresh databases get the new CHECK from `CREATE TABLE`.
+- **Save** writes one row per student on the submitted class roster. The body is `marks: { studentId, status }[]` plus `classStudentIds`. Every class student needs one status. Marks for ids outside that roster are ignored.
+- **`GET /api/attendance/state`** returns `marks` (`studentId` + `status`) for stored rows in the class.
+- **`GET /api/attendance/present-roster`** returns every saved student for the session with `status`. Route path is unchanged. `getAttendancePresentRoster` remains an alias so reminder banners can still read `session`.
+- **Session page:** each student has Present, Absent, and Late controls (primary, neutral, and secondary). Bulk action marks the class all present, or all absent when everyone is already present. Students with no stored row open as absent and are written on the next save.
+- **Student Lab** summary adds `lateCount`. Session rows show Present, Absent, or Late. Counts come from stored status. A missing row is left out of the list and out of the totals. `presentRate` is still present ÷ all counted records.
+
+**Files involved:**
+- `tdtd-node/src/db/migrate.ts`
+- `tdtd-node/src/schema/types.ts`
+- `tdtd-node/src/queries/attendance.queries.ts`
+- `tdtd-node/src/dao/attendance.dao.ts`
+- `tdtd-node/src/services/attendance.service.ts`
+- `tdtd-node/src/controllers/attendance.controller.ts`
+- `tdtd-node/src/queries/studentLab.queries.ts`
+- `tdtd-node/src/dao/studentLab.dao.ts`
+- `tdtd-node/src/services/studentLab.service.ts`
+- `tdtd-frontend/src/types/schema.ts`
+- `tdtd-frontend/src/api/attendanceApi.ts`
+- `tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx`
+- `tdtd-frontend/src/pages/StudentLab/StudentLab.tsx`
+- `.cursor/schemas/attendance.md`
+- `.cursor/schemas/student-lab.md`
+- `.cursor/rules/Schema-Rules.md`
+
+**Schemas involved:**
+- [attendance.md](../schemas/attendance.md) — `attendance_records.status`
+- [student-lab.md](../schemas/student-lab.md) — summary counts and session status
+- [Schema-Rules.md](../rules/Schema-Rules.md) — absent and late removed from unimplemented future extensions
+
+---
+
+## Entry ATT-005 — In-app attendance reminders on Home and calendar
+
+**Date:** 2026-11-22
+
+**Summary:** Show a warning banner on Home and the attendance calendar when today's AM session is not saved, and another when today's PM session is not saved. Each banner links to that period's session route. No Web Push, local notifications, or new API route.
+
+**Reason:** The mobile plan already calls for an in-app nudge (“No AM session saved today” / “No PM session saved today”) before any push or device notification. Teachers should see the missing period without opening the session screen first.
+
+**What changed:**
+- **`ReminderBanners`** loads today's AM and PM via existing `GET /api/attendance/present-roster`. A null `session` means that period is not saved, so the matching banner is shown. Copy is generic (no student names).
+- **`GET /api/attendance/session-dates` is not enough on its own:** it returns dates that have any saved session, not which period. Present-roster is the existing read that distinguishes AM from PM, so no backend route was added.
+- **Links** use `attendanceSessionPath(today, period)` (`/attendance/session/:date?period=AM|PM`). Weekends still show the banner when no session exists and do not block calendar or other navigation.
+- **Failed loads** hide the banners (they do not claim a session is missing).
+- **Style:** accent (coral) warning link class in `uiClasses.ts`; pointer and focus stay on the global rules. No new CSS file.
+
+**Files involved:**
+- `tdtd-frontend/src/components/ReminderBanners/ReminderBanners.tsx`
+- `tdtd-frontend/src/pages/Home/Home.tsx`
+- `tdtd-frontend/src/pages/AttendanceCalendar/AttendanceCalendar.tsx`
+- `tdtd-frontend/src/lib/uiClasses.ts`
+- Reused: `tdtd-frontend/src/api/attendanceApi.ts` (`getAttendancePresentRoster`), `tdtd-frontend/src/lib/attendanceSessionRoute.ts` (`attendanceSessionPath`), `tdtd-frontend/src/lib/period.ts` (`otherAttendancePeriod` to pair AM with PM). Clock time does not hide a banner.
+
+**Schemas involved:**
+- None (read-only use of existing `attendance_sessions` through present-roster; no DDL or table-doc change)
 
 ---
 

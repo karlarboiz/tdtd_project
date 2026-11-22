@@ -5,9 +5,9 @@ export const STUDENT_LAB_QUERIES = {
     SELECT
       sess.date AS date,
       sess.period AS period,
-      CASE WHEN ar.id IS NOT NULL THEN 'present' ELSE 'absent' END AS status
+      ar.status AS status
     FROM attendance_sessions sess
-    LEFT JOIN attendance_records ar
+    INNER JOIN attendance_records ar
       ON ar.session_id = sess.id AND ar.student_id = ?
     WHERE
       (

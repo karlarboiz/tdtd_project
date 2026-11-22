@@ -15,12 +15,25 @@ import { ApiError } from '../../lib/http'
 import { errorAlertClass, formLabelInlineClass } from '@/lib/uiClasses'
 import type {
   SchoolYearRow,
+  StudentLabAttendanceStatus,
   StudentLabPayload,
   StudentLabScoreRow,
 } from '@/types/schema'
 
 type AttendanceRangeMode = '30' | 'all'
 type ScoreRangePreset = '30' | '90' | 'sy'
+
+function attendanceStatusLabel(status: StudentLabAttendanceStatus): string {
+  if (status === 'present') return 'Present'
+  if (status === 'late') return 'Late'
+  return 'Absent'
+}
+
+function attendanceStatusClass(status: StudentLabAttendanceStatus): string {
+  if (status === 'present') return 'text-secondary'
+  if (status === 'late') return 'text-primary'
+  return 'text-slate-700'
+}
 
 function genderLabel(code: string): string {
   if (code === 'M') return 'Male'
@@ -274,11 +287,17 @@ export function StudentLab() {
 
         {attendance ? (
           <>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
                 <p className="text-xs font-medium text-slate-500">Present</p>
                 <p className="text-xl font-bold text-secondary">
                   {attendance.summary.presentCount}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
+                <p className="text-xs font-medium text-slate-500">Late</p>
+                <p className="text-xl font-bold text-primary">
+                  {attendance.summary.lateCount}
                 </p>
               </div>
               <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
@@ -312,14 +331,9 @@ export function StudentLab() {
                       {formatLongDate(sess.date)} · {sess.period}
                     </span>
                     <span
-                      className={[
-                        'text-sm font-semibold',
-                        sess.status === 'present'
-                          ? 'text-secondary'
-                          : 'text-slate-700',
-                      ].join(' ')}
+                      className={`text-sm font-semibold ${attendanceStatusClass(sess.status)}`}
                     >
-                      {sess.status === 'present' ? 'Present' : 'Absent'}
+                      {attendanceStatusLabel(sess.status)}
                       <span className="ml-2 font-normal text-slate-400">›</span>
                     </span>
                   </Link>

@@ -20,6 +20,52 @@ function studentColumnNames(db: SqliteDatabase): Set<string> {
   return new Set(rows.map((r) => r.name))
 }
 
+function attendanceRecordsHaveExtendedStatus(db: SqliteDatabase): boolean {
+  const row = db
+    .prepare(
+      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'attendance_records'`,
+    )
+    .get() as { sql: string } | undefined
+  if (!row?.sql) return false
+  return row.sql.includes("'absent'") && row.sql.includes("'late'")
+}
+
+/**
+ * SQLite cannot ALTER a CHECK. Rebuild `attendance_records` when status is still
+ * present-only so it allows present, absent, and late. Existing present rows are copied.
+ */
+export function migrateAttendanceRecordStatuses(db: SqliteDatabase): void {
+  if (!tableExists(db, 'attendance_records')) return
+  if (attendanceRecordsHaveExtendedStatus(db)) return
+
+  db.pragma('foreign_keys = OFF')
+  try {
+    db.exec(`
+      CREATE TABLE attendance_records__new (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        student_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('present', 'absent', 'late')),
+        timestamp INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES attendance_sessions(id),
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        UNIQUE(session_id, student_id)
+      );
+      INSERT INTO attendance_records__new (
+        id, session_id, student_id, status, timestamp
+      )
+      SELECT id, session_id, student_id, status, timestamp
+      FROM attendance_records;
+      DROP TABLE attendance_records;
+      ALTER TABLE attendance_records__new RENAME TO attendance_records;
+      CREATE INDEX IF NOT EXISTS idx_records_session ON attendance_records(session_id);
+      CREATE INDEX IF NOT EXISTS idx_records_student ON attendance_records(student_id);
+    `)
+  } finally {
+    db.pragma('foreign_keys = ON')
+  }
+}
+
 function createStudentsIndexes(db: SqliteDatabase): void {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_students_class_id ON students(class_id);
@@ -206,7 +252,7 @@ export function migrateSchoolYearTables(db: SqliteDatabase): void {
   const subjectIds = db
     .prepare(
       `
-      SELECT subject_id AS id FROM subjects
+      SELECT id AS id FROM subjects
       UNION
       SELECT subject_id AS id FROM class_subjects
       UNION
@@ -286,7 +332,7 @@ export function migrate(db: SqliteDatabase): void {
       id TEXT PRIMARY KEY,
       session_id TEXT NOT NULL,
       student_id TEXT NOT NULL,
-      status TEXT NOT NULL CHECK (status = 'present'),
+      status TEXT NOT NULL CHECK (status IN ('present', 'absent', 'late')),
       timestamp INTEGER NOT NULL,
       FOREIGN KEY (session_id) REFERENCES attendance_sessions(id),
       FOREIGN KEY (student_id) REFERENCES students(id),
@@ -351,6 +397,7 @@ export function migrate(db: SqliteDatabase): void {
   migrateSchoolYearSubjectsGradeLevel(db)
   migrateSubjectUniqueConstraints(db)
   migrateActivityLogsTable(db)
+  migrateAttendanceRecordStatuses(db)
 }
 
 /** Teacher activity recents — see .cursor/schemas/recents.md */
@@ -366,6 +413,21 @@ export function migrateActivityLogsTable(db: SqliteDatabase): void {
     CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at
       ON activity_logs(created_at DESC);
   `)
+  migrateActivityLogsDropLegacyUserId(db)
+}
+
+/**
+ * A local database briefly had `user_id NOT NULL` with no writer.
+ * Recents inserts omit that column, so drop it when present.
+ */
+function migrateActivityLogsDropLegacyUserId(db: SqliteDatabase): void {
+  if (!tableExists(db, 'activity_logs')) return
+  const columns = db.prepare(`PRAGMA table_info(activity_logs)`).all() as {
+    name: string
+  }[]
+  if (!columns.some((column) => column.name === 'user_id')) return
+  db.exec(`DROP INDEX IF EXISTS idx_activity_logs_user_created`)
+  db.exec(`ALTER TABLE activity_logs DROP COLUMN user_id`)
 }
 
 /** Unique indexes on subject name / short code when no legacy duplicates exist. */

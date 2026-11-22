@@ -110,10 +110,11 @@ function buildAttendanceSummary(
 ): StudentLabAttendanceSummary {
   const totalSessions = sessions.length
   const presentCount = sessions.filter((s) => s.status === 'present').length
-  const absentCount = totalSessions - presentCount
+  const absentCount = sessions.filter((s) => s.status === 'absent').length
+  const lateCount = sessions.filter((s) => s.status === 'late').length
   const presentRate =
     totalSessions === 0 ? 0 : Math.round((100 * presentCount) / totalSessions)
-  return { totalSessions, presentCount, absentCount, presentRate }
+  return { totalSessions, presentCount, absentCount, lateCount, presentRate }
 }
 
 function mapScoreRows(

@@ -1,6 +1,7 @@
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import type {
   AttendancePeriod,
+  AttendanceRecordStatus,
   ClassShift,
   ScoreEventKind,
 } from '../schema/types.js'
@@ -9,7 +10,7 @@ import { STUDENT_LAB_QUERIES } from '../queries/studentLab.queries.js'
 export type StudentLabAttendanceDbRow = {
   date: string
   period: AttendancePeriod
-  status: 'present' | 'absent'
+  status: AttendanceRecordStatus
 }
 
 export type StudentLabScoreDbRow = {

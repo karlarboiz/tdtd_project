@@ -71,7 +71,6 @@ Domain-specific anti-patterns: [attendance.md](../schemas/attendance.md), [quiz.
 
 ## Future extensions (do not implement yet)
 
-- Attendance statuses: absent, late ([attendance.md](../schemas/attendance.md)).
 - Weighted grading / term averages ([quiz.md](../schemas/quiz.md)).
 - DepEd report generation.
 - Selective client-side caching or sync.

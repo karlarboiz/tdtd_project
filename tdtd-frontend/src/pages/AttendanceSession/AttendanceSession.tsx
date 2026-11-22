@@ -3,9 +3,10 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RegisterStudentsModal } from '../../components/RegisterStudentsModal/RegisterStudentsModal'
 import { listClasses } from '../../api/classesApi'
 import {
-  getAttendancePresentRoster,
+  getAttendanceRoster,
   getAttendanceState,
   saveAttendance as saveAttendanceRequest,
+  type AttendanceRosterStudent,
 } from '../../api/attendanceApi'
 import { listStudentsByClass } from '../../api/studentsApi'
 import {
@@ -15,6 +16,7 @@ import {
 import { formatStudentName } from '../../lib/studentDisplay'
 import type {
   AttendancePeriod,
+  AttendanceRecordStatus,
   AttendanceSessionRow,
   ClassRow,
   StudentRow,
@@ -31,6 +33,20 @@ import {
   otherAttendancePeriod,
   parseAttendancePeriod,
 } from '../../lib/period'
+
+const ATTENDANCE_STATUSES = ['present', 'absent', 'late'] as const
+
+function attendanceStatusLabel(status: AttendanceRecordStatus): string {
+  if (status === 'present') return 'Present'
+  if (status === 'late') return 'Late'
+  return 'Absent'
+}
+
+function attendanceStatusClass(status: AttendanceRecordStatus): string {
+  if (status === 'present') return 'text-secondary'
+  if (status === 'late') return 'text-primary'
+  return 'text-slate-600'
+}
 
 export function AttendanceSession() {
   const { date: dateParam } = useParams<{ date: string }>()
@@ -64,8 +80,8 @@ export function AttendanceSession() {
       const other = otherAttendancePeriod(current)
       try {
         const [forCurrent, forOther] = await Promise.all([
-          getAttendancePresentRoster({ date: dateYmd, period: current }),
-          getAttendancePresentRoster({ date: dateYmd, period: other }),
+          getAttendanceRoster({ date: dateYmd, period: current }),
+          getAttendanceRoster({ date: dateYmd, period: other }),
         ])
         if (cancelled) return
         const pick = forCurrent.session
@@ -97,7 +113,7 @@ export function AttendanceSession() {
   const [allClasses, setAllClasses] = useState<ClassRow[]>([])
   const [classId, setClassId] = useState('')
   const [students, setStudents] = useState<StudentRow[]>([])
-  const [present, setPresent] = useState<Record<string, boolean>>({})
+  const [marks, setMarks] = useState<Record<string, AttendanceRecordStatus>>({})
   const [loadingClass, setLoadingClass] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
@@ -106,9 +122,9 @@ export function AttendanceSession() {
   const [rosterSession, setRosterSession] = useState<AttendanceSessionRow | null>(
     null,
   )
-  const [savedPresentStudents, setSavedPresentStudents] = useState<
-    StudentRow[]
-  >([])
+  const [savedRecords, setSavedRecords] = useState<AttendanceRosterStudent[]>(
+    [],
+  )
   const didAutoPickClassRef = useRef(false)
 
   const periodLabel =
@@ -127,31 +143,31 @@ export function AttendanceSession() {
     didAutoPickClassRef.current = false
   }, [dateYmd, period])
 
-  const refreshPresentRoster = useCallback(async () => {
+  const refreshRoster = useCallback(async () => {
     if (!parseYMD(dateYmd) || resolvingPeriod) {
       if (!resolvingPeriod) {
         setRosterSession(null)
-        setSavedPresentStudents([])
+        setSavedRecords([])
       }
       setRosterLoading(resolvingPeriod)
       return
     }
     setRosterLoading(true)
     try {
-      const data = await getAttendancePresentRoster({ date: dateYmd, period })
+      const data = await getAttendanceRoster({ date: dateYmd, period })
       setRosterSession(data.session)
-      setSavedPresentStudents(data.presentStudents)
+      setSavedRecords(data.students)
     } catch {
       setRosterSession(null)
-      setSavedPresentStudents([])
+      setSavedRecords([])
     } finally {
       setRosterLoading(false)
     }
   }, [dateYmd, period, resolvingPeriod])
 
   useEffect(() => {
-    void refreshPresentRoster()
-  }, [refreshPresentRoster])
+    void refreshRoster()
+  }, [refreshRoster])
 
   const classesForPeriod = useMemo(
     () =>
@@ -167,14 +183,14 @@ export function AttendanceSession() {
 
   useEffect(() => {
     if (didAutoPickClassRef.current || rosterLoading) return
-    if (!rosterSession || savedPresentStudents.length === 0) return
-    const uniq = [...new Set(savedPresentStudents.map((s) => s.classId))]
+    if (!rosterSession || savedRecords.length === 0) return
+    const uniq = [...new Set(savedRecords.map((s) => s.classId))]
     if (uniq.length !== 1) return
     const onlyClassId = uniq[0]
     if (!classesForPeriod.some((c) => c.id === onlyClassId)) return
     setClassId((prev) => (prev ? prev : onlyClassId))
     didAutoPickClassRef.current = true
-  }, [rosterLoading, rosterSession, savedPresentStudents, classesForPeriod])
+  }, [rosterLoading, rosterSession, savedRecords, classesForPeriod])
 
   const loadClassStudents = useCallback(
     async (cid: string) => {
@@ -184,21 +200,23 @@ export function AttendanceSession() {
       try {
         const list = await listStudentsByClass(cid)
         const ids = list.map((s) => s.id)
-        let presentSet = new Set<string>()
+        const stored = new Map<string, AttendanceRecordStatus>()
         if (ids.length > 0) {
           const state = await getAttendanceState({
             date: dateYmd,
             period,
             classId: cid,
           })
-          presentSet = new Set(state.presentStudentIds)
+          for (const mark of state.marks) {
+            stored.set(mark.studentId, mark.status)
+          }
         }
-        const next: Record<string, boolean> = {}
+        const next: Record<string, AttendanceRecordStatus> = {}
         for (const s of list) {
-          next[s.id] = presentSet.has(s.id)
+          next[s.id] = stored.get(s.id) ?? 'absent'
         }
         setStudents(list)
-        setPresent(next)
+        setMarks(next)
       } finally {
         setLoadingClass(false)
       }
@@ -209,27 +227,27 @@ export function AttendanceSession() {
   useEffect(() => {
     if (!classId || resolvingPeriod) {
       setStudents([])
-      setPresent({})
+      setMarks({})
       return
     }
     void loadClassStudents(classId)
   }, [classId, loadClassStudents, resolvingPeriod])
 
-  const allChecked =
-    students.length > 0 && students.every((s) => present[s.id])
+  const allPresent =
+    students.length > 0 && students.every((s) => marks[s.id] === 'present')
 
-  function toggleSelectAll() {
+  function markAll() {
     if (students.length === 0) return
-    const turnOn = !allChecked
-    setPresent((prev) => {
+    const nextStatus: AttendanceRecordStatus = allPresent ? 'absent' : 'present'
+    setMarks((prev) => {
       const next = { ...prev }
-      for (const s of students) next[s.id] = turnOn
+      for (const s of students) next[s.id] = nextStatus
       return next
     })
   }
 
-  function toggleOne(studentId: string) {
-    setPresent((prev) => ({ ...prev, [studentId]: !prev[studentId] }))
+  function setStudentStatus(studentId: string, status: AttendanceRecordStatus) {
+    setMarks((prev) => ({ ...prev, [studentId]: status }))
   }
 
   async function handleSave() {
@@ -238,15 +256,17 @@ export function AttendanceSession() {
     setSaveMsg(null)
     try {
       const ids = students.map((s) => s.id)
-      const presentIds = ids.filter((id) => present[id])
       await saveAttendanceRequest({
         date: dateYmd,
         period,
         classStudentIds: ids,
-        presentStudentIds: presentIds,
+        marks: ids.map((id) => ({
+          studentId: id,
+          status: marks[id] ?? 'absent',
+        })),
       })
       setSaveMsg('Attendance saved.')
-      await refreshPresentRoster()
+      await refreshRoster()
     } catch {
       setSaveMsg('Could not save. Try again.')
     } finally {
@@ -367,19 +387,19 @@ export function AttendanceSession() {
               ) : (
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h2 className="text-lg font-semibold text-slate-900">
-                    Students marked present
+                    Saved attendance
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     Attendance for this date and period is already on file. You can
                     still change the class below to review or update the roster.
                   </p>
-                  {savedPresentStudents.length === 0 ? (
+                  {savedRecords.length === 0 ? (
                     <p className="mt-4 text-center text-slate-600">
-                      No students were marked present for this session.
+                      No attendance records for this session yet.
                     </p>
                   ) : (
                     <ul className="mt-4 divide-y divide-slate-100">
-                      {savedPresentStudents.map((s) => {
+                      {savedRecords.map((s) => {
                         const cls = allClasses.find((c) => c.id === s.classId)
                         return (
                           <li
@@ -389,11 +409,18 @@ export function AttendanceSession() {
                             <span className="text-slate-900">
                               {formatStudentName(s)}
                             </span>
-                            {cls ? (
-                              <span className="text-sm text-slate-500">
-                                {cls.name} · {formatClassShiftLabel(cls.shift)}
+                            <span className="flex flex-wrap items-baseline justify-end gap-2">
+                              {cls ? (
+                                <span className="text-sm text-slate-500">
+                                  {cls.name} · {formatClassShiftLabel(cls.shift)}
+                                </span>
+                              ) : null}
+                              <span
+                                className={`text-sm font-semibold ${attendanceStatusClass(s.status)}`}
+                              >
+                                {attendanceStatusLabel(s.status)}
                               </span>
-                            ) : null}
+                            </span>
                           </li>
                         )
                       })}
@@ -457,11 +484,11 @@ export function AttendanceSession() {
                 <h2 className="text-lg font-semibold text-slate-900">Students</h2>
                 <button
                   type="button"
-                  onClick={toggleSelectAll}
+                  onClick={markAll}
                   disabled={students.length === 0 || loadingClass}
-                  className="rounded-lg bg-secondary/15 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-secondary/25 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="min-h-11 touch-manipulation rounded-lg bg-secondary/15 px-3 py-2 text-sm font-semibold text-teal-800 hover:bg-secondary/25 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {allChecked ? 'Clear all' : 'Select all'}
+                  {allPresent ? 'Mark all absent' : 'Mark all present'}
                 </button>
               </div>
 
@@ -474,23 +501,47 @@ export function AttendanceSession() {
                 </p>
               ) : (
                 <ul className="divide-y divide-slate-100">
-                  {students.map((s) => (
-                    <li key={s.id} className="flex items-center gap-3 py-3">
-                      <input
-                        id={`stu-${s.id}`}
-                        type="checkbox"
-                        checked={Boolean(present[s.id])}
-                        onChange={() => toggleOne(s.id)}
-                        className="size-5 touch-manipulation rounded border-slate-300 text-primary focus:ring-primary"
-                      />
-                      <label
-                        htmlFor={`stu-${s.id}`}
-                        className="flex-1 cursor-pointer text-left text-slate-900"
-                      >
-                        {formatStudentName(s)}
-                      </label>
-                    </li>
-                  ))}
+                  {students.map((s) => {
+                    const current = marks[s.id] ?? 'absent'
+                    return (
+                      <li key={s.id} className="py-3">
+                        <p className="text-slate-900" id={`stu-${s.id}`}>
+                          {formatStudentName(s)}
+                        </p>
+                        <div
+                          className="mt-2 grid grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-neutral-bg p-1"
+                          role="group"
+                          aria-labelledby={`stu-${s.id}`}
+                        >
+                          {ATTENDANCE_STATUSES.map((status) => {
+                            const active = current === status
+                            const activeClass =
+                              status === 'present'
+                                ? 'bg-primary text-white shadow-sm'
+                                : status === 'late'
+                                  ? 'bg-secondary text-white shadow-sm'
+                                  : 'bg-white text-slate-900 shadow-sm'
+                            return (
+                              <button
+                                key={status}
+                                type="button"
+                                aria-pressed={active}
+                                onClick={() => setStudentStatus(s.id, status)}
+                                className={[
+                                  'min-h-11 touch-manipulation rounded-lg px-2 py-2 text-sm font-semibold transition',
+                                  active
+                                    ? activeClass
+                                    : 'text-slate-600 hover:bg-white',
+                                ].join(' ')}
+                              >
+                                {attendanceStatusLabel(status)}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
 

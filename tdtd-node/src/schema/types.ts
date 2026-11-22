@@ -12,8 +12,8 @@ export type ClassShift = 'MRNG' | 'AFTNN'
 /** Stored gender code for students. */
 export type StudentGenderCode = 'M' | 'F' | 'O'
 
-/** MVP: only "present"; absence = no record. */
-export type AttendanceRecordStatus = 'present'
+/** Stored on attendance_records.status. */
+export type AttendanceRecordStatus = 'present' | 'absent' | 'late'
 
 /** Calendar date key: YYYY-MM-DD */
 export type IsoDateString = string
@@ -152,8 +152,8 @@ export interface ActivityLogRow {
   createdAt: number
 }
 
-/** Student Lab — attendance row in session list. */
-export type StudentLabAttendanceStatus = 'present' | 'absent'
+/** Student Lab — attendance row in session list. Same values as stored records. */
+export type StudentLabAttendanceStatus = AttendanceRecordStatus
 
 export interface StudentLabAttendanceSessionRow {
   date: IsoDateString
@@ -165,6 +165,7 @@ export interface StudentLabAttendanceSummary {
   totalSessions: number
   presentCount: number
   absentCount: number
+  lateCount: number
   presentRate: number
 }
 

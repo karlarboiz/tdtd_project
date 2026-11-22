@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import {
+  getAttendanceRoster,
   getAttendanceState,
-  getPresentAttendanceRoster,
   listAttendanceSessionDatesInRange,
   saveAttendance,
 } from '../services/attendance.service.js'
@@ -15,7 +15,7 @@ export function attendancePresentRosterHandler(db: SqliteDatabase) {
         typeof req.query.date === 'string' ? req.query.date : ''
       const period =
         typeof req.query.period === 'string' ? req.query.period : ''
-      const roster = getPresentAttendanceRoster(db, date, period)
+      const roster = getAttendanceRoster(db, date, period)
       res.json(roster)
     } catch (e) {
       if (e instanceof HttpError) {
@@ -76,22 +76,31 @@ export function attendanceSaveHandler(db: SqliteDatabase) {
         date?: unknown
         period?: unknown
         classStudentIds?: unknown
-        presentStudentIds?: unknown
+        marks?: unknown
       }
       const date = typeof body.date === 'string' ? body.date : ''
       const period = typeof body.period === 'string' ? body.period : ''
       const classStudentIds = Array.isArray(body.classStudentIds)
         ? body.classStudentIds.map((x) => String(x ?? ''))
         : []
-      const presentStudentIds = Array.isArray(body.presentStudentIds)
-        ? body.presentStudentIds.map((x) => String(x ?? ''))
+      const marks = Array.isArray(body.marks)
+        ? body.marks.map((item) => {
+            const rec =
+              item && typeof item === 'object'
+                ? (item as { studentId?: unknown; status?: unknown })
+                : {}
+            return {
+              studentId: typeof rec.studentId === 'string' ? rec.studentId : '',
+              status: typeof rec.status === 'string' ? rec.status : '',
+            }
+          })
         : []
 
       const session = saveAttendance(db, {
         date,
         period,
         classStudentIds,
-        presentStudentIds,
+        marks,
       })
       res.status(200).json({ session })
     } catch (e) {

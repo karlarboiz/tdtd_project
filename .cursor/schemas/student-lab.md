@@ -37,12 +37,30 @@ Base: `/api/students`
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| GET | `/?classId=` | Roster for one class |
+| GET | `/?q=` | Cross-class name search (first, middle, and last) |
 | GET | `/:studentId` | Student + class context (header / picker validation) |
 | GET | `/:studentId/lab` | Aggregated lab payload (profile + attendance + scores) |
 
-Existing list route unchanged: `GET /api/students?classId=`.
+`GET /api/students?classId=` is unchanged when `q` is omitted.
 
 Register `/:studentId/lab` **before** or alongside `/:studentId` so `lab` is not parsed as an id.
+
+---
+
+## Query parameters — `GET /` (list)
+
+| Param | Required | Used for |
+|--------|----------|----------|
+| `classId` | Required when `q` is omitted | Roster for one class. Unknown class → 404. |
+| `q` | No | Cross-class name search. When non-empty after trim, `classId` is ignored. |
+
+**Name match** (case-insensitive substring; repeated spaces collapsed):
+
+- Display name: `firstName`, optional `middleName`, `lastName`.
+- `firstName` + `lastName`, so a middle name does not hide a “First Last” query.
+
+A middle-name-only query matches because the display name includes it. Results use the same order as a class roster (`last_name`, then `first_name`, `NOCASE`). This GET is not written to activity logs.
 
 ---
 
@@ -55,7 +73,7 @@ Register `/:studentId/lab` **before** or alongside `/:studentId` so `lab` is not
 | `scoresFrom` | No | same as `from` | Score list range start |
 | `scoresTo` | No | same as `to` | Score list range end |
 
-**All-time attendance:** omit `from` and `to` (or send empty) — server returns every shift-eligible session for the student.
+**All-time attendance:** omit `from` and `to` (or send empty) — server returns every shift-eligible attendance record for the student.
 
 **Validation:**
 
@@ -78,6 +96,7 @@ Register `/:studentId/lab` **before** or alongside `/:studentId` so `lab` is not
       totalSessions: number
       presentCount: number
       absentCount: number
+      lateCount: number
       presentRate: number // 0–100, 0 when totalSessions === 0
     }
     sessions: StudentLabAttendanceSessionRow[]
@@ -96,7 +115,7 @@ Register `/:studentId/lab` **before** or alongside `/:studentId` so `lab` is not
 {
   date: string       // "YYYY-MM-DD"
   period: "AM" | "PM"
-  status: "present" | "absent"
+  status: "present" | "absent" | "late"
 }
 ```
 
@@ -134,19 +153,19 @@ Global sessions are keyed by `date` + `period` only ([attendance.md](./attendanc
 
 PM sessions must **not** count as absent for a morning-section student (and vice versa).
 
-### Present vs absent
+### Status counts
 
-- **`present`:** row exists in `attendance_records` for `(sessionId, studentId)`.
-- **`absent`:** shift-eligible session in range with no record for that student.
+Each row in `sessions` is an `attendance_records` row for that student whose session matches the class shift and the date range. `status` is the stored value: **`present`**, **`absent`**, or **`late`**.
 
-MVP `status` on records is always `present`; absence is inferred from missing row.
+A shift-eligible session with no record for the student is omitted. It is not counted as absent.
 
 ### Summary
 
-- `totalSessions` = count of `sessions` array.
+- `totalSessions` = count of `sessions` (explicit records only).
 - `presentCount` = sessions with `status: present`.
-- `absentCount` = `totalSessions - presentCount`.
-- `presentRate` = `round(100 * presentCount / totalSessions)` or `0` if `totalSessions === 0`.
+- `absentCount` = sessions with `status: absent`.
+- `lateCount` = sessions with `status: late`.
+- `presentRate` = `round(100 * presentCount / totalSessions)` or `0` if `totalSessions === 0`. Late and absent rows sit in `totalSessions`, so they lower the present rate. They do not increment `presentCount`.
 
 ---
 
@@ -203,6 +222,7 @@ No migration required. Queries rely on:
 - Adding `attendance_summary` or `student_scores` columns on `students`.
 - Storing denormalized lab snapshots in SQLite.
 - Counting all AM+PM sessions for every student regardless of `classes.shift`.
+- Treating a missing `attendance_records` row as `absent`.
 - Including score events with `score IS NULL` in “recent scores” lists.
 - Editing roster, attendance, or scores from Student Lab v1 (view-only; use existing routes).
 
@@ -211,6 +231,8 @@ No migration required. Queries rely on:
 ## Future extensions (not in v1)
 
 - `PATCH /api/students/:studentId` from Student Lab UI.
-- Recents deep link when `metadata.studentId` is set.
-- Cross-class student search on `/student-lab`.
 - Charts, PDF export, photo on profile card.
+
+**Shipped:** Cross-class student search on `/student-lab` (`GET /api/students?q=`). The class select and selected-class roster stay. See LAB-002 in [Student-Lab-Function-Doc.md](../documentation/Student-Lab-Function-Doc.md).
+
+**Shipped:** Recents opens `/student-lab/:studentId` when `metadata.studentId` is set and the log has no `eventId` or attendance `date`. See REC-003 in [Recents-Function-Doc.md](../documentation/Recents-Function-Doc.md).

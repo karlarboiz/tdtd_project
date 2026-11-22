@@ -1,6 +1,7 @@
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import type {
   AttendancePeriod,
+  AttendanceRecordStatus,
   AttendanceSessionRow,
   StudentGenderCode,
   StudentRow,
@@ -48,16 +49,24 @@ export function expandInPlaceholders(count: number): string {
   return Array(count).fill('?').join(', ')
 }
 
-export function selectPresentStudentIds(
+export type AttendanceMarkRow = {
+  studentId: string
+  status: AttendanceRecordStatus
+}
+
+export function selectAttendanceMarks(
   db: SqliteDatabase,
   sessionId: string,
   studentIds: string[],
-): Set<string> {
-  if (studentIds.length === 0) return new Set()
+): AttendanceMarkRow[] {
+  if (studentIds.length === 0) return []
   const ph = expandInPlaceholders(studentIds.length)
-  const sql = ATTENDANCE_QUERIES.presentStudentIds.replace('%IDS%', ph)
-  const rows = db.prepare(sql).all(sessionId, ...studentIds) as { student_id: string }[]
-  return new Set(rows.map((r) => r.student_id))
+  const sql = ATTENDANCE_QUERIES.marksForStudents.replace('%IDS%', ph)
+  const rows = db.prepare(sql).all(sessionId, ...studentIds) as {
+    student_id: string
+    status: AttendanceRecordStatus
+  }[]
+  return rows.map((r) => ({ studentId: r.student_id, status: r.status }))
 }
 
 export function deleteRecordsForStudentsInSession(
@@ -76,13 +85,14 @@ export function insertAttendanceRecord(
   id: string,
   sessionId: string,
   studentId: string,
+  status: AttendanceRecordStatus,
   timestamp: number,
 ): void {
   db.prepare(ATTENDANCE_QUERIES.recordInsert).run({
     id,
     session_id: sessionId,
     student_id: studentId,
-    status: 'present',
+    status,
     timestamp,
   })
 }
@@ -98,7 +108,7 @@ export function listDistinctSessionDatesInRange(
   return rows.map((r) => r.date)
 }
 
-type PresentStudentDbRow = {
+type RosterStudentDbRow = {
   id: string
   first_name: string
   middle_name: string | null
@@ -107,15 +117,20 @@ type PresentStudentDbRow = {
   gender: StudentGenderCode
   class_id: string
   created_at: number
+  status: AttendanceRecordStatus
 }
 
-export function listPresentStudentsForSession(
+export type AttendanceRosterStudentRow = StudentRow & {
+  status: AttendanceRecordStatus
+}
+
+export function listRosterStudentsForSession(
   db: SqliteDatabase,
   sessionId: string,
-): StudentRow[] {
+): AttendanceRosterStudentRow[] {
   const rows = db
-    .prepare(ATTENDANCE_QUERIES.presentStudentsForSession)
-    .all(sessionId) as PresentStudentDbRow[]
+    .prepare(ATTENDANCE_QUERIES.rosterStudentsForSession)
+    .all(sessionId) as RosterStudentDbRow[]
   return rows.map((r) => ({
     id: r.id,
     firstName: r.first_name,
@@ -125,5 +140,6 @@ export function listPresentStudentsForSession(
     gender: r.gender,
     classId: r.class_id,
     createdAt: r.created_at,
+    status: r.status,
   }))
 }
