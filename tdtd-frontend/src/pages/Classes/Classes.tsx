@@ -1,5 +1,8 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import * as XLSX from 'xlsx'
 import { createClass, listClasses } from '../../api/classesApi'
 import {
@@ -12,12 +15,11 @@ import { formatStudentName } from '../../lib/studentDisplay'
 import { studentLabPath } from '../../lib/studentLabRoute'
 import { parseStudentImportWorkbook } from '../../lib/studentImportParse'
 import { downloadStudentImportSample } from '../../lib/studentImportSampleXlsx'
+import { Button } from '@/components/Button/Button'
 import {
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
-  secondaryButtonClass,
 } from '@/lib/uiClasses'
 import type {
   ClassRow,
@@ -181,7 +183,8 @@ export function Classes() {
   }
 
   return (
-    <div className="w-full">
+    <PageContainer variant="wide">
+      <PageContentReveal>
       <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
         <Link
           to="/"
@@ -191,7 +194,7 @@ export function Classes() {
         </Link>
       </div>
 
-      <h1 className="text-xl font-semibold text-slate-900">Classes &amp; students</h1>
+      <h1 className="text-xl font-semibold text-slate-900">Classes &amp; Students</h1>
       <p className="mt-1 max-w-2xl text-sm text-slate-600">
         Create a section, then add students with full details or import from Excel (see sample).
       </p>
@@ -225,12 +228,9 @@ export function Classes() {
             <option value="MRNG">Morning (MRNG)</option>
             <option value="AFTNN">Afternoon (AFTNN)</option>
           </select>
-          <button
-            type="submit"
-            className={`mt-4 w-full py-3 ${primaryButtonClass}`}
-          >
+          <Button type="submit" fullWidth className="mt-4">
             Add class
-          </button>
+          </Button>
           </form>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -303,13 +303,14 @@ export function Classes() {
                 <option value="F">Female (F)</option>
                 <option value="O">Other (O)</option>
               </select>
-              <button
+              <Button
                 type="submit"
+                variant="secondary"
+                fullWidth
                 disabled={!selectedClassId}
-                className="w-full rounded-xl border-2 border-secondary bg-teal-50 py-3 font-semibold text-secondary hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Add student
-              </button>
+              </Button>
             </form>
           </section>
         </div>
@@ -338,17 +339,22 @@ export function Classes() {
                 className={`block w-full min-w-0 flex-1 text-sm text-neutral-label file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white ${importError ? 'rounded-xl border-2 border-primary' : ''}`}
                 aria-invalid={Boolean(importError)}
               />
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
                 disabled={!selectedClassId}
                 onClick={() => downloadStudentImportSample()}
-                className={`shrink-0 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
               >
                 Download sample (.xlsx)
-              </button>
+              </Button>
             </div>
 
-            <div className="mt-8 flex min-h-0 flex-1 flex-col border-t border-slate-100 pt-4 lg:min-h-[12rem]">
+            <ContentReveal
+              revealKey={selectedClassId}
+              className="mt-8 flex min-h-0 flex-1 flex-col border-t border-slate-100 pt-4 lg:min-h-[12rem]"
+            >
               <h2 className="shrink-0 font-semibold text-slate-900">
                 Students ({students.length})
               </h2>
@@ -377,10 +383,11 @@ export function Classes() {
                   </li>
                 )}
               </ul>
-            </div>
+            </ContentReveal>
           </div>
         </section>
       </div>
-    </div>
+      </PageContentReveal>
+    </PageContainer>
   )
 }

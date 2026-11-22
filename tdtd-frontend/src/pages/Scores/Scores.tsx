@@ -1,5 +1,9 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ScoresPageSkeleton } from '@/components/LoadingSkeleton/ScoresPageSkeleton'
+import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listClasses } from '../../api/classesApi'
 import {
   getActiveSchoolYear,
@@ -13,20 +17,24 @@ import {
 } from '../../api/scoreApi'
 import {
   SCORE_EVENT_KIND,
+  QUARTER_OPTIONS,
+  ASSESSMENT_BUCKET,
+  ASSESSMENT_BUCKET_LABELS,
+  type AssessmentBucketValue,
   type ScoreEventKindValue,
 } from '@/constants/TDTDConstants'
-import { formatClassShiftLabel } from '../../lib/classShift'
 import { ApiError } from '../../lib/http'
 import {
   buildScoreEventTitle,
   formatScoreEventKindLabel,
   subtypeOptionsForKind,
 } from '../../lib/scoreLabels'
+import { Button } from '@/components/Button/Button'
 import {
+  bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 import type { ClassRow, SchoolYearSubjectRow, ScoreEventRow } from '@/types/schema'
 
@@ -50,6 +58,8 @@ export function Scores() {
 
   const [kind, setKind] = useState<ScoreEventKindValue>(SCORE_EVENT_KIND.QUIZ)
   const [subtypeCode, setSubtypeCode] = useState('')
+  const [quarter, setQuarter] = useState(1)
+  const [assessmentBucket, setAssessmentBucket] = useState<AssessmentBucketValue | ''>('')
   const [subjectId, setSubjectId] = useState('')
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(todayYmd())
@@ -189,6 +199,9 @@ export function Scores() {
         title: trimmedTitle,
         date: date.trim() || undefined,
         maxScore: max,
+        quarter,
+        subtype: subtypeCode || undefined,
+        assessmentBucket: assessmentBucket || undefined,
       })
       navigate(`/scores/event/${created.id}`)
     } catch (err) {
@@ -203,7 +216,8 @@ export function Scores() {
   const subjectSelectDisabled = !classId || subjectOptions.length === 0
 
   return (
-    <div className="w-full">
+    <PageContainer variant="wide">
+      <PageContentReveal>
       <header className="mb-6 lg:mb-8">
         <h1 className="text-2xl font-semibold text-slate-900">Scores</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-600">
@@ -213,18 +227,15 @@ export function Scores() {
       </header>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <ScoresPageSkeleton />
       ) : classes.length === 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-slate-700">
             Register a class before recording scores.
           </p>
-          <Link
-            to="/classes"
-            className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
-          >
-            Classes &amp; students
-          </Link>
+          <Button to="/classes" className="mt-4">
+            Classes &amp; Students
+          </Button>
         </section>
       ) : (
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
@@ -241,7 +252,7 @@ export function Scores() {
             >
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} · {formatClassShiftLabel(c.shift)}
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -285,6 +296,41 @@ export function Scores() {
                 </select>
               </>
             ) : null}
+
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-quarter">
+              Quarter
+            </label>
+            <select
+              id="scores-quarter"
+              className={`mt-2 py-3 ${formInputClasses()}`}
+              value={quarter}
+              onChange={(e) => setQuarter(Number(e.target.value))}
+            >
+              {QUARTER_OPTIONS.map((q) => (
+                <option key={q.value} value={q.value}>
+                  {q.label}
+                </option>
+              ))}
+            </select>
+
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-bucket">
+              Component bucket (optional override)
+            </label>
+            <select
+              id="scores-bucket"
+              className={`mt-2 py-3 ${formInputClasses()}`}
+              value={assessmentBucket}
+              onChange={(e) =>
+                setAssessmentBucket(e.target.value as AssessmentBucketValue | '')
+              }
+            >
+              <option value="">Auto from type</option>
+              {Object.values(ASSESSMENT_BUCKET).map((b) => (
+                <option key={b} value={b}>
+                  {ASSESSMENT_BUCKET_LABELS[b]}
+                </option>
+              ))}
+            </select>
 
             <label className={`mt-4 ${formLabelClass}`} htmlFor="scores-subject">
               Subject
@@ -379,13 +425,15 @@ export function Scores() {
               </p>
             ) : null}
 
-            <button
+            <Button
               type="submit"
+              size="lg"
+              fullWidth
+              className="mt-6"
               disabled={busy || !classId || !subjectId}
-              className={`mt-6 w-full rounded-2xl px-4 py-4 ${primaryButtonClass}`}
             >
               {busy ? 'Creating…' : 'Create & enter scores'}
-            </button>
+            </Button>
           </form>
           </div>
 
@@ -409,6 +457,7 @@ export function Scores() {
                 No assessments yet. Create one on the left.
               </p>
             ) : (
+              <ContentReveal revealKey={classId}>
               <ul className="mt-4 min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto lg:max-h-[calc(100svh-14rem)]">
                 {events.map((ev) => {
                   const subjectLabel =
@@ -416,16 +465,32 @@ export function Scores() {
                   return (
                     <li
                       key={ev.id}
-                      className="flex items-center justify-between gap-3 py-3 first:pt-0"
+                      className="flex flex-col gap-3 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-slate-900">
+                        <p className="font-medium text-slate-900 sm:truncate">
                           {ev.title}
                         </p>
                         <p className="text-sm text-slate-500">
                           <span className="font-medium text-slate-600">
                             {formatScoreEventKindLabel(ev.kind)}
                           </span>
+                          {ev.quarter != null ? (
+                            <>
+                              {' · '}
+                              <span className="font-medium text-slate-600">
+                                Q{ev.quarter}
+                              </span>
+                            </>
+                          ) : null}
+                          {ev.assessmentBucket ? (
+                            <>
+                              {' · '}
+                              <span className="font-medium text-slate-600">
+                                {ev.assessmentBucket}
+                              </span>
+                            </>
+                          ) : null}
                           {' · '}
                           {subjectLabel}
                           {ev.date ? ` · ${ev.date}` : ''}
@@ -434,7 +499,7 @@ export function Scores() {
                       </div>
                       <Link
                         to={`/scores/event/${ev.id}`}
-                        className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50"
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50 sm:self-auto"
                       >
                         Open
                       </Link>
@@ -442,10 +507,12 @@ export function Scores() {
                   )
                 })}
               </ul>
+              </ContentReveal>
             )}
           </section>
         </div>
       )}
-    </div>
+      </PageContentReveal>
+    </PageContainer>
   )
 }

@@ -8,7 +8,7 @@ Defines the **Student Lab** feature: a student-centric **read-only** view aggreg
 
 **Depends on:**
 
-- [core.md](./core.md) — `students`, `classes` (`shift` drives attendance session eligibility)
+- [core.md](./core.md) — `students`, `classes` (`shift` drives attendance session eligibility; roster rules: **Class shift and roster rules**)
 - [attendance.md](./attendance.md) — `attendance_sessions`, `attendance_records`
 - [quiz.md](./quiz.md) — `score_events`, `score_entries`
 - [subjects.md](./subjects.md) — `subjects` (display name on score rows)

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAttendancePresentRoster } from '@/api/attendanceApi'
 import { attendanceSessionPath } from '@/lib/attendanceSessionRoute'
-import { toYMD } from '@/lib/dates'
+import { isWeekendDate, toYMD } from '@/lib/dates'
 import { otherAttendancePeriod } from '@/lib/period'
 import { warningBannerLinkClass } from '@/lib/uiClasses'
 import type { AttendancePeriod } from '@/types/schema'
@@ -33,7 +33,12 @@ export function ReminderBanners() {
   const [state, setState] = useState<ReminderState | null>(null)
 
   useEffect(() => {
-    const todayYmd = toYMD(new Date())
+    const today = new Date()
+    const todayYmd = toYMD(today)
+    if (isWeekendDate(today)) {
+      setState({ todayYmd, missing: [] })
+      return
+    }
     let cancelled = false
 
     void (async () => {

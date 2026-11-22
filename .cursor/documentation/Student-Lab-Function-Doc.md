@@ -38,7 +38,7 @@ Per-student **read-only** dashboard: profile, shift-aware attendance (summary + 
   - `/student-lab` — `StudentLabPicker` (class select + student list).
   - `/student-lab/:studentId` — `StudentLab` detail (profile card, attendance toggle Last 30 days / All time, score presets Last 30 / 90 / active school year).
   - `studentLabApi.ts`, `studentLabRoute.ts`, types on `StudentLabPayload` and row types.
-  - Nav: **Student Lab** in `AppShell`; optional Home card.
+  - Nav: **Student Lab** in `AppShell`; **Student Lab shortcut** card on Home (see [Home-Page-Doc.md](./Home-Page-Doc.md)).
   - **Classes:** roster rows link to student lab.
 - **v1 scope:** View-only; edits via `/attendance/session/...` and `/scores/event/...`.
 

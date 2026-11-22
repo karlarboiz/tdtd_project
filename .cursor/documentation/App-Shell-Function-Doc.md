@@ -10,15 +10,15 @@ Not tied to a single SQLite schema; see [UI-Rules.md](../rules/UI-Rules.md) for 
 
 **Date:** 2026-05-26
 
-**Summary:** App logo in header and home; primary nav collapsed behind a hamburger menu on small screens; **Recents** kept visible beside the menu (see [Recents-Function-Doc.md](./Recents-Function-Doc.md) REC-002).
+**Summary:** App logo in header; primary nav collapsed behind a hamburger menu on small screens; **Recents** kept visible beside the menu (see [Recents-Function-Doc.md](./Recents-Function-Doc.md) REC-002).
 
 **Reason:** Reduce header clutter on phones while keeping quick access to cross-cutting **Recents**; reinforce product identity with a consistent mark.
 
 **What changed:**
-- **`AppBrand` component:** Renders `/tdtd-logo.png` in header (compact) and home (hero size); alt text “Teacher's Dilemma Today”.
+- **`AppBrand` component:** Renders `/tdtd-logo.png` in header (compact); alt text “Teacher's Dilemma Today”.
 - **`AppShell`:** Top bar with brand + Recents + hamburger; Home, Attendance, Classes & students, Subjects, and Scores in a collapsible panel (`#main-nav`).
 - **Menu behavior:** Toggle open/close; closes on route change and **Escape**; `aria-expanded` / `aria-controls` on the menu button.
-- **Home:** Uses `AppBrand` hero variant instead of a text-only title block.
+- **Home:** Content-first today dashboard — greeting, due items, contextual attendance CTA, missed-work summary, and Student Lab shortcut (no hero logo or nav link tiles; navigation lives in the shell only). See [Home-Page-Doc.md](./Home-Page-Doc.md).
 
 **Files involved:**
 - `tdtd-frontend/src/components/AppBrand/AppBrand.tsx`

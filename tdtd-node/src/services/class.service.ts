@@ -17,24 +17,29 @@ function parseClassShift(raw: string): ClassShift {
   throw new HttpError(400, 'shift must be MRNG or AFTNN')
 }
 
-export function listClasses(db: SqliteDatabase): ClassRow[] {
-  return classDao.listClasses(db)
+export function listClasses(db: SqliteDatabase, userId: string): ClassRow[] {
+  return classDao.listClasses(db, userId)
 }
 
-export function createClass(db: SqliteDatabase, input: CreateClassInput): ClassRow {
+export function createClass(
+  db: SqliteDatabase,
+  userId: string,
+  input: CreateClassInput,
+): ClassRow {
   const name = input.name.trim()
   const shift = parseClassShift(typeof input.shift === 'string' ? input.shift : '')
   if (!name) throw new HttpError(400, 'name is required')
 
   const row: ClassRow = {
     id: randomUUID(),
+    userId,
     name,
     shift,
     createdAt: Date.now(),
   }
   classDao.insertClass(db, row)
   const shiftLabel = shift === 'MRNG' ? 'morning' : 'afternoon'
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.CLASS_CREATED,
     summary: `Created class ${name} (${shiftLabel})`,
     metadata: { classId: row.id },

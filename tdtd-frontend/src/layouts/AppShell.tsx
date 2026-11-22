@@ -1,12 +1,21 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AppBrand } from '@/components/AppBrand/AppBrand'
+import { Button } from '@/components/Button/Button'
+import { InactivityWarningModal } from '@/components/InactivityWarningModal/InactivityWarningModal'
+import { useAuth } from '@/contexts/AuthContext'
+import { useInactivityTimeout } from '@/hooks/useInactivityTimeout'
+import {
+  INACTIVITY_COUNTDOWN_MS,
+  INACTIVITY_LOGOUT_MS,
+  INACTIVITY_WARNING_MS,
+} from '@/lib/inactivityConfig'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'touch-manipulation rounded-lg text-sm font-semibold transition',
-    'inline-flex min-h-11 w-full items-center justify-center px-4 py-2.5',
-    'sm:min-h-10 sm:w-auto sm:justify-start sm:px-3 sm:py-2',
+    'inline-flex min-h-11 w-full items-center justify-start px-4 py-2.5',
+    'sm:min-h-10 sm:w-auto sm:px-3 sm:py-2',
     isActive
       ? 'bg-primary/10 text-primary'
       : 'text-slate-700 active:bg-slate-100 sm:hover:bg-slate-100',
@@ -20,6 +29,27 @@ const recentsLinkClass = ({ isActive }: { isActive: boolean }) =>
       ? 'bg-primary/10 text-primary'
       : 'text-slate-700 active:bg-slate-100 hover:bg-slate-100',
   ].join(' ')
+
+function SignOutIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-6 w-6"
+      aria-hidden
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  )
+}
+
 
 function NavMenuIcon({ open }: { open: boolean }) {
   if (open) {
@@ -55,9 +85,86 @@ function NavMenuIcon({ open }: { open: boolean }) {
   )
 }
 
+const INACTIVITY_COUNTDOWN_SECONDS = Math.ceil(
+  INACTIVITY_COUNTDOWN_MS / 1000,
+)
+
 export function AppShell() {
   const [navOpen, setNavOpen] = useState(false)
+  const [warningOpen, setWarningOpen] = useState(false)
+  const [secondsRemaining, setSecondsRemaining] = useState(
+    INACTIVITY_COUNTDOWN_SECONDS,
+  )
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const dismissWarning = useCallback(() => {
+    setWarningOpen(false)
+    setSecondsRemaining(INACTIVITY_COUNTDOWN_SECONDS)
+  }, [])
+
+  const { reset } = useInactivityTimeout({
+    enabled: true,
+    warningMs: INACTIVITY_WARNING_MS,
+    logoutMs: INACTIVITY_LOGOUT_MS,
+    onWarning: () => setWarningOpen(true),
+    onLogout: () => {
+      dismissWarning()
+      void logout().then(() => navigate('/login', { replace: true }))
+    },
+    onDismissWarning: dismissWarning,
+  })
+
+  const staySignedIn = useCallback(() => {
+    dismissWarning()
+    reset()
+  }, [dismissWarning, reset])
+
+  const signOutLabel = user ? `Sign out (${user.firstName})` : 'Sign out'
+
+  const handleSignOut = useCallback(() => {
+    void logout().then(() => navigate('/login', { replace: true }))
+  }, [logout, navigate])
+
+  useEffect(() => {
+    if (!warningOpen) return
+
+    setSecondsRemaining(INACTIVITY_COUNTDOWN_SECONDS)
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    const startInterval = () => {
+      if (intervalId) return
+      intervalId = setInterval(() => {
+        setSecondsRemaining((seconds) => Math.max(0, seconds - 1))
+      }, 1000)
+    }
+
+    const stopInterval = () => {
+      if (!intervalId) return
+      clearInterval(intervalId)
+      intervalId = null
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stopInterval()
+        return
+      }
+      startInterval()
+    }
+
+    if (document.visibilityState === 'visible') {
+      startInterval()
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      stopInterval()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [warningOpen])
 
   useEffect(() => {
     setNavOpen(false)
@@ -75,7 +182,13 @@ export function AppShell() {
   }, [navOpen])
 
   return (
-    <div className="flex min-h-svh flex-col bg-neutral-bg lg:h-svh lg:overflow-hidden">
+    <>
+      <InactivityWarningModal
+        open={warningOpen}
+        secondsRemaining={secondsRemaining}
+        onStaySignedIn={staySignedIn}
+      />
+      <div className="flex min-h-svh flex-col bg-neutral-bg lg:h-svh lg:overflow-hidden">
       <header className="shrink-0 border-b border-slate-200 bg-white pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
         <div className="mx-auto w-full max-w-7xl px-4 pb-3 sm:pb-4 lg:px-6 lg:pb-4">
           <div className="flex items-center justify-between gap-3">
@@ -84,16 +197,25 @@ export function AppShell() {
               <NavLink to="/recents" className={recentsLinkClass}>
                 Recents
               </NavLink>
-              <button
+              <Button
                 type="button"
-                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100"
+                variant="ghost"
+                aria-label={signOutLabel}
+                title={signOutLabel}
+                onClick={handleSignOut}
+              >
+                <SignOutIcon />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
                 aria-expanded={navOpen}
                 aria-controls="main-nav"
                 aria-label={navOpen ? 'Close menu' : 'Open menu'}
                 onClick={() => setNavOpen((open) => !open)}
               >
                 <NavMenuIcon open={navOpen} />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -111,11 +233,20 @@ export function AppShell() {
             <NavLink to="/attendance" className={navLinkClass}>
               Attendance
             </NavLink>
+            <NavLink to="/due-list" className={navLinkClass}>
+              DueList
+            </NavLink>
             <NavLink to="/classes" className={navLinkClass}>
-              Classes &amp; students
+              Classes &amp; Students
             </NavLink>
             <NavLink to="/subjects" className={navLinkClass}>
               Subjects
+            </NavLink>
+            <NavLink to="/reports" className={navLinkClass}>
+              DepEd Reports
+            </NavLink>
+            <NavLink to="/deped/component-weights" className={navLinkClass}>
+              Component Weights
             </NavLink>
             <NavLink to="/scores" className={navLinkClass}>
               Scores
@@ -133,5 +264,6 @@ export function AppShell() {
         </div>
       </main>
     </div>
+    </>
   )
 }

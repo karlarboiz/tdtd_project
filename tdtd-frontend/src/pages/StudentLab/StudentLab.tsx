@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ProfileDetailSkeleton } from '@/components/LoadingSkeleton/ProfileDetailSkeleton'
+import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { getActiveSchoolYear } from '../../api/schoolYearApi'
 import { getStudentLab, type StudentLabQuery } from '../../api/studentLabApi'
 import { attendanceSessionPath } from '../../lib/attendanceSessionRoute'
@@ -161,42 +165,8 @@ export function StudentLab() {
       : 'This school year'
   }, [scorePreset, schoolYear?.label])
 
-  if (!studentId) {
-    return (
-      <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
-        <p className="text-slate-700">Missing student in URL.</p>
-        <Link
-          to="/student-lab"
-          className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-        >
-          Student Lab
-        </Link>
-      </div>
-    )
-  }
-
-  if (loading && !data) {
-    return <p className="text-sm text-slate-500">Loading student lab…</p>
-  }
-
-  if (!profile) {
-    return (
-      <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
-        <p className="text-slate-700">{error ?? 'Student not found.'}</p>
-        <Link
-          to="/student-lab"
-          className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-        >
-          Back to Student Lab
-        </Link>
-      </div>
-    )
-  }
-
-  const { student, class: classRow } = profile
-
   return (
-    <div className="space-y-6">
+    <PageContainer variant="wide" className="space-y-6">
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <Link
           to="/student-lab"
@@ -215,40 +185,73 @@ export function StudentLab() {
         </Link>
       </div>
 
+      <PageContentReveal className="space-y-6">
+      {!studentId ? (
+        <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
+          <p className="text-slate-700">Missing student in URL.</p>
+          <Link
+            to="/student-lab"
+            className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+          >
+            Student Lab
+          </Link>
+        </div>
+      ) : loading && !data ? (
+        <ProfileDetailSkeleton />
+      ) : !profile ? (
+        <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
+          <p className="text-slate-700">{error ?? 'Student not found.'}</p>
+          <Link
+            to="/student-lab"
+            className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+          >
+            Back to Student Lab
+          </Link>
+        </div>
+      ) : (
+        <ContentReveal
+          revealKey={`${studentId}-${attendanceMode}-${scorePreset}`}
+          className={[
+            'space-y-6',
+            loading && data ? 'pointer-events-none opacity-50' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">
-          {formatStudentName(student)}
+          {formatStudentName(profile.student)}
         </h1>
         <dl className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
           <div>
             <dt className="font-medium text-slate-500">Birth date</dt>
-            <dd>{student.birthDate}</dd>
+            <dd>{profile.student.birthDate}</dd>
           </div>
           <div>
             <dt className="font-medium text-slate-500">Gender</dt>
-            <dd>{genderLabel(student.gender)}</dd>
+            <dd>{genderLabel(profile.student.gender)}</dd>
           </div>
           <div className="sm:col-span-2">
             <dt className="font-medium text-slate-500">Class</dt>
             <dd>
-              {classRow.name} · {formatClassShiftLabel(classRow.shift)}
+              {profile.class.name} · {formatClassShiftLabel(profile.class.shift)}
             </dd>
           </div>
         </dl>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Attendance</h2>
           <div
-            className="inline-flex rounded-xl border border-slate-200 p-0.5"
+            className="inline-flex w-full rounded-xl border border-slate-200 p-0.5 sm:w-auto"
             role="group"
             aria-label="Attendance date range"
           >
             <button
               type="button"
               className={[
-                'touch-manipulation rounded-lg px-3 py-2 text-sm font-semibold transition',
+                'touch-manipulation flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition sm:flex-none',
                 attendanceMode === '30'
                   ? 'bg-primary text-white'
                   : 'text-slate-700 hover:bg-slate-50',
@@ -260,7 +263,7 @@ export function StudentLab() {
             <button
               type="button"
               className={[
-                'touch-manipulation rounded-lg px-3 py-2 text-sm font-semibold transition',
+                'touch-manipulation flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition sm:flex-none',
                 attendanceMode === 'all'
                   ? 'bg-primary text-white'
                   : 'text-slate-700 hover:bg-slate-50',
@@ -336,16 +339,16 @@ export function StudentLab() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-slate-900">Recent scores</h2>
-          <label className="flex items-center gap-2 text-sm">
-            <span className={formLabelInlineClass}>Range</span>
+          <label className="flex w-full min-w-0 flex-col gap-1 text-sm sm:w-auto sm:flex-row sm:items-center sm:gap-2">
+            <span className={`shrink-0 ${formLabelInlineClass}`}>Range</span>
             <select
               value={scorePreset}
               onChange={(e) =>
                 setScorePreset(e.target.value as ScoreRangePreset)
               }
-              className="rounded-lg border border-slate-200 bg-neutral-bg px-2 py-2 outline-none ring-secondary focus:ring-2"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-neutral-bg px-2 py-2 outline-none ring-secondary focus:ring-2 sm:w-auto"
               aria-label="Score date range"
             >
               <option value="30">Last 30 days</option>
@@ -378,14 +381,14 @@ export function StudentLab() {
         ) : null}
       </section>
 
-      {loading ? (
-        <p className="text-center text-xs text-slate-400">Refreshing…</p>
-      ) : null}
       {error && data ? (
         <p className={`text-center ${errorAlertClass}`} role="alert">
           {error}
         </p>
       ) : null}
-    </div>
+        </ContentReveal>
+      )}
+      </PageContentReveal>
+    </PageContainer>
   )
 }

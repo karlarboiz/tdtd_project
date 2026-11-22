@@ -1,23 +1,27 @@
 export const SUBJECT_QUERIES = {
   listByName: `
-    SELECT id, name, short_code, created_at, updated_at
+    SELECT id, user_id, name, short_code, created_at, updated_at
     FROM subjects
+    WHERE user_id = ?
     ORDER BY name COLLATE NOCASE ASC
   `,
   getByNameInsensitive: `
-    SELECT id, name, short_code, created_at, updated_at
+    SELECT id, user_id, name, short_code, created_at, updated_at
     FROM subjects
-    WHERE name = ? COLLATE NOCASE
+    WHERE user_id = ? AND name = ? COLLATE NOCASE
     LIMIT 1
   `,
   getByShortCodeInsensitive: `
-    SELECT id, name, short_code, created_at, updated_at
+    SELECT id, user_id, name, short_code, created_at, updated_at
     FROM subjects
-    WHERE short_code = ? COLLATE NOCASE
+    WHERE user_id = ? AND short_code = ? COLLATE NOCASE
     LIMIT 1
   `,
   insert: `
-    INSERT INTO subjects (id, name, short_code, created_at, updated_at)
-    VALUES (@id, @name, @short_code, @created_at, @updated_at)
+    INSERT INTO subjects (id, user_id, name, short_code, created_at, updated_at)
+    VALUES (@id, @user_id, @name, @short_code, @created_at, @updated_at)
+  `,
+  exists: `
+    SELECT 1 AS ok FROM subjects WHERE id = ? AND user_id = ? LIMIT 1
   `,
 } as const
