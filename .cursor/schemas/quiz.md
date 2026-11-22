@@ -6,6 +6,8 @@ Defines recording **quiz**, **exam**, and **participation** scores. Scores are a
 
 Depends on [core.md](./core.md) (`classes`, `students`) and [subjects.md](./subjects.md) (`subjects`, `class_subjects`). Do not embed score data on `students` or `classes` rows.
 
+**Ownership (GAP-001):** `score_events` and `score_entries` are scoped via `score_events.class_id` → `classes.user_id`. See [GAP-001.md](../gaps/GAP-001.md).
+
 ---
 
 ## Tables
@@ -20,6 +22,9 @@ score_events: {
   classId: string // FK → classes.id
   subjectId: string // FK → subjects.id
   kind: string // "QUIZ" | "EXAM" | "PARTICIPATION"
+  quarter: number // 1–4 (DepEd quarter, required on create)
+  assessmentBucket?: string // "WW" | "PT" | "QA"
+  subtype?: string // UI code: RZ, WZ, QZ, QE
   title: string // e.g. "Quarter 2 Long Test"
   date?: string // "YYYY-MM-DD", optional
   maxScore?: number // optional ceiling for validation / UI
@@ -107,9 +112,34 @@ See `tdtd-node/src/db/migrate.ts`:
 
 ---
 
+---
+
+## computed_subject_grades
+
+DepEd quarter/final grades — see [deped-grading.md](./deped-grading.md).
+
+```
+computed_subject_grades: {
+  id: string (uuid, primary key)
+  studentId: string
+  subjectId: string
+  classId: string
+  schoolYearId: string
+  quarter: number // 1–4, or 0 for final
+  transmutedGrade?: number
+  descriptor?: string
+  finalGrade?: number
+  manualOverride?: boolean
+  computedAt: number (timestamp)
+}
+```
+
+---
+
 ## Future extensions
 
 Do not implement yet:
 
-- Weighted grading / term averages (built on `score_events` + `score_entries`).
-- DepEd report generation from normalized score history.
+- Conduct/values grades on report cards.
+
+**Weighted grading and DepEd report generation** — shipped; see [deped-grading.md](./deped-grading.md), [deped-forms.md](./deped-forms.md).

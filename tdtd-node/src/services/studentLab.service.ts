@@ -9,8 +9,8 @@ import type {
   StudentLabScoreRow,
 } from '../schema/types.js'
 import { HttpError } from '../errors/http-error.js'
+import { assertStudentOwned } from '../lib/ownership.js'
 import * as classDao from '../dao/class.dao.js'
-import * as studentDao from '../dao/student.dao.js'
 import * as studentLabDao from '../dao/studentLab.dao.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -91,15 +91,14 @@ function parseDateRange(
 
 export function getStudentProfile(
   db: SqliteDatabase,
+  userId: string,
   studentId: string,
 ): StudentLabProfile {
   const id = studentId.trim()
   if (!id) throw new HttpError(400, 'studentId is required')
 
-  const student = studentDao.getStudentById(db, id)
-  if (!student) throw new HttpError(404, 'student not found')
-
-  const classRow = classDao.getClassById(db, student.classId)
+  const student = assertStudentOwned(db, id, userId)
+  const classRow = classDao.getClassById(db, student.classId, userId)
   if (!classRow) throw new HttpError(404, 'class not found')
 
   return { student, class: classRow }
@@ -157,10 +156,11 @@ export type StudentLabQueryInput = {
 
 export function getStudentLab(
   db: SqliteDatabase,
+  userId: string,
   studentId: string,
   query: StudentLabQueryInput,
 ): StudentLabPayload {
-  const profile = getStudentProfile(db, studentId)
+  const profile = getStudentProfile(db, userId, studentId)
   const { student, class: classRow } = profile
 
   const fromEmpty = !query.from || query.from.trim() === ''

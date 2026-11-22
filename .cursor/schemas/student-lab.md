@@ -8,7 +8,7 @@ Defines the **Student Lab** feature: a student-centric **read-only** view aggreg
 
 **Depends on:**
 
-- [core.md](./core.md) — `students`, `classes` (`shift` drives attendance session eligibility)
+- [core.md](./core.md) — `students`, `classes` (`shift` drives attendance session eligibility; roster rules: **Class shift and roster rules**)
 - [attendance.md](./attendance.md) — `attendance_sessions`, `attendance_records`
 - [quiz.md](./quiz.md) — `score_events`, `score_entries`
 - [subjects.md](./subjects.md) — `subjects` (display name on score rows)
@@ -53,14 +53,14 @@ Register `/:studentId/lab` **before** or alongside `/:studentId` so `lab` is not
 | Param | Required | Used for |
 |--------|----------|----------|
 | `classId` | Required when `q` is omitted | Roster for one class. Unknown class → 404. |
-| `q` | No | Cross-class name search. When non-empty after trim, `classId` is ignored. |
+| `q` | No | Name search across the signed-in teacher's classes. When non-empty after trim, `classId` is ignored. |
 
 **Name match** (case-insensitive substring; repeated spaces collapsed):
 
 - Display name: `firstName`, optional `middleName`, `lastName`.
 - `firstName` + `lastName`, so a middle name does not hide a “First Last” query.
 
-A middle-name-only query matches because the display name includes it. Results use the same order as a class roster (`last_name`, then `first_name`, `NOCASE`). This GET is not written to activity logs.
+A middle-name-only query matches because the display name includes it. Results use the same order as a class roster (`last_name`, then `first_name`, `NOCASE`) and are limited to classes owned by the authenticated teacher. This GET is not written to activity logs.
 
 ---
 

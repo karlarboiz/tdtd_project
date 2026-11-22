@@ -5,6 +5,14 @@
  *   `/api` proxy misbehaves; backend enables CORS. Override with `VITE_API_URL`, or set
  *   `VITE_API_URL=` (empty) to use relative `/api` + Vite proxy only.
  */
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from '@/lib/authStorage'
+import type { AuthTokensResponse } from '@/types/schema'
+
 function resolveApiBase(): string {
   const raw = import.meta.env.VITE_API_URL as string | undefined
   if (raw === '') return ''
@@ -22,25 +30,86 @@ export function apiPath(path: string): string {
 
 export class ApiError extends Error {
   readonly status: number
+  readonly code?: string
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
-function readErrorMessage(body: unknown): string {
-  if (body && typeof body === 'object' && 'error' in body) {
-    const e = (body as { error: unknown }).error
-    return typeof e === 'string' ? e : 'Request failed'
+function readErrorBody(body: unknown): { message: string; code?: string } {
+  if (body && typeof body === 'object') {
+    const record = body as Record<string, unknown>
+    const message =
+      typeof record.error === 'string' ? record.error : 'Request failed'
+    const code = typeof record.code === 'string' ? record.code : undefined
+    return { message, code }
   }
-  return 'Request failed'
+  return { message: 'Request failed' }
+}
+
+function isPublicAuthPath(path: string): boolean {
+  return (
+    path.startsWith('/api/auth/login') ||
+    path.startsWith('/api/auth/signup') ||
+    path.startsWith('/api/auth/refresh') ||
+    path.startsWith('/api/auth/logout') ||
+    path.startsWith('/api/auth/forgot-password') ||
+    path.startsWith('/api/auth/reset-password')
+  )
+}
+
+let refreshInFlight: Promise<boolean> | null = null
+
+async function tryRefreshAccessToken(): Promise<boolean> {
+  const refresh = getRefreshToken()
+  if (!refresh) return false
+
+  const res = await fetch(apiPath('/api/auth/refresh'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken: refresh }),
+  })
+
+  const text = await res.text()
+  let parsed: unknown
+  try {
+    parsed = text ? JSON.parse(text) : undefined
+  } catch {
+    parsed = undefined
+  }
+
+  if (!res.ok) {
+    await clearTokens()
+    return false
+  }
+
+  const session = parsed as AuthTokensResponse
+  if (!session?.accessToken || !session?.refreshToken) {
+    await clearTokens()
+    return false
+  }
+
+  await setTokens(session.accessToken, session.refreshToken)
+  return true
+}
+
+async function refreshAccessTokenOnce(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = tryRefreshAccessToken().finally(() => {
+      refreshInFlight = null
+    })
+  }
+  return refreshInFlight
 }
 
 export async function apiJson<T>(
   path: string,
   init?: RequestInit,
+  retryOnUnauthorized = true,
 ): Promise<T> {
   const headers = new Headers(init?.headers)
   if (
@@ -49,6 +118,11 @@ export async function apiJson<T>(
     !headers.has('Content-Type')
   ) {
     headers.set('Content-Type', 'application/json')
+  }
+
+  const access = getAccessToken()
+  if (access && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${access}`)
   }
 
   const res = await fetch(apiPath(path), {
@@ -64,8 +138,25 @@ export async function apiJson<T>(
     parsed = undefined
   }
 
+  if (
+    res.status === 401 &&
+    retryOnUnauthorized &&
+    !isPublicAuthPath(path) &&
+    getRefreshToken()
+  ) {
+    const refreshed = await refreshAccessTokenOnce()
+    if (refreshed) {
+      return apiJson<T>(path, init, false)
+    }
+  }
+
   if (!res.ok) {
-    throw new ApiError(res.status, readErrorMessage(parsed))
+    const { message, code } = readErrorBody(parsed)
+    throw new ApiError(res.status, message, code)
+  }
+
+  if (res.status === 204) {
+    return undefined as T
   }
 
   return parsed as T

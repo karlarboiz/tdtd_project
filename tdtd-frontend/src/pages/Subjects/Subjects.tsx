@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { SubjectsPageSkeleton } from '@/components/LoadingSkeleton/SubjectsPageSkeleton'
+import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import * as XLSX from 'xlsx'
 import { AddSubjectModal } from '../../components/AddSubjectModal/AddSubjectModal'
 import {
@@ -13,12 +17,12 @@ import { ApiError } from '../../lib/http'
 import { defaultSchoolYearLabel } from '../../lib/schoolYearLabel'
 import { parseSubjectImportWorkbook } from '../../lib/subjectImportParse'
 import { downloadSubjectImportSample } from '../../lib/subjectImportSampleXlsx'
+import { Button } from '@/components/Button/Button'
 import {
+  bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelInlineClass,
-  primaryButtonClass,
-  secondaryButtonClass,
 } from '@/lib/uiClasses'
 import type { SchoolYearRow, SchoolYearSubjectRow } from '@/types/schema'
 
@@ -187,7 +191,8 @@ export function Subjects() {
   const showGradeFilter = hasSubjects && gradeLevels.length > 0
 
   return (
-    <div className="w-full">
+    <PageContainer variant="wide">
+      <PageContentReveal>
       <div className="mb-6 flex items-center justify-between gap-3 lg:mb-8">
         <Link
           to="/"
@@ -216,7 +221,7 @@ export function Subjects() {
       ) : null}
 
       {loading ? (
-        <p className="mt-8 text-sm text-slate-500">Loading…</p>
+        <SubjectsPageSkeleton className="mt-8" />
       ) : !schoolYear ? (
         <section className="mt-8 max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="font-semibold text-slate-900">Set up school year</h2>
@@ -224,14 +229,15 @@ export function Subjects() {
             Create an active school year before registering subjects (suggested:{' '}
             <strong>{defaultSchoolYearLabel()}</strong>).
           </p>
-          <button
+          <Button
             type="button"
+            fullWidth
+            className="mt-4 sm:w-auto"
             disabled={setupBusy}
             onClick={() => void setupSchoolYear()}
-            className={`mt-4 w-full py-3 sm:w-auto sm:px-6 ${primaryButtonClass}`}
           >
             {setupBusy ? 'Creating…' : 'Create active school year'}
-          </button>
+          </Button>
         </section>
       ) : (
         <>
@@ -241,13 +247,14 @@ export function Subjects() {
               <p className="mt-1 text-sm text-slate-600">
                 Add one subject at a time or import many from Excel.
               </p>
-              <button
+              <Button
                 type="button"
+                fullWidth
+                className="mt-4"
                 onClick={() => setAddOpen(true)}
-                className={`mt-4 w-full py-3 ${primaryButtonClass}`}
               >
                 Add subject manually
-              </button>
+              </Button>
             </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-8">
@@ -272,14 +279,16 @@ export function Subjects() {
                   className={`block w-full min-w-0 flex-1 text-sm text-neutral-label file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white disabled:opacity-50 ${importError ? 'rounded-xl border-2 border-primary' : ''}`}
                   aria-invalid={Boolean(importError)}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="shrink-0"
                   disabled={importBusy}
                   onClick={() => downloadSubjectImportSample()}
-                  className={`shrink-0 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
                 >
                   Download sample (.xlsx)
-                </button>
+                </Button>
               </div>
               {importBusy ? (
                 <p className="mt-2 text-sm text-slate-500">Importing…</p>
@@ -320,7 +329,36 @@ export function Subjects() {
 
             {hasSubjects ? (
               filteredSubjects.length > 0 ? (
-              <div className="overflow-x-auto">
+              <ContentReveal revealKey={`${gradeFilter}-${filteredSubjects.length}`}>
+              <>
+              <ul className="divide-y divide-slate-100 sm:hidden" role="list">
+                {filteredSubjects.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex flex-col gap-3 px-4 py-4"
+                    role="listitem"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-900">{s.subjectName}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {s.gradeLevel}
+                        {s.subjectShortCode ? ` · ${s.subjectShortCode}` : ''}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={removingId === s.id}
+                      onClick={() =>
+                        void removeSubject(s.id, s.subjectName, s.gradeLevel)
+                      }
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-secondary px-3 py-2 text-sm font-semibold text-secondary transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50 sm:w-auto"
+                    >
+                      {removingId === s.id ? 'Removing…' : 'Remove'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden overflow-x-auto sm:block">
                 <table className="w-full min-w-[32rem] text-left text-sm">
                   <thead>
                     <tr className="border-b border-slate-100 bg-neutral-bg/80 text-slate-600">
@@ -363,6 +401,8 @@ export function Subjects() {
                   </tbody>
                 </table>
               </div>
+              </>
+              </ContentReveal>
               ) : (
                 <p className="px-5 py-10 text-center text-sm text-slate-500">
                   No subjects for <strong>{gradeFilter}</strong>. Choose{' '}
@@ -384,6 +424,7 @@ export function Subjects() {
           />
         </>
       )}
-    </div>
+      </PageContentReveal>
+    </PageContainer>
   )
 }

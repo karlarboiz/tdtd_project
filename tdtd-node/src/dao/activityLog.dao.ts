@@ -4,6 +4,7 @@ import { ACTIVITY_LOG_QUERIES } from '../queries/activityLog.queries.js'
 
 type ActivityLogDbRow = {
   id: string
+  user_id: string
   action: string
   summary: string
   metadata: string | null
@@ -22,6 +23,7 @@ function parseMetadata(raw: string | null): ActivityLogMetadata | undefined {
 export function mapActivityLogRow(row: ActivityLogDbRow): ActivityLogRow {
   return {
     id: row.id,
+    userId: row.user_id,
     action: row.action,
     summary: row.summary,
     metadata: parseMetadata(row.metadata),
@@ -32,6 +34,7 @@ export function mapActivityLogRow(row: ActivityLogDbRow): ActivityLogRow {
 export function insertActivityLog(db: SqliteDatabase, row: ActivityLogRow): void {
   db.prepare(ACTIVITY_LOG_QUERIES.insert).run({
     id: row.id,
+    user_id: row.userId,
     action: row.action,
     summary: row.summary,
     metadata: row.metadata ? JSON.stringify(row.metadata) : null,
@@ -41,10 +44,11 @@ export function insertActivityLog(db: SqliteDatabase, row: ActivityLogRow): void
 
 export function listRecentActivityLogs(
   db: SqliteDatabase,
+  userId: string,
   limit: number,
 ): ActivityLogRow[] {
   const rows = db
     .prepare(ACTIVITY_LOG_QUERIES.listRecent)
-    .all(limit) as ActivityLogDbRow[]
+    .all(userId, limit) as ActivityLogDbRow[]
   return rows.map(mapActivityLogRow)
 }

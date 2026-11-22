@@ -1,66 +1,101 @@
 /** Parameterized SQL for students / class FK checks. */
 
+const STUDENT_COLS = `
+  id, first_name, middle_name, last_name, birth_date, gender, class_id,
+  lrn, learner_status, house_no, street, barangay, city_municipality, province,
+  father_name, mother_name, guardian_name, parent_contact,
+  mother_tongue, religion, is_4ps, is_ip,
+  date_enrolled, previous_school, last_grade_completed, created_at
+`
+
+const STUDENT_COLS_FROM_ALIAS = `
+  s.id, s.first_name, s.middle_name, s.last_name, s.birth_date, s.gender, s.class_id,
+  s.lrn, s.learner_status, s.house_no, s.street, s.barangay, s.city_municipality, s.province,
+  s.father_name, s.mother_name, s.guardian_name, s.parent_contact,
+  s.mother_tongue, s.religion, s.is_4ps, s.is_ip,
+  s.date_enrolled, s.previous_school, s.last_grade_completed, s.created_at
+`
+
 export const STUDENT_QUERIES = {
   insert: `
     INSERT INTO students (
-      id, first_name, middle_name, last_name, birth_date, gender, class_id, created_at
+      id, first_name, middle_name, last_name, birth_date, gender, class_id,
+      lrn, learner_status, house_no, street, barangay, city_municipality, province,
+      father_name, mother_name, guardian_name, parent_contact,
+      mother_tongue, religion, is_4ps, is_ip,
+      date_enrolled, previous_school, last_grade_completed, created_at
     )
     VALUES (
-      @id, @first_name, @middle_name, @last_name, @birth_date, @gender, @class_id, @created_at
+      @id, @first_name, @middle_name, @last_name, @birth_date, @gender, @class_id,
+      @lrn, @learner_status, @house_no, @street, @barangay, @city_municipality, @province,
+      @father_name, @mother_name, @guardian_name, @parent_contact,
+      @mother_tongue, @religion, @is_4ps, @is_ip,
+      @date_enrolled, @previous_school, @last_grade_completed, @created_at
     )
   `,
+  updateProfile: `
+    UPDATE students SET
+      first_name = @first_name,
+      middle_name = @middle_name,
+      last_name = @last_name,
+      birth_date = @birth_date,
+      gender = @gender,
+      lrn = @lrn,
+      learner_status = @learner_status,
+      house_no = @house_no,
+      street = @street,
+      barangay = @barangay,
+      city_municipality = @city_municipality,
+      province = @province,
+      father_name = @father_name,
+      mother_name = @mother_name,
+      guardian_name = @guardian_name,
+      parent_contact = @parent_contact,
+      mother_tongue = @mother_tongue,
+      religion = @religion,
+      is_4ps = @is_4ps,
+      is_ip = @is_ip,
+      date_enrolled = @date_enrolled,
+      previous_school = @previous_school,
+      last_grade_completed = @last_grade_completed
+    WHERE id = @id
+  `,
   classExists: `
-    SELECT 1 AS ok FROM classes WHERE id = ? LIMIT 1
+    SELECT 1 AS ok FROM classes WHERE id = ? AND user_id = ? LIMIT 1
+  `,
+  getByIdForUser: `
+    SELECT ${STUDENT_COLS_FROM_ALIAS}
+    FROM students s
+    INNER JOIN classes c ON c.id = s.class_id AND c.user_id = ?
+    WHERE s.id = ?
+    LIMIT 1
   `,
   listByClass: `
-    SELECT
-      id,
-      first_name,
-      middle_name,
-      last_name,
-      birth_date,
-      gender,
-      class_id,
-      created_at
+    SELECT ${STUDENT_COLS}
     FROM students
     WHERE class_id = ?
     ORDER BY last_name COLLATE NOCASE ASC, first_name COLLATE NOCASE ASC
   `,
-  /** Cross-class name search. @term is already trimmed; match is case-insensitive. */
+  /** Name search limited to the signed-in teacher's classes. @term is already trimmed. */
   searchByName: `
-    SELECT
-      id,
-      first_name,
-      middle_name,
-      last_name,
-      birth_date,
-      gender,
-      class_id,
-      created_at
-    FROM students
+    SELECT ${STUDENT_COLS_FROM_ALIAS}
+    FROM students s
+    INNER JOIN classes c ON c.id = s.class_id AND c.user_id = @userId
     WHERE instr(lower(
       CASE
-        WHEN middle_name IS NULL OR trim(middle_name) = ''
-        THEN first_name || ' ' || last_name
-        ELSE first_name || ' ' || middle_name || ' ' || last_name
+        WHEN s.middle_name IS NULL OR trim(s.middle_name) = ''
+        THEN s.first_name || ' ' || s.last_name
+        ELSE s.first_name || ' ' || s.middle_name || ' ' || s.last_name
       END
     ), lower(@term)) > 0
-    OR instr(lower(first_name || ' ' || last_name), lower(@term)) > 0
-    ORDER BY last_name COLLATE NOCASE ASC, first_name COLLATE NOCASE ASC
+    OR instr(lower(s.first_name || ' ' || s.last_name), lower(@term)) > 0
+    ORDER BY s.last_name COLLATE NOCASE ASC, s.first_name COLLATE NOCASE ASC
   `,
   classIdByStudentId: `
     SELECT class_id AS class_id FROM students WHERE id = ? LIMIT 1
   `,
   getById: `
-    SELECT
-      id,
-      first_name,
-      middle_name,
-      last_name,
-      birth_date,
-      gender,
-      class_id,
-      created_at
+    SELECT ${STUDENT_COLS}
     FROM students
     WHERE id = ?
     LIMIT 1

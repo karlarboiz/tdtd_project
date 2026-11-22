@@ -31,7 +31,7 @@ Per-student **read-only** dashboard: profile, shift-aware attendance (summary + 
 
 **What changed:**
 
-- `GET /api/students?q=` searches first, middle, and last name (case-insensitive substring). A “First Last” query still matches when a middle name sits between them. Non-empty `q` ignores `classId`. `GET /api/students?classId=` is unchanged. GETs are not logged.
+- `GET /api/students?q=` searches first, middle, and last name (case-insensitive substring) and returns only students in classes owned by the signed-in teacher. A “First Last” query still matches when a middle name sits between them. Non-empty `q` ignores `classId`. `GET /api/students?classId=` is unchanged. GETs are not logged.
 - `/student-lab` keeps the class roster and adds a search field. Matches list the student’s class, birth date, and gender, and link to `/student-lab/:studentId`.
 
 **Files involved:**
@@ -71,7 +71,7 @@ Per-student **read-only** dashboard: profile, shift-aware attendance (summary + 
   - `/student-lab` — `StudentLabPicker` (class select + student list).
   - `/student-lab/:studentId` — `StudentLab` detail (profile card, attendance toggle Last 30 days / All time, score presets Last 30 / 90 / active school year).
   - `studentLabApi.ts`, `studentLabRoute.ts`, types on `StudentLabPayload` and row types.
-  - Nav: **Student Lab** in `AppShell`; optional Home card.
+  - Nav: **Student Lab** in `AppShell`; **Student Lab shortcut** card on Home (see [Home-Page-Doc.md](./Home-Page-Doc.md)).
   - **Classes:** roster rows link to student lab.
 - **v1 scope:** View-only; edits via `/attendance/session/...` and `/scores/event/...`.
 

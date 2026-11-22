@@ -17,10 +17,11 @@ Represents one academic year (e.g. Philippine SY **2025-2026**).
 ```
 school_years: {
   id: string (uuid, primary key)
+  userId: string // FK → users.id — owning teacher (GAP-001)
   label: string // required, e.g. "2025-2026"
   startDate?: string // "YYYY-MM-DD", optional
   endDate?: string // "YYYY-MM-DD", optional
-  isActive: boolean // at most one true per app (MVP); drives default SY in UI
+  isActive: boolean // at most one true per teacher; drives default SY in UI
   createdAt: number (timestamp)
   updatedAt?: number (timestamp, optional)
 }
@@ -28,11 +29,12 @@ school_years: {
 
 ### subjects
 
-Reusable subject catalog (not tied to a single class or year).
+Reusable subject catalog per teacher (not tied to a single class or year).
 
 ```
 subjects: {
   id: string (uuid, primary key)
+  userId: string // FK → users.id — owning teacher (GAP-001)
   name: string // display name, required, trimmed in API
   shortCode?: string // optional, e.g. "MATH"
   createdAt: number (timestamp)
@@ -180,6 +182,7 @@ See `tdtd-node/src/db/migrate.ts`:
 
 ## Future extensions (do not implement yet)
 
-- Multiple teachers / `teacher_id` on registrations.
 - DepEd standard subject codes.
 - Archiving prior school years (read-only scores).
+
+**Per-teacher ownership (GAP-001):** shipped — `userId` on `subjects` and `school_years`; see [GAP-001.md](../gaps/GAP-001.md).

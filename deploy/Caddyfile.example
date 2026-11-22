@@ -1,0 +1,9 @@
+# Example Caddy config for profile `tls`.
+# Copy to Caddyfile and set API_DOMAIN + ACME_EMAIL in deploy/.env
+#
+# Local HTTP-only testing: skip this profile and use API_PORT on the api service.
+
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:3000
+}

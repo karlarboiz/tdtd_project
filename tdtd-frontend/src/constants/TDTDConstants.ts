@@ -46,3 +46,26 @@ export const SCORE_EVENT_KIND_LABELS: Record<ScoreEventKindValue, string> = {
   [SCORE_EVENT_KIND.EXAM]: 'Exam',
   [SCORE_EVENT_KIND.PARTICIPATION]: 'Participation',
 }
+
+/** DepEd assessment component buckets (WW / PT / QA). */
+export const ASSESSMENT_BUCKET = {
+  WW: 'WW',
+  PT: 'PT',
+  QA: 'QA',
+} as const
+
+export type AssessmentBucketValue =
+  (typeof ASSESSMENT_BUCKET)[keyof typeof ASSESSMENT_BUCKET]
+
+export const ASSESSMENT_BUCKET_LABELS: Record<AssessmentBucketValue, string> = {
+  WW: 'Written Work (WW)',
+  PT: 'Performance Task (PT)',
+  QA: 'Quarterly Assessment (QA)',
+}
+
+export const QUARTER_OPTIONS = [
+  { value: 1, label: 'Quarter 1 (Q1)' },
+  { value: 2, label: 'Quarter 2 (Q2)' },
+  { value: 3, label: 'Quarter 3 (Q3)' },
+  { value: 4, label: 'Quarter 4 (Q4)' },
+] as const

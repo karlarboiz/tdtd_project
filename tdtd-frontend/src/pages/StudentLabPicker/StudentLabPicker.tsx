@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ContentReveal } from '@/components/ContentReveal/ContentReveal'
+import { ListRowsSkeleton } from '@/components/LoadingSkeleton/ListRowsSkeleton'
+import { SkeletonBlock } from '@/components/LoadingSkeleton/SkeletonBlock'
+import { PageContainer } from '@/layouts/PageContainer'
+import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { listClasses } from '../../api/classesApi'
 import { listStudentsByClass, searchStudents } from '../../api/studentsApi'
-import { formatClassShiftLabel } from '../../lib/classShift'
 import { studentLabPath } from '../../lib/studentLabRoute'
 import { formatStudentName } from '../../lib/studentDisplay'
 import { errorAlertClass, formInputClasses, formLabelClass } from '../../lib/uiClasses'
@@ -120,109 +124,110 @@ export function StudentLabPicker() {
     }
   }, [trimmedQuery])
 
-  const selectedClass = classes.find((c) => c.id === classId)
   const classNameById = (id: string) =>
     classes.find((c) => c.id === id)?.name ?? 'Unknown class'
 
-  if (loading) {
-    return <p className="text-sm text-slate-500">Loading classes…</p>
-  }
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Student Lab</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Pick a class, or search by name across every class, then open a student
-          to view profile, attendance, and recent scores.
-        </p>
-      </div>
-
-      {classes.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-slate-700">No classes yet.</p>
-          <Link
-            to="/classes"
-            className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-          >
-            Go to Classes
-          </Link>
-        </div>
-      ) : (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <label className={formLabelClass} htmlFor="lab-class">
-            Class
-          </label>
-          <select
-            id="lab-class"
-            value={classId}
-            onChange={(e) => setClassId(e.target.value)}
-            className={`mt-1 py-3 ${formInputClasses()}`}
-          >
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({formatClassShiftLabel(c.shift)})
-              </option>
-            ))}
-          </select>
-
-          {selectedClass ? (
-            <p className="mt-2 text-xs text-slate-500">
-              {formatClassShiftLabel(selectedClass.shift)}
-            </p>
-          ) : null}
-
-          <label className={`mt-6 ${formLabelClass}`} htmlFor="lab-student-search">
-            Search all classes
-          </label>
-          <input
-            id="lab-student-search"
-            type="search"
-            value={nameQuery}
-            onChange={(e) => setNameQuery(e.target.value)}
-            placeholder="First, middle, or last name"
-            autoComplete="off"
-            spellCheck={false}
-            className={`mt-1 py-3 ${formInputClasses()}`}
-          />
-          <p className="mt-1 text-xs text-slate-500">
-            Matches first, middle, and last name in every class.
+    <PageContainer variant="wide" className="space-y-6">
+      <PageContentReveal className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Student Lab</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Pick a class, or search by name across your classes, then open a student
+            to view profile, attendance, and recent scores.
           </p>
-          {searchError ? (
-            <p className={`mt-2 ${errorAlertClass}`} role="alert">
-              {searchError}
+        </div>
+
+        {loading ? (
+          <section
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            aria-hidden
+          >
+            <SkeletonBlock className="mb-4 h-11 w-full rounded-xl" />
+            <ListRowsSkeleton rows={5} />
+          </section>
+        ) : classes.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+            <p className="text-slate-700">No classes yet.</p>
+            <Link
+              to="/classes"
+              className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-white"
+            >
+              Go to Classes
+            </Link>
+          </div>
+        ) : (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <label className={formLabelClass} htmlFor="lab-class">
+              Class
+            </label>
+            <select
+              id="lab-class"
+              value={classId}
+              onChange={(e) => setClassId(e.target.value)}
+              className={`mt-1 py-3 ${formInputClasses()}`}
+            >
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            <label className={`mt-6 ${formLabelClass}`} htmlFor="lab-student-search">
+              Search your classes
+            </label>
+            <input
+              id="lab-student-search"
+              type="search"
+              value={nameQuery}
+              onChange={(e) => setNameQuery(e.target.value)}
+              placeholder="First, middle, or last name"
+              autoComplete="off"
+              spellCheck={false}
+              className={`mt-1 py-3 ${formInputClasses()}`}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Matches first, middle, and last name in your classes.
             </p>
-          ) : null}
+            {searchError ? (
+              <p className={`mt-2 ${errorAlertClass}`} role="alert">
+                {searchError}
+              </p>
+            ) : null}
 
-          {trimmedQuery ? (
-            <>
+            {trimmedQuery ? (
+              <>
+                <h2 className="mt-6 font-semibold text-slate-900">
+                  {searching ? 'Matches' : `Matches (${matches.length})`}
+                </h2>
+                {searching ? (
+                  <p className="mt-3 text-sm text-slate-500">Searching…</p>
+                ) : (
+                  <StudentRosterList
+                    students={matches}
+                    emptyMessage="No students match that name."
+                    detail={(s) =>
+                      `${classNameById(s.classId)} · ${s.birthDate} · ${s.gender}`
+                    }
+                  />
+                )}
+              </>
+            ) : null}
+
+            <ContentReveal revealKey={classId}>
               <h2 className="mt-6 font-semibold text-slate-900">
-                {searching ? 'Matches' : `Matches (${matches.length})`}
+                Students ({students.length})
               </h2>
-              {searching ? (
-                <p className="mt-3 text-sm text-slate-500">Searching…</p>
-              ) : (
-                <StudentRosterList
-                  students={matches}
-                  emptyMessage="No students match that name."
-                  detail={(s) =>
-                    `${classNameById(s.classId)} · ${s.birthDate} · ${s.gender}`
-                  }
-                />
-              )}
-            </>
-          ) : null}
-
-          <h2 className="mt-6 font-semibold text-slate-900">
-            Students ({students.length})
-          </h2>
-          <StudentRosterList
-            students={students}
-            emptyMessage="No students in this class."
-            detail={(s) => `${s.birthDate} · ${s.gender}`}
-          />
-        </section>
-      )}
-    </div>
+              <StudentRosterList
+                students={students}
+                emptyMessage="No students in this class."
+                detail={(s) => `${s.birthDate} · ${s.gender}`}
+              />
+            </ContentReveal>
+          </section>
+        )}
+      </PageContentReveal>
+    </PageContainer>
   )
 }

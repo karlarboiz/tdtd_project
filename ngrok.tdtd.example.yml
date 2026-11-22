@@ -1,0 +1,27 @@
+# TDTD — Option B only: API + UI tunnels in ONE ngrok agent.
+# On ngrok FREE tier you often get ONE public URL — use Option A instead:
+#   VITE_API_URL= in .env.local, then: ngrok http 5173
+# See .cursor/documentation/Ngrok-Demo.md
+#
+# Use this file only when ngrok shows TWO DIFFERENT HTTPS hostnames for tdtd-api and tdtd-web.
+#
+# Setup (once): ngrok config add-authtoken YOUR_TOKEN
+#
+# Start (from repo root, after `npm start` in tdtd-node and `npm run dev` in tdtd-frontend):
+#   ngrok start --config "%LocalAppData%\ngrok\ngrok.yml" --config ngrok.tdtd.example.yml tdtd-api tdtd-web
+#
+# PowerShell:
+#   ngrok start --config "$env:LOCALAPPDATA\ngrok\ngrok.yml" --config ngrok.tdtd.example.yml tdtd-api tdtd-web
+#
+# Copy the two HTTPS forwarding URLs from the ngrok TUI:
+#   tdtd-api → VITE_API_URL in tdtd-frontend/.env.local (restart Vite)
+#   tdtd-web → URL you open / share in the browser
+
+version: "2"
+tunnels:
+  tdtd-api:
+    proto: http
+    addr: 3000
+  tdtd-web:
+    proto: http
+    addr: 5173
