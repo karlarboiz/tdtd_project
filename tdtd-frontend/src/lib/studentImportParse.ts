@@ -7,6 +7,17 @@ type ColKey =
   | 'lastName'
   | 'birthDate'
   | 'gender'
+  | 'lrn'
+  | 'learnerStatus'
+  | 'houseNo'
+  | 'street'
+  | 'barangay'
+  | 'cityMunicipality'
+  | 'province'
+  | 'fatherName'
+  | 'motherName'
+  | 'guardianName'
+  | 'parentContact'
 
 /** Normalized header (lowercase, no spaces) → logical column key. */
 const HEADER_MAP: Record<string, ColKey> = {
@@ -25,6 +36,19 @@ const HEADER_MAP: Record<string, ColKey> = {
   dob: 'birthDate',
   gender: 'gender',
   sex: 'gender',
+  lrn: 'lrn',
+  learnerreferencenumber: 'lrn',
+  learnerstatus: 'learnerStatus',
+  houseno: 'houseNo',
+  street: 'street',
+  barangay: 'barangay',
+  citymunicipality: 'cityMunicipality',
+  city: 'cityMunicipality',
+  province: 'province',
+  fathername: 'fatherName',
+  mothername: 'motherName',
+  guardianname: 'guardianName',
+  parentcontact: 'parentContact',
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/

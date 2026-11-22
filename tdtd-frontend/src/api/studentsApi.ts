@@ -6,6 +6,12 @@ export function listStudentsByClass(classId: string): Promise<StudentRow[]> {
   return apiJson<StudentRow[]>(`/api/students?${q.toString()}`)
 }
 
+/** Cross-class name search. `q` matches first, middle, and last name. */
+export function searchStudents(q: string): Promise<StudentRow[]> {
+  const params = new URLSearchParams({ q })
+  return apiJson<StudentRow[]>(`/api/students?${params.toString()}`)
+}
+
 export async function registerStudent(
   input: StudentUpsertPayload & { classId: string },
 ): Promise<StudentRow> {

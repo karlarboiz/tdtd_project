@@ -6,6 +6,32 @@ Schema: [recents.md](../schemas/recents.md).
 
 ---
 
+## Entry REC-003 — Student Lab deep link from metadata.studentId
+
+**Date:** 2026-11-22
+
+**Summary:** A Recents row with `metadata.studentId` opens that student’s lab when the row has no score event or attendance date.
+
+**Reason:** `studentId` was stored for deep links (for example after registering a student) but `activityLogHref` ignored it and sent `classId` rows to `/classes`.
+
+**What changed:**
+
+- `activityLogHref` link order: `eventId`, then attendance `date`, then `studentId` → `/student-lab/:studentId` via `studentLabPath`, then `classId`, then `schoolYearId`.
+- Logging rules are unchanged. GET requests are still not logged.
+
+**Files involved:**
+
+- `tdtd-frontend/src/lib/activityLinks.ts`
+- `.cursor/schemas/recents.md`
+- `.cursor/documentation/Recents-Function-Doc.md`
+
+**Schemas involved:**
+
+- [recents.md](../schemas/recents.md) — `metadata.studentId` deep-link priority
+- [student-lab.md](../schemas/student-lab.md) — `/student-lab/:studentId`
+
+---
+
 ## Entry REC-002 — Recents UX, nav placement, refresh, and logging refinements
 
 **Date:** 2026-05-26

@@ -4,6 +4,7 @@ import {
   bulkRegisterHandler,
   listStudentsHandler,
   registerStudentHandler,
+  patchStudentHandler,
 } from '../controllers/student.controller.js'
 import {
   getStudentLabHandler,
@@ -17,5 +18,6 @@ export function studentRouter(db: SqliteDatabase): Router {
   router.post('/', registerStudentHandler(db))
   router.get('/:studentId/lab', getStudentLabHandler(db))
   router.get('/:studentId', getStudentProfileHandler(db))
+  router.patch('/:studentId', patchStudentHandler(db))
   return router
 }

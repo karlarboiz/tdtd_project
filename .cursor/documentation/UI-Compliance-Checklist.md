@@ -11,14 +11,21 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 ## Layout & shell
 
 - [x] `AppShell`: top bar (brand, Recents, hamburger), `max-w-7xl` main region
+- [x] `PageContainer` in `tdtd-frontend/src/layouts/PageContainer.tsx` (`standard` | `wide`)
+- [x] All routed pages wrap root content in `PageContainer` (no ad-hoc root `max-w-*` wrappers)
+- [x] Mobile nav drawer links left-aligned (`justify-start` on full-width `NavLink`s in `AppShell`; not centered)
 - [x] Heavier pages use `lg:` multi-column grids (attendance, classes, subjects, scores)
-- [x] Home shows `AppBrand` hero and uses shell-appropriate width
+- [x] Home is a today dashboard (greeting, due items, attendance CTA, missed-work summary, Student Lab shortcut) in `PageContainer` `standard` — see [Home-Page-Doc.md](../documentation/Home-Page-Doc.md)
 
 ## Buttons
 
-- [x] Primary actions: `bg-primary` / `hover:bg-indigo-600`
-- [x] Secondary actions: teal border/text (`secondaryButtonClass` / Home secondary link pattern)
+- [x] Shared `<Button>` in `tdtd-frontend/src/components/Button/Button.tsx` (`variant`, `size`, `fullWidth`, `to`)
+- [x] Standard CTAs use `<Button>` (not raw `primaryButtonClass` / `secondaryButtonClass`)
+- [x] Primary actions: `variant="primary"` (Indigo)
+- [x] Secondary actions: `variant="secondary"` (teal border/text)
+- [x] Ghost toolbar/icon controls: `variant="ghost"`
 - [x] Accent reserved for errors and high-emphasis warnings (not stats or status chips)
+- [x] Raw `*ButtonClass` from `uiClasses.ts` only for documented exceptions (segmented controls, modal overlays, contextual chips)
 
 ## Forms
 
@@ -42,6 +49,11 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 - [x] Focus-visible outlines on primary/secondary buttons and form controls (via shared classes)
 - [x] Legible base typography (`font-sans`, inherited sizing on controls)
 
+## Motion
+
+- [x] Unified content enter animation (`ContentReveal`, `PageContentReveal`, `.tdtd-content-enter`) — see [Content-Reveal-Function-Doc.md](./Content-Reveal-Function-Doc.md)
+- [x] Unified loading skeleton while fetching (`LoadingSkeleton`, `.tdtd-skeleton`) — see [Loading-Skeleton-Function-Doc.md](./Loading-Skeleton-Function-Doc.md)
+
 ## Documentation sync
 
 - [x] UI-Rules nav list includes Student Lab
@@ -51,4 +63,10 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 
 ```bash
 cd tdtd-frontend && npm run lint && npm run build
+```
+
+After layout changes, confirm pages do not use root-level width wrappers outside `PageContainer` (modals and inline copy `max-w-*` are OK):
+
+```bash
+rg "max-w-(md|lg|2xl|4xl|7xl)" tdtd-frontend/src/pages --glob "*.tsx"
 ```

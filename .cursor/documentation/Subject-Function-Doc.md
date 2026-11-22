@@ -13,6 +13,8 @@ Subject **catalog**, **school year** setup, per-year **registration** (with grad
 | Catalog | `GET/POST /api/subjects` |
 | Class assignment | `GET/POST/DELETE /api/classes/:classId/subjects` |
 
+**Data ownership (GAP-001):** Subject catalog and school years are per-teacher (`user_id`). Each teacher maintains their own catalog and active school year. See [GAP-001.md](../gaps/GAP-001.md).
+
 ---
 
 ## Entry SUB-004 — Filter registered subjects by grade level

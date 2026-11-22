@@ -1,16 +1,22 @@
 export const ATTENDANCE_QUERIES = {
   sessionByDatePeriod: `
-    SELECT id, date, period, created_at
+    SELECT id, user_id, date, period, created_at
     FROM attendance_sessions
-    WHERE date = ? AND period = ?
+    WHERE user_id = ? AND date = ? AND period = ?
+    LIMIT 1
+  `,
+  sessionById: `
+    SELECT id, user_id, date, period, created_at
+    FROM attendance_sessions
+    WHERE id = ? AND user_id = ?
     LIMIT 1
   `,
   sessionInsert: `
-    INSERT INTO attendance_sessions (id, date, period, created_at)
-    VALUES (@id, @date, @period, @created_at)
+    INSERT INTO attendance_sessions (id, user_id, date, period, created_at)
+    VALUES (@id, @user_id, @date, @period, @created_at)
   `,
-  presentStudentIds: `
-    SELECT student_id
+  marksForStudents: `
+    SELECT student_id, status
     FROM attendance_records
     WHERE session_id = ?
       AND student_id IN (%IDS%)
@@ -27,10 +33,15 @@ export const ATTENDANCE_QUERIES = {
   distinctSessionDatesInRange: `
     SELECT DISTINCT date
     FROM attendance_sessions
-    WHERE date >= ? AND date <= ?
+    WHERE user_id = ? AND date >= ? AND date <= ?
     ORDER BY date
   `,
-  presentStudentsForSession: `
+  sessionsInRange: `
+    SELECT date, period
+    FROM attendance_sessions
+    WHERE user_id = ? AND date >= ? AND date <= ?
+  `,
+  rosterStudentsForSession: `
     SELECT
       s.id,
       s.first_name,
@@ -39,9 +50,11 @@ export const ATTENDANCE_QUERIES = {
       s.birth_date,
       s.gender,
       s.class_id,
-      s.created_at
+      s.created_at,
+      ar.status AS status
     FROM attendance_records ar
     INNER JOIN students s ON s.id = ar.student_id
+    INNER JOIN classes c ON c.id = s.class_id AND c.user_id = ?
     WHERE ar.session_id = ?
     ORDER BY s.last_name COLLATE NOCASE ASC, s.first_name COLLATE NOCASE ASC
   `,
