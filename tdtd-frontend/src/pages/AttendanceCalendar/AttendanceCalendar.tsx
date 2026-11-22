@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAttendanceSessionDatesRange } from '../../api/attendanceApi'
 import { MonthlyCalendar } from '../../components/MonthlyCalendar/MonthlyCalendar'
+import { ReminderBanners } from '../../components/ReminderBanners/ReminderBanners'
 import { toYMD } from '../../lib/dates'
 
 export function AttendanceCalendar() {
@@ -25,8 +26,8 @@ export function AttendanceCalendar() {
 
   return (
     <div className="w-full">
-      <div className="mx-auto w-full max-w-md lg:max-w-2xl">
-        <div className="mb-6 flex items-center gap-3">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 lg:max-w-2xl">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate('/')}
@@ -36,6 +37,8 @@ export function AttendanceCalendar() {
           </button>
           <h1 className="text-xl font-semibold text-slate-900">Pick a date</h1>
         </div>
+
+        <ReminderBanners />
 
         <MonthlyCalendar
           sessionDatesWithSavedAttendance={sessionDatesWithSavedAttendance}
