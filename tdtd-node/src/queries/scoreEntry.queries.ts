@@ -17,4 +17,8 @@ export const SCORE_ENTRY_QUERIES = {
       note = excluded.note,
       recorded_at = excluded.recorded_at
   `,
+  deleteByEvent: `
+    DELETE FROM score_entries
+    WHERE event_id = ?
+  `,
 } as const

@@ -10,10 +10,43 @@
 |------|-----------|--------|
 | Class subjects | `/api/classes/:classId/subjects` | Required before creating events |
 | Score events | `/api/classes/:classId/score-events` | Optional `?subjectId=` filter |
-| Event detail | `/api/score-events/:eventId` | GET single event |
+| Event detail | `/api/score-events/:eventId` | GET one event; PATCH update; DELETE event and its entries |
 | Entries | `/api/score-events/:eventId/entries` | GET list; PUT bulk upsert |
 
-`kind` must be `QUIZ` | `EXAM` | `PARTICIPATION`. Creating an event requires an existing `class_subjects` row and active-year subject registration.
+`kind` must be `QUIZ` | `EXAM` | `PARTICIPATION`. Creating an event requires an existing `class_subjects` row and active-year subject registration. `PATCH` reuses that validation. `DELETE` removes the event and its `score_entries` only.
+
+---
+
+## Entry QUIZ-005 — Edit and delete a score event
+
+**Date:** 2026-11-22
+
+**Summary:** A teacher can correct a quiz, exam, or participation event (title, date, kind, and the other fields create already accepts) and can delete that event together with its scores.
+
+**Reason:** Score events could be created and graded, but a wrong title, date, or kind had no correction path, and an assessment could not be removed without leaving its entries behind.
+
+**What changed:**
+- **`PATCH /api/score-events/:eventId`** updates `title`, `date`, `kind`, `subjectId`, and `maxScore` with the same validation as create. Omitted fields stay as stored. `kind` stays `QUIZ` | `EXAM` | `PARTICIPATION`. `classId` does not change. Sets `updatedAt`.
+- **`DELETE /api/score-events/:eventId`** deletes the event and its `score_entries` in one transaction. Students, classes, and subjects are not deleted.
+- **Activity log:** one row on success, `SCORE_EVENT_UPDATED` or `SCORE_EVENT_DELETED`. A logging failure does not roll back the mutation.
+- **Scores list and grading page:** edit form for title, date, and kind, and delete with a confirm step. After delete on the grading page, the app goes to `/scores`.
+
+**Files involved:**
+- `tdtd-node/src/routes/scoreEvent.routes.ts`
+- `tdtd-node/src/controllers/score.controller.ts`
+- `tdtd-node/src/services/score.service.ts`
+- `tdtd-node/src/dao/scoreEvent.dao.ts`
+- `tdtd-node/src/dao/scoreEntry.dao.ts`
+- `tdtd-node/src/queries/scoreEvent.queries.ts`
+- `tdtd-node/src/queries/scoreEntry.queries.ts`
+- `tdtd-node/src/constants/ActivityActions.ts`
+- `tdtd-frontend/src/api/scoreApi.ts`
+- `tdtd-frontend/src/pages/Scores/Scores.tsx`
+- `tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx`
+
+**Schemas involved:**
+- [quiz.md](../schemas/quiz.md) — update and delete rules for `score_events` and `score_entries`
+- [recents.md](../schemas/recents.md) — `SCORE_EVENT_UPDATED`, `SCORE_EVENT_DELETED`
 
 ---
 

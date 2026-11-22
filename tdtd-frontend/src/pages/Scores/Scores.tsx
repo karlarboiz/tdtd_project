@@ -8,8 +8,10 @@ import {
 import {
   assignSubjectToClass,
   createScoreEvent,
+  deleteScoreEvent,
   listClassSubjects,
   listScoreEvents,
+  updateScoreEvent,
 } from '../../api/scoreApi'
 import {
   SCORE_EVENT_KIND,
@@ -27,6 +29,7 @@ import {
   formInputClasses,
   formLabelClass,
   primaryButtonClass,
+  secondaryButtonClass,
 } from '@/lib/uiClasses'
 import type { ClassRow, SchoolYearSubjectRow, ScoreEventRow } from '@/types/schema'
 
@@ -54,6 +57,17 @@ export function Scores() {
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(todayYmd())
   const [maxScore, setMaxScore] = useState('')
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDate, setEditDate] = useState('')
+  const [editKind, setEditKind] = useState<ScoreEventKindValue>(
+    SCORE_EVENT_KIND.QUIZ,
+  )
+  const [editBusy, setEditBusy] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null)
+  const [listError, setListError] = useState<string | null>(null)
 
   const subtypeOptions = useMemo(() => subtypeOptionsForKind(kind), [kind])
 
@@ -150,6 +164,13 @@ export function Scores() {
     void refreshEvents()
   }, [refreshEvents])
 
+  useEffect(() => {
+    setEditingEventId(null)
+    setConfirmDeleteId(null)
+    setEditError(null)
+    setListError(null)
+  }, [classId])
+
   async function ensureSubjectAssignedToClass(
     cid: string,
     sid: string,
@@ -197,6 +218,61 @@ export function Scores() {
       )
     } finally {
       setBusy(false)
+    }
+  }
+
+  function startEdit(ev: ScoreEventRow) {
+    setEditingEventId(ev.id)
+    setEditTitle(ev.title)
+    setEditDate(ev.date ?? '')
+    setEditKind(ev.kind)
+    setEditError(null)
+    setConfirmDeleteId(null)
+    setListError(null)
+  }
+
+  async function handleUpdate(e: FormEvent) {
+    e.preventDefault()
+    if (!editingEventId) return
+    const trimmedTitle = editTitle.trim()
+    if (!trimmedTitle) {
+      setEditError('Title is required.')
+      return
+    }
+    setEditBusy(true)
+    setEditError(null)
+    setListError(null)
+    try {
+      await updateScoreEvent(editingEventId, {
+        title: trimmedTitle,
+        date: editDate.trim() || null,
+        kind: editKind,
+      })
+      setEditingEventId(null)
+      await refreshEvents()
+    } catch (err) {
+      setEditError(
+        err instanceof ApiError ? err.message : 'Could not update assessment.',
+      )
+    } finally {
+      setEditBusy(false)
+    }
+  }
+
+  async function handleDelete(ev: ScoreEventRow) {
+    setDeleteBusyId(ev.id)
+    setListError(null)
+    try {
+      await deleteScoreEvent(ev.id)
+      if (editingEventId === ev.id) setEditingEventId(null)
+      setConfirmDeleteId(null)
+      await refreshEvents()
+    } catch (err) {
+      setListError(
+        err instanceof ApiError ? err.message : 'Could not delete assessment.',
+      )
+    } finally {
+      setDeleteBusyId(null)
     }
   }
 
@@ -402,6 +478,11 @@ export function Scores() {
             <p className="mt-1 text-xs text-slate-500">
               Quizzes, exams, and participation for the selected class.
             </p>
+            {listError ? (
+              <p className={`mt-3 ${errorAlertClass}`} role="alert">
+                {listError}
+              </p>
+            ) : null}
             {!classId ? (
               <p className="mt-4 text-sm text-slate-500">Select a class to see assessments.</p>
             ) : events.length === 0 ? (
@@ -413,31 +494,169 @@ export function Scores() {
                 {events.map((ev) => {
                   const subjectLabel =
                     subjectNameById.get(ev.subjectId) ?? 'Subject'
+                  const deleting = deleteBusyId === ev.id
                   return (
-                    <li
-                      key={ev.id}
-                      className="flex items-center justify-between gap-3 py-3 first:pt-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-slate-900">
-                          {ev.title}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          <span className="font-medium text-slate-600">
-                            {formatScoreEventKindLabel(ev.kind)}
-                          </span>
-                          {' · '}
-                          {subjectLabel}
-                          {ev.date ? ` · ${ev.date}` : ''}
-                          {ev.maxScore !== undefined ? ` · /${ev.maxScore}` : ''}
-                        </p>
+                    <li key={ev.id} className="py-3 first:pt-0">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-slate-900">
+                            {ev.title}
+                          </p>
+                          <p className="text-sm text-slate-500">
+                            <span className="font-medium text-slate-600">
+                              {formatScoreEventKindLabel(ev.kind)}
+                            </span>
+                            {' · '}
+                            {subjectLabel}
+                            {ev.date ? ` · ${ev.date}` : ''}
+                            {ev.maxScore !== undefined ? ` · /${ev.maxScore}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                          <Link
+                            to={`/scores/event/${ev.id}`}
+                            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50"
+                          >
+                            Open
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => startEdit(ev)}
+                            className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConfirmDeleteId(ev.id)
+                              setEditingEventId((current) =>
+                                current === ev.id ? null : current,
+                              )
+                              setEditError(null)
+                            }}
+                            className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                      <Link
-                        to={`/scores/event/${ev.id}`}
-                        className="shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-primary hover:bg-indigo-50"
-                      >
-                        Open
-                      </Link>
+
+                      {confirmDeleteId === ev.id ? (
+                        <div className="mt-3 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3">
+                          <p className="text-sm text-slate-700">
+                            Delete &quot;{ev.title}&quot; and all of its scores?
+                            Students, the class, and the subject stay.
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={deleting}
+                              onClick={() => void handleDelete(ev)}
+                              className={`px-3 py-2 text-sm ${primaryButtonClass}`}
+                            >
+                              {deleting ? 'Deleting…' : 'Delete assessment'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deleting}
+                              onClick={() => setConfirmDeleteId(null)}
+                              className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {editingEventId === ev.id ? (
+                        <form
+                          onSubmit={(e) => void handleUpdate(e)}
+                          className="mt-3 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3"
+                        >
+                          <label
+                            className={formLabelClass}
+                            htmlFor="score-edit-title"
+                          >
+                            Title
+                          </label>
+                          <input
+                            id="score-edit-title"
+                            type="text"
+                            className={`mt-2 py-3 ${formInputClasses({ error: Boolean(editError) })}`}
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            disabled={editBusy}
+                            aria-invalid={Boolean(editError)}
+                          />
+
+                          <label
+                            className={`mt-4 ${formLabelClass}`}
+                            htmlFor="score-edit-date"
+                          >
+                            Date
+                          </label>
+                          <input
+                            id="score-edit-date"
+                            type="date"
+                            className={`mt-2 py-3 ${formInputClasses()}`}
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                            disabled={editBusy}
+                          />
+
+                          <label
+                            className={`mt-4 ${formLabelClass}`}
+                            htmlFor="score-edit-kind"
+                          >
+                            Type
+                          </label>
+                          <select
+                            id="score-edit-kind"
+                            className={`mt-2 py-3 ${formInputClasses()}`}
+                            value={editKind}
+                            onChange={(e) =>
+                              setEditKind(e.target.value as ScoreEventKindValue)
+                            }
+                            disabled={editBusy}
+                          >
+                            {(
+                              Object.values(SCORE_EVENT_KIND) as ScoreEventKindValue[]
+                            ).map((k) => (
+                              <option key={k} value={k}>
+                                {formatScoreEventKindLabel(k)}
+                              </option>
+                            ))}
+                          </select>
+
+                          {editError ? (
+                            <p className={`mt-4 ${errorAlertClass}`} role="alert">
+                              {editError}
+                            </p>
+                          ) : null}
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              type="submit"
+                              disabled={editBusy}
+                              className={`px-3 py-2 text-sm ${primaryButtonClass}`}
+                            >
+                              {editBusy ? 'Saving…' : 'Save'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={editBusy}
+                              onClick={() => {
+                                setEditingEventId(null)
+                                setEditError(null)
+                              }}
+                              className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      ) : null}
                     </li>
                   )
                 })}

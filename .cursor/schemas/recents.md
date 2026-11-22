@@ -37,6 +37,8 @@ activity_logs: {
 | `SUBJECT_ASSIGNED_TO_CLASS` | Subject linked to class |
 | `SUBJECT_UNASSIGNED_FROM_CLASS` | Class–subject link removed |
 | `SCORE_EVENT_CREATED` | Score event created |
+| `SCORE_EVENT_UPDATED` | Score event updated (`title`, `date`, `kind`, or other create fields) |
+| `SCORE_EVENT_DELETED` | Score event deleted, together with its score entries |
 | `SCORES_SAVED` | Score entries upserted for an event (summary: **Saved** vs **Updated** on re-save) |
 
 ---

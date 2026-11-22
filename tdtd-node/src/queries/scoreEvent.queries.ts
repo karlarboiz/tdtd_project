@@ -41,4 +41,19 @@ export const SCORE_EVENT_QUERIES = {
       @id, @class_id, @subject_id, @kind, @title, @date, @max_score, @created_at, @updated_at
     )
   `,
+  update: `
+    UPDATE score_events
+    SET
+      subject_id = @subject_id,
+      kind = @kind,
+      title = @title,
+      date = @date,
+      max_score = @max_score,
+      updated_at = @updated_at
+    WHERE id = @id
+  `,
+  delete: `
+    DELETE FROM score_events
+    WHERE id = ?
+  `,
 } as const

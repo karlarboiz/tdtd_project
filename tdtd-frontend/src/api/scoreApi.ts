@@ -87,6 +87,31 @@ export function createScoreEvent(
   )
 }
 
+export function updateScoreEvent(
+  eventId: string,
+  input: {
+    subjectId?: string
+    kind?: ScoreEventKind
+    title?: string
+    date?: string | null
+    maxScore?: number | null
+  },
+): Promise<ScoreEventRow> {
+  return apiJson<ScoreEventRow>(
+    `/api/score-events/${encodeURIComponent(eventId)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    },
+  )
+}
+
+export function deleteScoreEvent(eventId: string): Promise<void> {
+  return apiJson<void>(`/api/score-events/${encodeURIComponent(eventId)}`, {
+    method: 'DELETE',
+  })
+}
+
 export function getScoreEvent(eventId: string): Promise<ScoreEventRow> {
   return apiJson<ScoreEventRow>(
     `/api/score-events/${encodeURIComponent(eventId)}`,

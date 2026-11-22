@@ -54,7 +54,8 @@ score_entries: {
 - Do **not** use separate tables per kind; `kind` discriminates behavior in the app.
 - Multiple events per day per class/subject/kind are allowed unless product adds stricter uniqueness.
 - `maxScore`, when set: optional API validation `0 <= score <= maxScore` when `score` is not null.
-- Creating a `score_event` requires an existing **`class_subjects`** row for `(classId, subjectId)` (enforce in API).
+- Creating a `score_event` requires an existing **`class_subjects`** row for `(classId, subjectId)` (enforce in API). The same check applies when `subjectId` is changed.
+- Deleting a `score_event` deletes its `score_entries` in the same transaction. Do not delete `students`, `classes`, or `subjects` as part of that delete.
 
 ### score_entries
 
@@ -95,6 +96,12 @@ See `tdtd-node/src/db/migrate.ts`:
 3. Teacher selects **class** → **subject** → **kind** (`QUIZ` / `EXAM` / `PARTICIPATION`).
 4. Create a **score_event** (`title`, optional `date`, optional `maxScore`).
 5. Load students for that **class**; upsert **score_entries** for the event.
+
+### Updating and deleting an event
+
+- `PATCH /api/score-events/:eventId` changes `title`, `date`, `kind`, and any other field the create path already accepts (`subjectId`, `maxScore`). Validation is the same as create. `kind` stays `QUIZ` | `EXAM` | `PARTICIPATION`. Fields omitted from the body stay as stored. `date` clears when sent as null or `""`. `maxScore` clears when sent as null. `classId` does not change. A successful change sets `updatedAt`.
+- `DELETE /api/score-events/:eventId` deletes that event and its `score_entries` in one transaction. Entries are children of the event. Students, classes, and subjects stay.
+- Each successful update or delete writes one activity row: `SCORE_EVENT_UPDATED` or `SCORE_EVENT_DELETED`. A logging failure does not roll back the mutation. See [recents.md](./recents.md).
 
 ---
 

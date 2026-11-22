@@ -4,12 +4,14 @@ import { HttpError } from '../errors/http-error.js'
 import {
   assignSubjectToClass,
   createScoreEvent,
+  deleteScoreEvent,
   getScoreEventOrThrow,
   listClassSubjects,
   listScoreEntries,
   listScoreEvents,
   removeSubjectFromClass,
   replaceScoreEntries,
+  updateScoreEvent,
 } from '../services/score.service.js'
 
 function classIdParam(req: Request): string {
@@ -118,6 +120,42 @@ export function getScoreEventHandler(db: SqliteDatabase) {
   return (req: Request, res: Response): void => {
     try {
       res.json(getScoreEventOrThrow(db, eventIdParam(req)))
+    } catch (e) {
+      if (e instanceof HttpError) {
+        res.status(e.statusCode).json({ error: e.message })
+        return
+      }
+      console.error(e)
+      res.status(500).json({ error: 'internal server error' })
+    }
+  }
+}
+
+export function patchScoreEventHandler(db: SqliteDatabase) {
+  return (req: Request, res: Response): void => {
+    try {
+      const body = req.body
+      const payload =
+        body && typeof body === 'object' && !Array.isArray(body)
+          ? (body as Record<string, unknown>)
+          : {}
+      res.json(updateScoreEvent(db, eventIdParam(req), payload))
+    } catch (e) {
+      if (e instanceof HttpError) {
+        res.status(e.statusCode).json({ error: e.message })
+        return
+      }
+      console.error(e)
+      res.status(500).json({ error: 'internal server error' })
+    }
+  }
+}
+
+export function deleteScoreEventHandler(db: SqliteDatabase) {
+  return (req: Request, res: Response): void => {
+    try {
+      deleteScoreEvent(db, eventIdParam(req))
+      res.status(204).end()
     } catch (e) {
       if (e instanceof HttpError) {
         res.status(e.statusCode).json({ error: e.message })

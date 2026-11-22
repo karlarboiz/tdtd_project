@@ -63,3 +63,27 @@ export function insertScoreEvent(db: SqliteDatabase, row: ScoreEventRow): void {
     updated_at: row.updatedAt ?? null,
   })
 }
+
+export function updateScoreEvent(
+  db: SqliteDatabase,
+  row: ScoreEventRow,
+): { changes: number } {
+  const info = db.prepare(SCORE_EVENT_QUERIES.update).run({
+    id: row.id,
+    subject_id: row.subjectId,
+    kind: row.kind,
+    title: row.title,
+    date: row.date ?? null,
+    max_score: row.maxScore ?? null,
+    updated_at: row.updatedAt ?? null,
+  })
+  return { changes: info.changes }
+}
+
+export function deleteScoreEvent(
+  db: SqliteDatabase,
+  id: string,
+): { changes: number } {
+  const info = db.prepare(SCORE_EVENT_QUERIES.delete).run(id)
+  return { changes: info.changes }
+}

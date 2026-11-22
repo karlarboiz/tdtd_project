@@ -28,7 +28,7 @@ Field-level rules: [quiz.md](../schemas/quiz.md), [subjects.md](../schemas/subje
 
 - **Subjects:** list/create under `/api/subjects` (or equivalent).
 - **Class–subject links:** `/api/classes/:classId/subjects`.
-- **Events:** create/list under `/api/classes/:classId/score-events` (optional `subjectId` query filter).
+- **Events:** create/list under `/api/classes/:classId/score-events` (optional `subjectId` query filter). Update and delete under `/api/score-events/:eventId` (`PATCH` changes the fields create accepts; `DELETE` removes the event and its `score_entries` only).
 - **Entries:** get/replace under `/api/score-events/:eventId/entries` (bulk upsert).
 
 Exact paths: `tdtd-node/src/app.ts` and route modules.

@@ -1,11 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { listClasses } from '../../api/classesApi'
 import {
+  deleteScoreEvent,
   getScoreEvent,
   listScoreEntries,
   saveScoreEntries,
+  updateScoreEvent,
 } from '../../api/scoreApi'
+import {
+  SCORE_EVENT_KIND,
+  type ScoreEventKindValue,
+} from '@/constants/TDTDConstants'
 import { listStudentsByClass } from '../../api/studentsApi'
 import { formatRecordedAt } from '../../lib/dates'
 import { formatScoreEventKindLabel } from '../../lib/scoreLabels'
@@ -16,6 +22,7 @@ import {
   formInputClasses,
   formLabelClass,
   primaryButtonClass,
+  secondaryButtonClass,
 } from '@/lib/uiClasses'
 import type {
   ClassRow,
@@ -71,6 +78,17 @@ export function ScoreGrading() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [editingMeta, setEditingMeta] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDate, setEditDate] = useState('')
+  const [editKind, setEditKind] = useState<ScoreEventKindValue>(
+    SCORE_EVENT_KIND.QUIZ,
+  )
+  const [savingMeta, setSavingMeta] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [metaError, setMetaError] = useState<string | null>(null)
+  const [metaMessage, setMetaMessage] = useState<string | null>(null)
 
   const lastRecordedAt = useMemo(() => {
     const times = Object.values(savedEntries)
@@ -141,6 +159,61 @@ export function ScoreGrading() {
     setIsEditing(true)
     setMessage(null)
     setError(null)
+  }
+
+  function openMetaEdit() {
+    if (!event) return
+    setEditTitle(event.title)
+    setEditDate(event.date ?? '')
+    setEditKind(event.kind)
+    setEditingMeta(true)
+    setConfirmDelete(false)
+    setMetaError(null)
+    setMetaMessage(null)
+  }
+
+  async function handleSaveMeta(e: FormEvent) {
+    e.preventDefault()
+    if (!event) return
+    const trimmedTitle = editTitle.trim()
+    if (!trimmedTitle) {
+      setMetaError('Title is required.')
+      return
+    }
+    setSavingMeta(true)
+    setMetaError(null)
+    setMetaMessage(null)
+    try {
+      const updated = await updateScoreEvent(event.id, {
+        title: trimmedTitle,
+        date: editDate.trim() || null,
+        kind: editKind,
+      })
+      setEvent(updated)
+      setEditingMeta(false)
+      setMetaMessage('Assessment updated.')
+    } catch (err) {
+      setMetaError(
+        err instanceof ApiError ? err.message : 'Could not update assessment.',
+      )
+    } finally {
+      setSavingMeta(false)
+    }
+  }
+
+  async function handleDeleteEvent() {
+    if (!event) return
+    setDeleting(true)
+    setMetaError(null)
+    try {
+      await deleteScoreEvent(event.id)
+      navigate('/scores', { replace: true })
+    } catch (err) {
+      setMetaError(
+        err instanceof ApiError ? err.message : 'Could not delete assessment.',
+      )
+      setDeleting(false)
+    }
   }
 
   async function handleSave() {
@@ -238,6 +311,137 @@ export function ScoreGrading() {
             ? `Scores last recorded: ${formatRecordedAt(lastRecordedAt)}`
             : 'Scores not recorded yet'}
         </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={openMetaEdit}
+            className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+          >
+            Edit assessment
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmDelete(true)
+              setEditingMeta(false)
+              setMetaError(null)
+              setMetaMessage(null)
+            }}
+            className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+          >
+            Delete assessment
+          </button>
+        </div>
+
+        {confirmDelete ? (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-neutral-bg px-3 py-3">
+            <p className="text-sm text-slate-700">
+              Delete &quot;{event.title}&quot; and all of its scores? Students,
+              the class, and the subject stay.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void handleDeleteEvent()}
+                className={`px-3 py-2 text-sm ${primaryButtonClass}`}
+              >
+                {deleting ? 'Deleting…' : 'Delete assessment'}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setConfirmDelete(false)}
+                className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {editingMeta ? (
+          <form onSubmit={(e) => void handleSaveMeta(e)} className="mt-4">
+            <label className={formLabelClass} htmlFor="grade-edit-title">
+              Title
+            </label>
+            <input
+              id="grade-edit-title"
+              type="text"
+              className={`mt-2 py-3 ${formInputClasses({ error: Boolean(metaError) })}`}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              disabled={savingMeta}
+              aria-invalid={Boolean(metaError)}
+            />
+
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="grade-edit-date">
+              Date
+            </label>
+            <input
+              id="grade-edit-date"
+              type="date"
+              className={`mt-2 py-3 ${formInputClasses()}`}
+              value={editDate}
+              onChange={(e) => setEditDate(e.target.value)}
+              disabled={savingMeta}
+            />
+
+            <label className={`mt-4 ${formLabelClass}`} htmlFor="grade-edit-kind">
+              Type
+            </label>
+            <select
+              id="grade-edit-kind"
+              className={`mt-2 py-3 ${formInputClasses()}`}
+              value={editKind}
+              onChange={(e) =>
+                setEditKind(e.target.value as ScoreEventKindValue)
+              }
+              disabled={savingMeta}
+            >
+              {(Object.values(SCORE_EVENT_KIND) as ScoreEventKindValue[]).map(
+                (k) => (
+                  <option key={k} value={k}>
+                    {formatScoreEventKindLabel(k)}
+                  </option>
+                ),
+              )}
+            </select>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="submit"
+                disabled={savingMeta}
+                className={`px-3 py-2 text-sm ${primaryButtonClass}`}
+              >
+                {savingMeta ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                disabled={savingMeta}
+                onClick={() => {
+                  setEditingMeta(false)
+                  setMetaError(null)
+                }}
+                className={`px-3 py-2 text-sm ${secondaryButtonClass}`}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : null}
+
+        {metaError ? (
+          <p className={`mt-4 ${errorAlertClass}`} role="alert">
+            {metaError}
+          </p>
+        ) : null}
+        {metaMessage ? (
+          <p className="mt-4 text-sm text-teal-700" role="status">
+            {metaMessage}
+          </p>
+        ) : null}
       </header>
 
       {students.length === 0 ? (

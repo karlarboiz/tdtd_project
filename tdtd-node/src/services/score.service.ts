@@ -116,6 +116,40 @@ function parseOptionalDate(raw: unknown): IsoDateString | undefined {
   return s as IsoDateString
 }
 
+function requireTitle(raw: unknown): string {
+  const title = typeof raw === 'string' ? raw.trim() : ''
+  if (!title) throw new HttpError(400, 'title is required')
+  return title
+}
+
+function parseOptionalMaxScore(raw: unknown): number | undefined {
+  if (raw === undefined || raw === null) return undefined
+  if (typeof raw !== 'number' || Number.isNaN(raw)) {
+    throw new HttpError(400, 'maxScore must be a number')
+  }
+  if (raw < 0) throw new HttpError(400, 'maxScore must be non-negative')
+  return raw
+}
+
+function requireSubjectAssignedToClass(
+  db: SqliteDatabase,
+  classId: string,
+  rawSubjectId: unknown,
+): string {
+  const subjectId = typeof rawSubjectId === 'string' ? rawSubjectId.trim() : ''
+  if (!subjectId) throw new HttpError(400, 'subjectId is required')
+  if (!subjectDao.subjectExists(db, subjectId)) {
+    throw new HttpError(404, 'subject not found')
+  }
+  if (!classSubjectDao.classSubjectPairExists(db, classId, subjectId)) {
+    throw new HttpError(
+      400,
+      'subject must be assigned to this class before creating a score event',
+    )
+  }
+  return subjectId
+}
+
 export function listScoreEvents(
   db: SqliteDatabase,
   classId: string,
@@ -149,28 +183,11 @@ export function createScoreEvent(
   if (!cid) throw new HttpError(400, 'classId is required')
   assertClassExists(db, cid)
 
-  const subjectId = typeof input.subjectId === 'string' ? input.subjectId.trim() : ''
-  if (!subjectId) throw new HttpError(400, 'subjectId is required')
-  if (!subjectDao.subjectExists(db, subjectId)) {
-    throw new HttpError(404, 'subject not found')
-  }
-  if (!classSubjectDao.classSubjectPairExists(db, cid, subjectId)) {
-    throw new HttpError(400, 'subject must be assigned to this class before creating a score event')
-  }
-
+  const subjectId = requireSubjectAssignedToClass(db, cid, input.subjectId)
   const kind = parseScoreKind(typeof input.kind === 'string' ? input.kind : '')
-  const title = typeof input.title === 'string' ? input.title.trim() : ''
-  if (!title) throw new HttpError(400, 'title is required')
+  const title = requireTitle(input.title)
   const date = parseOptionalDate(input.date)
-
-  let maxScore: number | undefined
-  if (input.maxScore !== undefined && input.maxScore !== null) {
-    if (typeof input.maxScore !== 'number' || Number.isNaN(input.maxScore)) {
-      throw new HttpError(400, 'maxScore must be a number')
-    }
-    if (input.maxScore < 0) throw new HttpError(400, 'maxScore must be non-negative')
-    maxScore = input.maxScore
-  }
+  const maxScore = parseOptionalMaxScore(input.maxScore)
 
   const now = Date.now()
   const row: ScoreEventRow = {
@@ -198,6 +215,79 @@ export function getScoreEventOrThrow(db: SqliteDatabase, eventId: string): Score
   const ev = scoreEventDao.getScoreEventById(db, id)
   if (!ev) throw new HttpError(404, 'score event not found')
   return ev
+}
+
+function bodyHas(body: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(body, key)
+}
+
+export function updateScoreEvent(
+  db: SqliteDatabase,
+  eventId: string,
+  body: Record<string, unknown>,
+): ScoreEventRow {
+  const existing = getScoreEventOrThrow(db, eventId)
+  const touchesSubject = bodyHas(body, 'subjectId')
+  const touchesKind = bodyHas(body, 'kind')
+  const touchesTitle = bodyHas(body, 'title')
+  const touchesDate = bodyHas(body, 'date')
+  const touchesMax = bodyHas(body, 'maxScore')
+  if (
+    !touchesSubject &&
+    !touchesKind &&
+    !touchesTitle &&
+    !touchesDate &&
+    !touchesMax
+  ) {
+    return existing
+  }
+
+  const subjectId = touchesSubject
+    ? requireSubjectAssignedToClass(db, existing.classId, body.subjectId)
+    : existing.subjectId
+  const kind = touchesKind
+    ? parseScoreKind(typeof body.kind === 'string' ? body.kind : '')
+    : existing.kind
+  const title = touchesTitle ? requireTitle(body.title) : existing.title
+  const date = touchesDate ? parseOptionalDate(body.date) : existing.date
+  const maxScore = touchesMax
+    ? parseOptionalMaxScore(body.maxScore)
+    : existing.maxScore
+
+  const row: ScoreEventRow = {
+    id: existing.id,
+    classId: existing.classId,
+    subjectId,
+    kind,
+    title,
+    date,
+    maxScore,
+    createdAt: existing.createdAt,
+    updatedAt: Date.now(),
+  }
+  const { changes } = scoreEventDao.updateScoreEvent(db, row)
+  if (changes === 0) throw new HttpError(404, 'score event not found')
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SCORE_EVENT_UPDATED,
+    summary: `Updated ${scoreKindLabel(kind)}: ${title}`,
+    metadata: { classId: existing.classId, eventId: existing.id },
+  })
+  return row
+}
+
+export function deleteScoreEvent(db: SqliteDatabase, eventId: string): void {
+  const existing = getScoreEventOrThrow(db, eventId)
+  const run = db.transaction(() => {
+    scoreEntryDao.deleteScoreEntriesByEvent(db, existing.id)
+    const { changes } = scoreEventDao.deleteScoreEvent(db, existing.id)
+    if (changes === 0) throw new HttpError(404, 'score event not found')
+  })
+  run()
+  recordActivity(db, {
+    action: ACTIVITY_ACTION.SCORE_EVENT_DELETED,
+    summary: `Deleted ${scoreKindLabel(existing.kind)}: ${existing.title}`,
+    metadata: { classId: existing.classId, eventId: existing.id },
+  })
 }
 
 export function listScoreEntries(db: SqliteDatabase, eventId: string): ScoreEntryRow[] {

@@ -43,3 +43,11 @@ export function upsertScoreEntry(
     recorded_at: row.recordedAt,
   })
 }
+
+export function deleteScoreEntriesByEvent(
+  db: SqliteDatabase,
+  eventId: string,
+): { changes: number } {
+  const info = db.prepare(SCORE_ENTRY_QUERIES.deleteByEvent).run(eventId)
+  return { changes: info.changes }
+}
