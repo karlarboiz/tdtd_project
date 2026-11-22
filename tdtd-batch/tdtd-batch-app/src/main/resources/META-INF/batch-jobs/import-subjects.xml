@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<job id="import-subjects" xmlns="http://xmlns.jcp.org/xml/ns/javaee" version="1.0">
+    <step id="importSubjects">
+        <chunk item-count="20" skip-limit="10000">
+            <reader ref="com.tdtd.batch.subjects.SubjectImportReader">
+                <properties>
+                    <property name="file" value="#{jobParameters['file']}"/>
+                </properties>
+            </reader>
+            <processor ref="com.tdtd.batch.subjects.SubjectImportProcessor"/>
+            <writer ref="com.tdtd.batch.subjects.SubjectImportWriter">
+                <properties>
+                    <property name="schoolYearId" value="#{jobParameters['schoolYearId']}"/>
+                </properties>
+            </writer>
+            <skippable-exception-classes>
+                <include class="com.tdtd.batch.subjects.SubjectImportSkipException"/>
+            </skippable-exception-classes>
+        </chunk>
+    </step>
+</job>
