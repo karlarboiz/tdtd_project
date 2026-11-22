@@ -251,6 +251,47 @@ When **multiple classes** exist for the period, the teacher chooses from the dro
 
 ---
 
+## Entry ATT-011 — Explicit absent and late attendance statuses
+
+**Date:** 2026-11-22
+
+**Summary:** Store `present`, `absent`, and `late` on each saved student row, and count those statuses separately in Student Lab.
+
+**Reason:** Teachers need to record who was absent or late, not only who was present. A missing row could not represent late, and it mixed unmarked students into the absent total.
+
+**What changed:**
+- **CHECK** on `attendance_records.status` already allows `present`, `absent`, `late`, and `excused`. This change stores absent and late on each saved roster row. It does not narrow that CHECK or drop `excused`.
+- **Save** writes one row per student on the submitted class roster. The body is `marks: { studentId, status }[]` plus `classStudentIds`. Every class student needs one status. Marks for ids outside that roster are ignored.
+- **`GET /api/attendance/state`** returns `marks` (`studentId` + `status`) for stored rows in the class.
+- **`GET /api/attendance/present-roster`** returns every saved student for the session with `status`. Route path is unchanged. `getAttendancePresentRoster` remains an alias so reminder banners can still read `session`.
+- **Session page:** each student has Present, Absent, and Late controls (primary, neutral, and secondary). Bulk action marks the class all present, or all absent when everyone is already present. Students with no stored row open as absent and are written on the next save.
+- **Student Lab** summary adds `lateCount`. Session rows show Present, Absent, or Late. Counts come from stored status. A missing row is left out of the list and out of the totals. `presentRate` is still present ÷ all counted records.
+
+**Files involved:**
+- `tdtd-node/src/db/migrate.ts`
+- `tdtd-node/src/schema/types.ts`
+- `tdtd-node/src/queries/attendance.queries.ts`
+- `tdtd-node/src/dao/attendance.dao.ts`
+- `tdtd-node/src/services/attendance.service.ts`
+- `tdtd-node/src/controllers/attendance.controller.ts`
+- `tdtd-node/src/queries/studentLab.queries.ts`
+- `tdtd-node/src/dao/studentLab.dao.ts`
+- `tdtd-node/src/services/studentLab.service.ts`
+- `tdtd-frontend/src/types/schema.ts`
+- `tdtd-frontend/src/api/attendanceApi.ts`
+- `tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx`
+- `tdtd-frontend/src/pages/StudentLab/StudentLab.tsx`
+- `.cursor/schemas/attendance.md`
+- `.cursor/schemas/student-lab.md`
+- `.cursor/rules/Schema-Rules.md`
+
+**Schemas involved:**
+- [attendance.md](../schemas/attendance.md) — `attendance_records.status`
+- [student-lab.md](../schemas/student-lab.md) — summary counts and session status
+- [Schema-Rules.md](../rules/Schema-Rules.md) — absent and late removed from unimplemented future extensions
+
+---
+
 ## Entry ATT-004 — Session period in URL, AM/PM toggle, calendar auto-resolve
 
 **Date:** 2026-05-26

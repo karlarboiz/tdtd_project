@@ -15,8 +15,8 @@ export const ATTENDANCE_QUERIES = {
     INSERT INTO attendance_sessions (id, user_id, date, period, created_at)
     VALUES (@id, @user_id, @date, @period, @created_at)
   `,
-  presentStudentIds: `
-    SELECT student_id
+  marksForStudents: `
+    SELECT student_id, status
     FROM attendance_records
     WHERE session_id = ?
       AND student_id IN (%IDS%)
@@ -41,7 +41,7 @@ export const ATTENDANCE_QUERIES = {
     FROM attendance_sessions
     WHERE user_id = ? AND date >= ? AND date <= ?
   `,
-  presentStudentsForSession: `
+  rosterStudentsForSession: `
     SELECT
       s.id,
       s.first_name,
@@ -50,7 +50,8 @@ export const ATTENDANCE_QUERIES = {
       s.birth_date,
       s.gender,
       s.class_id,
-      s.created_at
+      s.created_at,
+      ar.status AS status
     FROM attendance_records ar
     INNER JOIN students s ON s.id = ar.student_id
     INNER JOIN classes c ON c.id = s.class_id AND c.user_id = ?

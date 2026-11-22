@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { saveAttendance } from '@/api/attendanceApi'
 import {
+  type AttendanceMarkMap,
   type AttendanceSaveContext,
   type AttendanceSaveStatus,
   buildAttendanceSavePayload,
@@ -17,7 +18,7 @@ export type UseAttendanceAutoSaveOptions = {
   period: AttendancePeriod
   classId: string
   students: StudentRow[]
-  present: Record<string, boolean>
+  marks: AttendanceMarkMap
   enabled: boolean
   onSaved: () => void | Promise<void>
 }
@@ -27,7 +28,7 @@ export function useAttendanceAutoSave({
   period,
   classId,
   students,
-  present,
+  marks,
   enabled,
   onSaved,
 }: UseAttendanceAutoSaveOptions) {
@@ -41,9 +42,9 @@ export function useAttendanceAutoSave({
     period,
     classId,
     students,
-    present,
+    marks,
   })
-  contextRef.current = { dateYmd, period, classId, students, present }
+  contextRef.current = { dateYmd, period, classId, students, marks }
 
   const runnerRef = useRef(
     createAttendanceSaveRunner({
@@ -62,7 +63,7 @@ export function useAttendanceAutoSave({
         const ctx = contextRef.current
         if (!enabled) return
         const runner = runnerRef.current
-        if (!runner.isDirty(ctx.present)) return
+        if (!runner.isDirty(ctx.marks)) return
         if (runner.isSaving()) {
           runner.queueWhileSaving(ctx)
           return
@@ -79,7 +80,7 @@ export function useAttendanceAutoSave({
   }, [debouncedSave])
 
   const syncBaseline = useCallback(
-    (baseline: Record<string, boolean>) => {
+    (baseline: AttendanceMarkMap) => {
       debouncedSave.cancel()
       runnerRef.current.syncBaseline(baseline)
       setHasEdited(false)
@@ -87,13 +88,13 @@ export function useAttendanceAutoSave({
     [debouncedSave],
   )
 
-  const notifyPresentChanged = useCallback((presentOverride?: Record<string, boolean>) => {
+  const notifyMarksChanged = useCallback((marksOverride?: AttendanceMarkMap) => {
     if (!enabled) return
-    const ctx = presentOverride
-      ? { ...contextRef.current, present: presentOverride }
+    const ctx = marksOverride
+      ? { ...contextRef.current, marks: marksOverride }
       : contextRef.current
     const runner = runnerRef.current
-    if (!runner.isDirty(ctx.present)) {
+    if (!runner.isDirty(ctx.marks)) {
       debouncedSave.cancel()
       if (!runner.isSaving() && saveStatus !== 'error') {
         setSaveStatus(hasEdited ? 'saved' : 'idle')
@@ -113,7 +114,7 @@ export function useAttendanceAutoSave({
     debouncedSave.cancel()
     const ctx = contextRef.current
     if (!ctx.classId || ctx.students.length === 0) return
-    if (!runnerRef.current.isDirty(ctx.present)) return
+    if (!runnerRef.current.isDirty(ctx.marks)) return
     try {
       await runnerRef.current.flush(ctx)
     } catch {
@@ -137,7 +138,7 @@ export function useAttendanceAutoSave({
   return {
     saveStatus,
     hasEdited,
-    notifyPresentChanged,
+    notifyMarksChanged,
     syncBaseline,
     flush,
     retry,

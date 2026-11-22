@@ -23,7 +23,7 @@ const baseContext: AttendanceSaveContext = {
       createdAt: 0,
     },
   ],
-  present: { s1: true },
+  marks: { s1: 'present' },
 }
 
 describe('useAttendanceAutoSave integration', () => {
@@ -43,17 +43,17 @@ describe('useAttendanceAutoSave integration', () => {
       onStatusChange,
       onSaved: vi.fn(),
     })
-    runner.syncBaseline({ s1: false })
+    runner.syncBaseline({ s1: 'absent' })
 
     let context = baseContext
     const debounced = createDebouncedCallback(() => {
-      if (!runner.isDirty(context.present)) return
+      if (!runner.isDirty(context.marks)) return
       void runner.performSave(context)
     }, AUTO_SAVE_DELAY_MS)
 
-    context = { ...baseContext, present: { s1: true } }
+    context = { ...baseContext, marks: { s1: 'present' } }
     debounced.schedule()
-    context = { ...baseContext, present: { s1: true } }
+    context = { ...baseContext, marks: { s1: 'present' } }
     debounced.schedule()
 
     vi.advanceTimersByTime(AUTO_SAVE_DELAY_MS)

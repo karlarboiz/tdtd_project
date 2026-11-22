@@ -42,7 +42,7 @@ public final class AttendanceReportDao {
       SELECT ar.student_id
       FROM attendance_records ar
       INNER JOIN attendance_sessions sess ON sess.id = ar.session_id
-      WHERE ar.session_id = ? AND sess.user_id = ?
+      WHERE ar.session_id = ? AND sess.user_id = ? AND ar.status = 'present'
       """;
 
   public Optional<String> findSessionId(

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   buildAttendanceSavePayload,
   createAttendanceSaveRunner,
-  isPresentMapDirty,
+  isAttendanceMarksDirty,
   type AttendanceSaveContext,
 } from '@/lib/attendanceAutoSaveLogic'
 import type { AttendancePeriod, StudentRow } from '@/types/schema'
@@ -28,30 +28,39 @@ const baseContext: AttendanceSaveContext = {
   period: 'AM' as AttendancePeriod,
   classId: 'class-1',
   students: [testStudent('s1', 'Ana', 'Dela'), testStudent('s2', 'Ben', 'Cruz')],
-  present: { s1: true, s2: false },
+  marks: { s1: 'present', s2: 'absent' },
 }
 
-describe('isPresentMapDirty', () => {
+describe('isAttendanceMarksDirty', () => {
   it('returns false when maps match', () => {
-    expect(isPresentMapDirty({ s1: true, s2: false }, { s1: true, s2: false })).toBe(
-      false,
-    )
+    expect(
+      isAttendanceMarksDirty(
+        { s1: 'present', s2: 'absent' },
+        { s1: 'present', s2: 'absent' },
+      ),
+    ).toBe(false)
   })
 
-  it('returns true when a student toggles', () => {
-    expect(isPresentMapDirty({ s1: true, s2: true }, { s1: true, s2: false })).toBe(
-      true,
-    )
+  it('returns true when a student status changes', () => {
+    expect(
+      isAttendanceMarksDirty(
+        { s1: 'present', s2: 'late' },
+        { s1: 'present', s2: 'absent' },
+      ),
+    ).toBe(true)
   })
 })
 
 describe('buildAttendanceSavePayload', () => {
-  it('maps present students for the save API', () => {
+  it('maps each student status for the save API', () => {
     expect(buildAttendanceSavePayload(baseContext)).toEqual({
       date: '2026-07-10',
       period: 'AM',
       classStudentIds: ['s1', 's2'],
-      presentStudentIds: ['s1'],
+      marks: [
+        { studentId: 's1', status: 'present' },
+        { studentId: 's2', status: 'absent' },
+      ],
     })
   })
 })
@@ -66,7 +75,7 @@ describe('createAttendanceSaveRunner', () => {
       onSaved: vi.fn(),
     })
 
-    runner.syncBaseline(baseContext.present)
+    runner.syncBaseline(baseContext.marks)
     await runner.performSave(baseContext)
 
     expect(save).not.toHaveBeenCalled()
@@ -82,14 +91,14 @@ describe('createAttendanceSaveRunner', () => {
       onSaved,
     })
 
-    runner.syncBaseline({ s1: false, s2: false })
+    runner.syncBaseline({ s1: 'absent', s2: 'absent' })
     await runner.performSave(baseContext)
 
     expect(save).toHaveBeenCalledWith(baseContext)
     expect(onStatusChange).toHaveBeenCalledWith('saving')
     expect(onStatusChange).toHaveBeenCalledWith('saved')
     expect(onSaved).toHaveBeenCalledTimes(1)
-    expect(runner.isDirty(baseContext.present)).toBe(false)
+    expect(runner.isDirty(baseContext.marks)).toBe(false)
   })
 
   it('flush waits for in-flight save then persists queued context', async () => {
@@ -100,11 +109,11 @@ describe('createAttendanceSaveRunner', () => {
       onSaved: vi.fn(),
     })
 
-    runner.syncBaseline({ s1: false, s2: false })
+    runner.syncBaseline({ s1: 'absent', s2: 'absent' })
     const first = runner.performSave(baseContext)
     const queued: AttendanceSaveContext = {
       ...baseContext,
-      present: { s1: true, s2: true },
+      marks: { s1: 'present', s2: 'present' },
     }
     const flushed = runner.flush(queued)
 
@@ -125,11 +134,11 @@ describe('createAttendanceSaveRunner', () => {
       onSaved: vi.fn(),
     })
 
-    runner.syncBaseline({ s1: false, s2: false })
+    runner.syncBaseline({ s1: 'absent', s2: 'absent' })
     const firstCtx = baseContext
     const secondCtx: AttendanceSaveContext = {
       ...baseContext,
-      present: { s1: true, s2: true },
+      marks: { s1: 'present', s2: 'present' },
     }
 
     const first = runner.performSave(firstCtx)

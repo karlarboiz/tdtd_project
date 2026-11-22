@@ -1,34 +1,42 @@
-import type { AttendancePeriod, StudentRow } from '@/types/schema'
+import type {
+  AttendancePeriod,
+  AttendanceRecordStatus,
+  StudentRow,
+} from '@/types/schema'
 
 export type AttendanceSaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
+
+export type AttendanceMarkMap = Record<string, AttendanceRecordStatus>
 
 export type AttendanceSaveContext = {
   dateYmd: string
   period: AttendancePeriod
   classId: string
   students: StudentRow[]
-  present: Record<string, boolean>
+  marks: AttendanceMarkMap
 }
 
-export function isPresentMapDirty(
-  present: Record<string, boolean>,
-  baseline: Record<string, boolean>,
+export function isAttendanceMarksDirty(
+  marks: AttendanceMarkMap,
+  baseline: AttendanceMarkMap,
 ): boolean {
-  const keys = new Set([...Object.keys(present), ...Object.keys(baseline)])
+  const keys = new Set([...Object.keys(marks), ...Object.keys(baseline)])
   for (const key of keys) {
-    if (Boolean(present[key]) !== Boolean(baseline[key])) return true
+    if ((marks[key] ?? 'absent') !== (baseline[key] ?? 'absent')) return true
   }
   return false
 }
 
 export function buildAttendanceSavePayload(ctx: AttendanceSaveContext) {
   const classStudentIds = ctx.students.map((s) => s.id)
-  const presentStudentIds = classStudentIds.filter((id) => ctx.present[id])
   return {
     date: ctx.dateYmd,
     period: ctx.period,
     classStudentIds,
-    presentStudentIds,
+    marks: classStudentIds.map((studentId) => ({
+      studentId,
+      status: ctx.marks[studentId] ?? 'absent',
+    })),
   }
 }
 
@@ -43,31 +51,31 @@ export function createAttendanceSaveRunner({
   onStatusChange,
   onSaved,
 }: SaveRunnerOptions) {
-  let lastSavedPresent: Record<string, boolean> = {}
+  let lastSavedMarks: AttendanceMarkMap = {}
   let saving = false
   let saveAgainAfter = false
   let pendingContext: AttendanceSaveContext | null = null
   let inFlight: Promise<void> | null = null
 
-  function syncBaseline(present: Record<string, boolean>) {
-    lastSavedPresent = { ...present }
+  function syncBaseline(marks: AttendanceMarkMap) {
+    lastSavedMarks = { ...marks }
     onStatusChange('idle')
   }
 
-  function isDirty(present: Record<string, boolean>) {
-    return isPresentMapDirty(present, lastSavedPresent)
+  function isDirty(marks: AttendanceMarkMap) {
+    return isAttendanceMarksDirty(marks, lastSavedMarks)
   }
 
   async function performSave(ctx: AttendanceSaveContext): Promise<void> {
     if (!ctx.classId || ctx.students.length === 0) return
-    if (!isDirty(ctx.present)) return
+    if (!isDirty(ctx.marks)) return
 
     const run = async () => {
       saving = true
       onStatusChange('saving')
       try {
         await save(ctx)
-        lastSavedPresent = { ...ctx.present }
+        lastSavedMarks = { ...ctx.marks }
         onStatusChange('saved')
         await onSaved()
       } catch {
@@ -87,7 +95,7 @@ export function createAttendanceSaveRunner({
         saveAgainAfter = false
         const next = pendingContext
         pendingContext = null
-        if (isDirty(next.present)) {
+        if (isDirty(next.marks)) {
           await performSave(next)
         }
       } else {
@@ -104,7 +112,7 @@ export function createAttendanceSaveRunner({
       try {
         await inFlight
       } catch {
-        if (isDirty(ctx.present)) {
+        if (isDirty(ctx.marks)) {
           await performSave(ctx)
         }
       }

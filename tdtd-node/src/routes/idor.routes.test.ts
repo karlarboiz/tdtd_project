@@ -160,7 +160,7 @@ describe('GAP-002 HTTP IDOR', () => {
         date: '2026-05-28',
         period: 'AM',
         classStudentIds: [student.id],
-        presentStudentIds: [student.id],
+        marks: [{ studentId: student.id, status: 'present' }],
       }),
     ).toThrow(HttpError)
   })

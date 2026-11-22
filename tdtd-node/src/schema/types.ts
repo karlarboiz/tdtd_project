@@ -268,8 +268,8 @@ export interface ActivityLogRow {
   createdAt: number
 }
 
-/** Student Lab — attendance row in session list. */
-export type StudentLabAttendanceStatus = AttendanceRecordStatus | 'absent'
+/** Student Lab — attendance row in session list. Same values as stored records. */
+export type StudentLabAttendanceStatus = AttendanceRecordStatus
 
 export interface StudentLabAttendanceSessionRow {
   date: IsoDateString
@@ -281,6 +281,7 @@ export interface StudentLabAttendanceSummary {
   totalSessions: number
   presentCount: number
   absentCount: number
+  lateCount: number
   presentRate: number
 }
 

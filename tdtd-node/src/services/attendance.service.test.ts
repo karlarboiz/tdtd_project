@@ -13,7 +13,7 @@ import {
 vi.mock('../dao/attendance.dao.js', () => ({
   listDistinctSessionDatesInRange: vi.fn(),
   findSessionByDatePeriod: vi.fn(),
-  selectPresentStudentIds: vi.fn(),
+  selectAttendanceMarks: vi.fn(),
   insertSession: vi.fn(),
   deleteRecordsForStudentsInSession: vi.fn(),
   insertAttendanceRecord: vi.fn(),
@@ -114,7 +114,7 @@ describe('attendance.service', () => {
       ).toThrowError(new HttpError(404, 'Class not found'))
     })
 
-    it('returns empty present ids when session is missing', async () => {
+    it('returns no marks when session is missing', async () => {
       const db = makeDb()
       const { assertClassOwned } = await import('../lib/ownership.js')
       vi.mocked(assertClassOwned).mockReturnValue({
@@ -138,7 +138,7 @@ describe('attendance.service', () => {
       vi.mocked(attendanceDao.findSessionByDatePeriod).mockReturnValue(undefined)
 
       const state = getAttendanceState(db, USER_ID, '2026-05-27', 'AM', 'class-1')
-      expect(state).toEqual({ session: null, presentStudentIds: [] })
+      expect(state).toEqual({ session: null, marks: [] })
     })
   })
 
@@ -150,14 +150,14 @@ describe('attendance.service', () => {
           date: '2026-06-06',
           period: 'AM',
           classStudentIds: ['s-1'],
-          presentStudentIds: ['s-1'],
+          marks: [{ studentId: 's-1', status: 'present' }],
         }),
       ).toThrowError(
         new HttpError(400, 'attendance is not recorded on non-school days'),
       )
     })
 
-    it('filters present ids by class list and records activity', () => {
+    it('writes one status per class student and ignores ids outside the class', () => {
       const db = makeDb()
       vi.mocked(attendanceDao.findSessionByDatePeriod).mockReturnValue({
         id: 'sess-1',
@@ -171,7 +171,12 @@ describe('attendance.service', () => {
         date: '2026-05-27',
         period: 'AM',
         classStudentIds: ['s-1', 's-2'],
-        presentStudentIds: ['s-1', 'outsider', 's-1'],
+        marks: [
+          { studentId: 's-1', status: 'present' },
+          { studentId: 'outsider', status: 'late' },
+          { studentId: 's-1', status: 'present' },
+          { studentId: 's-2', status: 'absent' },
+        ],
       })
 
       expect(session.id).toBe('sess-1')
@@ -180,13 +185,14 @@ describe('attendance.service', () => {
         'sess-1',
         ['s-1', 's-2'],
       )
-      expect(attendanceDao.insertAttendanceRecord).toHaveBeenCalledTimes(1)
+      expect(attendanceDao.insertAttendanceRecord).toHaveBeenCalledTimes(2)
       expect(recordActivity).toHaveBeenCalledWith(
         db,
         USER_ID,
         expect.objectContaining({
-          summary: 'Saved AM attendance for 2026-05-27 (1 present)',
-          metadata: expect.objectContaining({ count: 1 }),
+          summary:
+            'Saved AM attendance for 2026-05-27 (1 present, 1 absent, 0 late, 0 excused)',
+          metadata: expect.objectContaining({ count: 2 }),
         }),
       )
     })

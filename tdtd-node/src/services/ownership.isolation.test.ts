@@ -180,7 +180,7 @@ describe('per-teacher data isolation (GAP-001)', () => {
         date: '2026-05-28',
         period: 'AM',
         classStudentIds: [student.id],
-        presentStudentIds: [student.id],
+        marks: [{ studentId: student.id, status: 'present' }],
       }),
     ).toThrow(HttpError)
   })

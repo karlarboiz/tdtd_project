@@ -73,7 +73,7 @@ A middle-name-only query matches because the display name includes it. Results u
 | `scoresFrom` | No | same as `from` | Score list range start |
 | `scoresTo` | No | same as `to` | Score list range end |
 
-**All-time attendance:** omit `from` and `to` (or send empty) — server returns every shift-eligible session for the student.
+**All-time attendance:** omit `from` and `to` (or send empty) — server returns every shift-eligible attendance record for the student.
 
 **Validation:**
 
@@ -96,6 +96,7 @@ A middle-name-only query matches because the display name includes it. Results u
       totalSessions: number
       presentCount: number
       absentCount: number
+      lateCount: number
       presentRate: number // 0–100, 0 when totalSessions === 0
     }
     sessions: StudentLabAttendanceSessionRow[]
@@ -114,7 +115,7 @@ A middle-name-only query matches because the display name includes it. Results u
 {
   date: string       // "YYYY-MM-DD"
   period: "AM" | "PM"
-  status: "present" | "absent"
+  status: "present" | "absent" | "late"
 }
 ```
 
@@ -152,19 +153,19 @@ Global sessions are keyed by `date` + `period` only ([attendance.md](./attendanc
 
 PM sessions must **not** count as absent for a morning-section student (and vice versa).
 
-### Present vs absent
+### Status counts
 
-- **`present`:** row exists in `attendance_records` for `(sessionId, studentId)`.
-- **`absent`:** shift-eligible session in range with no record for that student.
+Each row in `sessions` is an `attendance_records` row for that student whose session matches the class shift and the date range. `status` is the stored value: **`present`**, **`absent`**, or **`late`**.
 
-MVP `status` on records is always `present`; absence is inferred from missing row.
+A shift-eligible session with no record for the student is omitted. It is not counted as absent.
 
 ### Summary
 
-- `totalSessions` = count of `sessions` array.
+- `totalSessions` = count of `sessions` (explicit records only).
 - `presentCount` = sessions with `status: present`.
-- `absentCount` = `totalSessions - presentCount`.
-- `presentRate` = `round(100 * presentCount / totalSessions)` or `0` if `totalSessions === 0`.
+- `absentCount` = sessions with `status: absent`.
+- `lateCount` = sessions with `status: late`.
+- `presentRate` = `round(100 * presentCount / totalSessions)` or `0` if `totalSessions === 0`. Late and absent rows sit in `totalSessions`, so they lower the present rate. They do not increment `presentCount`.
 
 ---
 
@@ -221,6 +222,7 @@ No migration required. Queries rely on:
 - Adding `attendance_summary` or `student_scores` columns on `students`.
 - Storing denormalized lab snapshots in SQLite.
 - Counting all AM+PM sessions for every student regardless of `classes.shift`.
+- Treating a missing `attendance_records` row as `absent`.
 - Including score events with `score IS NULL` in “recent scores” lists.
 - Editing roster, attendance, or scores from Student Lab v1 (view-only; use existing routes).
 

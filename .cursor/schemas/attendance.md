@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines **per-teacher** daily attendance: one session per teacher + calendar date + period (AM/PM), with per-student present records. See [GAP-001.md](../gaps/GAP-001.md).
+Defines **per-teacher** daily attendance: one session per teacher + calendar date + period (AM/PM), with an explicit per-student status of `present`, `absent`, `late`, or `excused`. See [GAP-001.md](../gaps/GAP-001.md).
 
 Depends on [core.md](./core.md) (`classes`, `students`). Class filtering at save time uses `classes.shift` vs session `period`.
 
@@ -51,9 +51,8 @@ attendance_records: {
 ### attendance_records
 
 - One record per student per session (`UNIQUE(session_id, student_id)`).
-- `status` values (GAP-088):
-  - **`present`**, **`absent`**, **`late`**, **`excused`**
-  - Legacy: absence = no record OR unchecked in UI (treated as absent)
+- `status` values (GAP-088): **`present`**, **`absent`**, **`late`**, **`excused`**.
+- Saving a class writes one row per student on that roster. Each row stores the chosen status. A missing row is not an absent or late mark.
 - Must reference valid session and student.
 
 ### daily_attendance_records
@@ -108,7 +107,7 @@ See `tdtd-node/src/db/migrate.ts`:
 
 1. Check if a session exists for the selected **date** and **period**.
 2. If NOT → create new session.
-3. Insert attendance records for checked students (present only).
+3. Replace that class's records in the session: one row per submitted student, with status `present`, `absent`, `late`, or `excused`.
 
 ### Class / shift filtering
 
@@ -125,7 +124,8 @@ Roster setup rules (do not duplicate the same children under both shifts): [core
 ### Data integrity
 
 - Do NOT create multiple sessions for the same date + period (DB enforces uniqueness).
-- API in **tdtd-node** should enforce the same rules on writes.
+- API in **tdtd-node** accepts `present`, `absent`, `late`, and `excused`, and requires a status for every submitted class student.
+- Existing databases rebuild `attendance_records` when the CHECK is still present-only, including `excused`. Copied rows keep their status. SQLite cannot `ALTER` a CHECK constraint.
 
 ---
 
@@ -135,10 +135,13 @@ Roster setup rules (do not duplicate the same children under both shifts): [core
 - Adding `classId` to `attendance_sessions`.
 - Nesting attendance arrays on class or student objects.
 - Creating deeply nested JSON blobs as the primary store.
+- Treating a missing `attendance_records` row as `absent` or `late`.
 
 ---
 
-## Future extensions
+## Status values
+
+Shipped on `attendance_records.status`: **`present`**, **`absent`**, **`late`**, and **`excused`**. See ATT-011 in [Attendance-Function-Doc.md](../documentation/Attendance-Function-Doc.md).
 
 Do not implement yet:
 

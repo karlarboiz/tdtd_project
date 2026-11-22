@@ -1,32 +1,45 @@
 import type {
   AttendancePeriod,
+  AttendanceRecordStatus,
   AttendanceSessionRow,
   StudentRow,
 } from '@/types/schema'
 import { apiJson } from '../lib/http'
 
+export type AttendanceMark = {
+  studentId: string
+  status: AttendanceRecordStatus
+}
+
 export type AttendanceStateResponse = {
   session: AttendanceSessionRow | null
-  presentStudentIds: string[]
+  marks: AttendanceMark[]
 }
 
-export type AttendancePresentRosterResponse = {
+export type AttendanceRosterStudent = StudentRow & {
+  status: AttendanceRecordStatus
+}
+
+export type AttendanceRosterResponse = {
   session: AttendanceSessionRow | null
-  presentStudents: StudentRow[]
+  students: AttendanceRosterStudent[]
 }
 
-export function getAttendancePresentRoster(params: {
+export function getAttendanceRoster(params: {
   date: string
   period: AttendancePeriod
-}): Promise<AttendancePresentRosterResponse> {
+}): Promise<AttendanceRosterResponse> {
   const q = new URLSearchParams({
     date: params.date,
     period: params.period,
   })
-  return apiJson<AttendancePresentRosterResponse>(
+  return apiJson<AttendanceRosterResponse>(
     `/api/attendance/present-roster?${q.toString()}`,
   )
 }
+
+/** Same roster read. Reminder banners only check whether `session` is set. */
+export const getAttendancePresentRoster = getAttendanceRoster
 
 export function getAttendanceState(params: {
   date: string
@@ -47,7 +60,7 @@ export function saveAttendance(input: {
   date: string
   period: AttendancePeriod
   classStudentIds: string[]
-  presentStudentIds: string[]
+  marks: AttendanceMark[]
 }): Promise<{ session: AttendanceSessionRow }> {
   return apiJson<{ session: AttendanceSessionRow }>('/api/attendance/save', {
     method: 'POST',

@@ -73,6 +73,9 @@ export type StudentUpsertPayload = {
   lastGradeCompleted?: string
 }
 
+/** Stored on attendance_records.status. */
+export type AttendanceRecordStatus = 'present' | 'absent' | 'late' | 'excused'
+
 export interface AttendanceSessionRow {
   id: string
   date: string
@@ -163,7 +166,7 @@ export interface ActivityLogRow {
   createdAt: number
 }
 
-export type StudentLabAttendanceStatus = 'present' | 'absent'
+export type StudentLabAttendanceStatus = AttendanceRecordStatus
 
 export interface StudentLabAttendanceSessionRow {
   date: string
@@ -175,6 +178,7 @@ export interface StudentLabAttendanceSummary {
   totalSessions: number
   presentCount: number
   absentCount: number
+  lateCount: number
   presentRate: number
 }
 

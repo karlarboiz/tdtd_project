@@ -287,7 +287,7 @@ export function migrate(db: SqliteDatabase): void {
       id TEXT PRIMARY KEY,
       session_id TEXT NOT NULL,
       student_id TEXT NOT NULL,
-      status TEXT NOT NULL CHECK (status = 'present'),
+      status TEXT NOT NULL CHECK (status IN ('present', 'absent', 'late', 'excused')),
       timestamp INTEGER NOT NULL,
       FOREIGN KEY (session_id) REFERENCES attendance_sessions(id),
       FOREIGN KEY (student_id) REFERENCES students(id),
@@ -763,7 +763,7 @@ function migrateAttendanceStatusCodes(db: SqliteDatabase): void {
       `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'attendance_records'`,
     )
     .get() as { sql: string } | undefined
-  if (row?.sql.includes("'absent'")) return
+  if (row?.sql.includes("'excused'")) return
 
   db.pragma('foreign_keys = OFF')
   try {
