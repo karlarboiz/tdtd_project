@@ -19,7 +19,9 @@ export function openDb(): SqliteDatabase {
   const dbPath = getDbPath()
   fs.mkdirSync(path.dirname(dbPath), { recursive: true })
   const db = new Sqlite(dbPath)
+  db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
+  db.pragma('busy_timeout = 5000')
   migrate(db)
   singleton = db
   return db

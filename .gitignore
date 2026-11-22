@@ -51,6 +51,7 @@ Desktop.ini
 *.local
 
 # Java / IntelliJ (tdtd-batch)
+tdtd-batch/data/
 target/
 *.iml
 *.class
