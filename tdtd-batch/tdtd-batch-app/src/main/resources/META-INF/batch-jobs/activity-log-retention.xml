@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<job id="activity-log-retention" xmlns="https://jakarta.ee/xml/ns/jakartaee" version="2.0">
+  <step id="purge-activity-logs">
+    <batchlet ref="com.tdtd.batch.recents.ActivityLogRetentionBatchlet">
+      <properties>
+        <property name="retainDays" value="#{jobParameters['retainDays']}"/>
+      </properties>
+    </batchlet>
+  </step>
+</job>
