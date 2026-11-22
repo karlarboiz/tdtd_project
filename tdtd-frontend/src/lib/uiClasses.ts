@@ -45,6 +45,10 @@ export const ghostButtonClass =
 
 export const errorAlertClass = 'text-sm font-medium text-accent'
 
+/** Linked warning (attendance reminders). Accent is reserved for warnings. */
+export const warningBannerLinkClass =
+  'block rounded-xl border border-accent bg-white px-4 py-3 text-sm font-medium text-accent shadow-sm transition hover:bg-neutral-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
+
 /** Enter animation for list/detail/page content — see Content-Reveal-Function-Doc.md */
 export const contentRevealClass = 'tdtd-content-enter'
 

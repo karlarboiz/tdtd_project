@@ -7,6 +7,7 @@ import { getHolidaysInRange } from '../../api/holidaysApi'
 import { listMissedDueItems } from '../../api/dueListApi'
 import { DueList } from '../../components/DueList/DueList'
 import { MonthlyCalendar } from '../../components/MonthlyCalendar/MonthlyCalendar'
+import { ReminderBanners } from '../../components/ReminderBanners/ReminderBanners'
 import { isWeekendDate, toYMD } from '../../lib/dates'
 import { uniqueDatesFromMissedDueItems } from '../../lib/missedAttendanceDates'
 
@@ -104,7 +105,11 @@ export function AttendanceCalendar() {
                 : 'No attendance on weekends — pick a weekday from the calendar.'}
             </p>
           </div>
-        ) : null}
+        ) : (
+          <div className="mb-4">
+            <ReminderBanners />
+          </div>
+        )}
 
         <div className="mb-6 flex items-center gap-3">
           <button

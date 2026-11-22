@@ -2,6 +2,7 @@ import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { DueList } from '@/components/DueList/DueList'
 import { MissedWorkSummary } from '@/components/MissedWorkSummary/MissedWorkSummary'
+import { ReminderBanners } from '@/components/ReminderBanners/ReminderBanners'
 import { StudentLabShortcut } from '@/components/StudentLabShortcut/StudentLabShortcut'
 import { TodayAttendanceCTA } from '@/components/TodayAttendanceCTA/TodayAttendanceCTA'
 import { useDueItems } from '@/hooks/useDueItems'
@@ -34,19 +35,20 @@ export function Home() {
         </header>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:items-start">
-        <div className="flex flex-col gap-6">
-          <DueList
-            showEmptyState
-            items={items}
-            loading={loading}
-            onDismiss={dismiss}
-          />
-          <TodayAttendanceCTA dueItems={items} loading={loading} />
-        </div>
-        <div className="flex flex-col gap-6">
-          <MissedWorkSummary />
-          <StudentLabShortcut />
-        </div>
+          <div className="flex flex-col gap-6">
+            <ReminderBanners />
+            <DueList
+              showEmptyState
+              items={items}
+              loading={loading}
+              onDismiss={dismiss}
+            />
+            <TodayAttendanceCTA dueItems={items} loading={loading} />
+          </div>
+          <div className="flex flex-col gap-6">
+            <MissedWorkSummary />
+            <StudentLabShortcut />
+          </div>
         </div>
       </PageContentReveal>
     </PageContainer>
