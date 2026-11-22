@@ -76,6 +76,21 @@ export const STUDENT_QUERIES = {
     WHERE class_id = ?
     ORDER BY last_name COLLATE NOCASE ASC, first_name COLLATE NOCASE ASC
   `,
+  /** Name search limited to the signed-in teacher's classes. @term is already trimmed. */
+  searchByName: `
+    SELECT ${STUDENT_COLS_FROM_ALIAS}
+    FROM students s
+    INNER JOIN classes c ON c.id = s.class_id AND c.user_id = @userId
+    WHERE instr(lower(
+      CASE
+        WHEN s.middle_name IS NULL OR trim(s.middle_name) = ''
+        THEN s.first_name || ' ' || s.last_name
+        ELSE s.first_name || ' ' || s.middle_name || ' ' || s.last_name
+      END
+    ), lower(@term)) > 0
+    OR instr(lower(s.first_name || ' ' || s.last_name), lower(@term)) > 0
+    ORDER BY s.last_name COLLATE NOCASE ASC, s.first_name COLLATE NOCASE ASC
+  `,
   classIdByStudentId: `
     SELECT class_id AS class_id FROM students WHERE id = ? LIMIT 1
   `,

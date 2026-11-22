@@ -30,8 +30,13 @@ describe('activityLogHref', () => {
     expect(activityLogHref({ schoolYearId: 'sy-1' })).toBe('/subjects')
   })
 
+  it('opens Student Lab when studentId is the most specific link', () => {
+    expect(activityLogHref({ studentId: 's-1', classId: 'class-1' })).toBe(
+      '/student-lab/s-1',
+    )
+  })
+
   it('returns undefined when metadata has no supported deep-link fields', () => {
-    expect(activityLogHref({ studentId: 's-1' })).toBeUndefined()
     expect(activityLogHref()).toBeUndefined()
   })
 })

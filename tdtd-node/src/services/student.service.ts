@@ -185,6 +185,17 @@ export function listStudentsByClass(
   return studentDao.listStudentsByClass(db, id)
 }
 
+/** Case-insensitive match on first, middle, last, display name, and "first last". */
+export function searchStudentsByName(
+  db: SqliteDatabase,
+  userId: string,
+  q: string,
+): StudentRow[] {
+  const term = q.trim().replace(/\s+/g, ' ')
+  if (!term) throw new HttpError(400, 'q is required')
+  return studentDao.searchStudentsByName(db, userId, term)
+}
+
 export function registerStudent(
   db: SqliteDatabase,
   userId: string,

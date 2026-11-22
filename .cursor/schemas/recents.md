@@ -58,6 +58,16 @@ activity_logs: {
 
 Used for deep links on the Recents page (not enforced FKs).
 
+`activityLogHref` picks the first match:
+
+1. `eventId` → `/scores/event/:eventId`
+2. `date` → attendance session for that date (`period` when set)
+3. `studentId` → `/student-lab/:studentId`
+4. `classId` → `/classes`
+5. `schoolYearId` → `/subjects`
+
+`studentId` is used only when there is no score-event or attendance-date link. A row with both `classId` and `studentId` (for example `STUDENT_REGISTERED`) opens Student Lab.
+
 ---
 
 ## Rules
