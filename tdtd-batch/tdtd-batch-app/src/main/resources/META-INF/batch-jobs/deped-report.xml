@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<job id="deped-report" xmlns="https://jakarta.ee/xml/ns/jakartaee" version="2.0">
+    <step id="extract">
+        <batchlet ref="com.tdtd.batch.deped.DepedReportBatchlet">
+            <properties>
+                <property name="output" value="#{jobParameters['output']}"/>
+                <property name="classId" value="#{jobParameters['classId']}"/>
+                <property name="from" value="#{jobParameters['from']}"/>
+                <property name="to" value="#{jobParameters['to']}"/>
+            </properties>
+        </batchlet>
+    </step>
+</job>
