@@ -19,6 +19,7 @@ import type { AssessmentBucket } from '../schema/types.js'
 import { assertSubjectRegisteredForActiveYear } from './schoolYear.service.js'
 import { assertClassExists } from './subject.service.js'
 import * as classDao from '../dao/class.dao.js'
+import { assertScoreEventOwned } from '../lib/ownership.js'
 import {
   ACTIVITY_ACTION,
   recordActivity,
@@ -31,16 +32,18 @@ export type ClassSubjectListItem = ClassSubjectListRow
 
 export function listClassSubjects(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
 ): ClassSubjectListItem[] {
   const id = classId.trim()
   if (!id) throw new HttpError(400, 'classId is required')
-  assertClassExists(db, id)
+  assertClassExists(db, id, userId)
   return classSubjectDao.listClassSubjects(db, id)
 }
 
 export function assignSubjectToClass(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
   subjectId: string,
 ): ClassSubjectListItem {
@@ -48,11 +51,11 @@ export function assignSubjectToClass(
   const sid = subjectId.trim()
   if (!cid) throw new HttpError(400, 'classId is required')
   if (!sid) throw new HttpError(400, 'subjectId is required')
-  assertClassExists(db, cid)
-  if (!subjectDao.subjectExists(db, sid)) {
+  assertClassExists(db, cid, userId)
+  if (!subjectDao.subjectExists(db, sid, userId)) {
     throw new HttpError(404, 'subject not found')
   }
-  assertSubjectRegisteredForActiveYear(db, sid)
+  assertSubjectRegisteredForActiveYear(db, userId, sid)
   if (classSubjectDao.classSubjectPairExists(db, cid, sid)) {
     throw new HttpError(409, 'subject already assigned to this class')
   }
@@ -66,8 +69,8 @@ export function assignSubjectToClass(
   const list = classSubjectDao.listClassSubjects(db, cid)
   const found = list.find((x) => x.subjectId === sid)
   if (!found) throw new HttpError(500, 'failed to load class subject')
-  const classRow = classDao.getClassById(db, cid)
-  recordActivity(db, {
+  const classRow = classDao.getClassById(db, cid, userId)
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SUBJECT_ASSIGNED_TO_CLASS,
     summary: `Assigned ${found.subjectName} to ${classRow?.name ?? 'class'}`,
     metadata: { classId: cid },
@@ -77,6 +80,7 @@ export function assignSubjectToClass(
 
 export function removeSubjectFromClass(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
   subjectId: string,
 ): void {
@@ -84,15 +88,15 @@ export function removeSubjectFromClass(
   const sid = subjectId.trim()
   if (!cid) throw new HttpError(400, 'classId is required')
   if (!sid) throw new HttpError(400, 'subjectId is required')
-  assertClassExists(db, cid)
+  assertClassExists(db, cid, userId)
   const list = classSubjectDao.listClassSubjects(db, cid)
   const existing = list.find((x) => x.subjectId === sid)
   const { changes } = classSubjectDao.deleteClassSubject(db, cid, sid)
   if (changes === 0) {
     throw new HttpError(404, 'class subject assignment not found')
   }
-  const classRow = classDao.getClassById(db, cid)
-  recordActivity(db, {
+  const classRow = classDao.getClassById(db, cid, userId)
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SUBJECT_UNASSIGNED_FROM_CLASS,
     summary: `Unassigned ${existing?.subjectName ?? 'subject'} from ${classRow?.name ?? 'class'}`,
     metadata: { classId: cid },
@@ -120,15 +124,16 @@ function parseOptionalDate(raw: unknown): IsoDateString | undefined {
 
 export function listScoreEvents(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
   subjectIdFilter?: string,
 ): ScoreEventRow[] {
   const cid = classId.trim()
   if (!cid) throw new HttpError(400, 'classId is required')
-  assertClassExists(db, cid)
+  assertClassExists(db, cid, userId)
   const sid = subjectIdFilter?.trim()
   const subjectParam = sid ? sid : null
-  if (subjectParam && !subjectDao.subjectExists(db, subjectParam)) {
+  if (subjectParam && !subjectDao.subjectExists(db, subjectParam, userId)) {
     throw new HttpError(404, 'subject not found')
   }
   return scoreEventDao.listScoreEventsByClass(db, cid, subjectParam)
@@ -170,16 +175,17 @@ function parseOptionalSubtype(raw: unknown): string | undefined {
 
 export function createScoreEvent(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
   input: CreateScoreEventInput,
 ): ScoreEventRow {
   const cid = classId.trim()
   if (!cid) throw new HttpError(400, 'classId is required')
-  assertClassExists(db, cid)
+  assertClassExists(db, cid, userId)
 
   const subjectId = typeof input.subjectId === 'string' ? input.subjectId.trim() : ''
   if (!subjectId) throw new HttpError(400, 'subjectId is required')
-  if (!subjectDao.subjectExists(db, subjectId)) {
+  if (!subjectDao.subjectExists(db, subjectId, userId)) {
     throw new HttpError(404, 'subject not found')
   }
   if (!classSubjectDao.classSubjectPairExists(db, cid, subjectId)) {
@@ -219,7 +225,7 @@ export function createScoreEvent(
     createdAt: now,
   }
   scoreEventDao.insertScoreEvent(db, row)
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SCORE_EVENT_CREATED,
     summary: `Created ${scoreKindLabel(kind)}: ${title}`,
     metadata: { classId: cid, eventId: row.id },
@@ -227,17 +233,22 @@ export function createScoreEvent(
   return row
 }
 
-export function getScoreEventOrThrow(db: SqliteDatabase, eventId: string): ScoreEventRow {
+export function getScoreEventOrThrow(
+  db: SqliteDatabase,
+  userId: string,
+  eventId: string,
+): ScoreEventRow {
   const id = eventId.trim()
   if (!id) throw new HttpError(400, 'eventId is required')
-  const ev = scoreEventDao.getScoreEventById(db, id)
-  if (!ev) throw new HttpError(404, 'score event not found')
-  return ev
+  return assertScoreEventOwned(db, id, userId)
 }
 
-export function listScoreEntries(db: SqliteDatabase, eventId: string): ScoreEntryRow[] {
-  const ev = getScoreEventOrThrow(db, eventId)
-  void ev
+export function listScoreEntries(
+  db: SqliteDatabase,
+  userId: string,
+  eventId: string,
+): ScoreEntryRow[] {
+  getScoreEventOrThrow(db, userId, eventId)
   return scoreEntryDao.listScoreEntriesByEvent(db, eventId.trim())
 }
 
@@ -249,10 +260,11 @@ export type ScoreEntryInput = {
 
 export function replaceScoreEntries(
   db: SqliteDatabase,
+  userId: string,
   eventId: string,
   entries: ScoreEntryInput[],
 ): ScoreEntryRow[] {
-  const ev = getScoreEventOrThrow(db, eventId)
+  const ev = getScoreEventOrThrow(db, userId, eventId)
   const eid = eventId.trim()
   const now = Date.now()
   const hadPriorEntries =
@@ -305,7 +317,7 @@ export function replaceScoreEntries(
     (e) => e.score !== null && e.score !== undefined,
   ).length
   const verb = hadPriorEntries ? 'Updated' : 'Saved'
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SCORES_SAVED,
     summary: `${verb} scores for ${ev.title} (${gradedCount} graded)`,
     metadata: { classId: ev.classId, eventId: eid, count: gradedCount },

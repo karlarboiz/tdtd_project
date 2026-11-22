@@ -4,7 +4,7 @@ Change history and feature notes for **Teacher's Dilemma Today**, organized by p
 
 Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These files record **what we built, when, why**, and which files/schemas were involved.
 
-**Planning** (not yet shipped): [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md). **Strategic alignment** (living): [Spec-Align-Doc.md](./Spec-Align-Doc.md) · [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) — checklist audit and prioritized execution backlog.
+**Planning** (not yet shipped): [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md). **Strategic alignment** (living): [Spec-Align-Doc.md](./Spec-Align-Doc.md) · [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) — checklist audit and prioritized execution backlog. **Gap epics:** [`.cursor/gaps/`](../gaps/) — detailed implementation specs (e.g. [GAP-001.md](../gaps/GAP-001.md)).
 
 ## Documents
 
@@ -30,6 +30,7 @@ Canonical **table definitions** stay in [`.cursor/schemas/`](../schemas/). These
 | [Gap-Backlog-Doc.md](./Gap-Backlog-Doc.md) | Prioritized `GAP-###` backlog mapped to existing plan docs and Spec-Align sections |
 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | DepEd official forms (SF1, SF2, SF4, SF5, SF9, SF10): enrollment, attendance codes, grading, PDF/Excel export |
 | [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md) | DepEd K–12 grading pipeline: WW/PT/QA, transmutation, quarter grades (GAP-080–082) |
+| [Components-Weights-Function-Doc.md](./Components-Weights-Function-Doc.md) | Configurable WW/PT/QA weights per grade band; grading system profiles (GAP-103) |
 
 ## Entry format
 

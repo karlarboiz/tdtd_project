@@ -17,11 +17,11 @@ import { formatRecordedAt } from '../../lib/dates'
 import { formatScoreEventKindLabel } from '../../lib/scoreLabels'
 import { formatStudentName } from '../../lib/studentDisplay'
 import { ApiError } from '../../lib/http'
+import { Button } from '@/components/Button/Button'
 import {
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 import type {
   ClassRow,
@@ -199,13 +199,9 @@ export function ScoreGrading() {
         {!eventId ? (
           <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
             <p className="text-slate-700">Missing event in URL.</p>
-            <button
-              type="button"
-              className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-              onClick={() => navigate('/scores')}
-            >
+            <Button type="button" className="mt-4" onClick={() => navigate('/scores')}>
               Back to scores
-            </button>
+            </Button>
           </div>
         ) : loading ? (
           <SkeletonStatus label="Loading score sheet" className="space-y-6">
@@ -224,13 +220,9 @@ export function ScoreGrading() {
         ) : !event ? (
           <div className="mx-auto max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
             <p className="text-slate-700">{error ?? 'Event not found.'}</p>
-            <button
-              type="button"
-              className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-              onClick={() => navigate('/scores')}
-            >
+            <Button type="button" className="mt-4" onClick={() => navigate('/scores')}>
               Back to scores
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -330,20 +322,22 @@ export function ScoreGrading() {
                     </p>
                   ) : null}
 
-                  <button
+                  <Button
                     type="button"
+                    size="lg"
+                    fullWidth
+                    className="mt-6"
                     disabled={saving}
                     onClick={() =>
                       isEditing ? void handleSave() : startEditing()
                     }
-                    className={`mt-6 w-full rounded-2xl px-4 py-4 ${primaryButtonClass}`}
                   >
                     {saving
                       ? 'Saving…'
                       : isEditing
                         ? 'Save Changes'
                         : 'Edit Changes'}
-                  </button>
+                  </Button>
                 </section>
               </ContentReveal>
             )}

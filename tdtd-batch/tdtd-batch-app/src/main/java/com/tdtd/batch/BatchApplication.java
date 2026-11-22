@@ -132,7 +132,7 @@ public final class BatchApplication {
     String dateYmd = TimeZones.todayIn(config.getTimeZone()).toString();
     AttendanceReminderService service = new AttendanceReminderService();
     try (Connection conn = DatabaseFactory.open(config.getDbPath())) {
-      String result = service.sync(conn, dateYmd, m, config.getTimeZone());
+      String result = service.syncAll(conn, dateYmd, m, config.getTimeZone());
       LOG.info("Run-once {} {} → {}", dateYmd, m, result);
     }
     System.exit(0);

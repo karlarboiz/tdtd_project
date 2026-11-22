@@ -19,9 +19,13 @@ Tracks alignment with [UI-Rules.md](../rules/UI-Rules.md) and [Standard-Rules.md
 
 ## Buttons
 
-- [x] Primary actions: `bg-primary` / `hover:bg-indigo-600`
-- [x] Secondary actions: teal border/text (`secondaryButtonClass` / Home secondary link pattern)
+- [x] Shared `<Button>` in `tdtd-frontend/src/components/Button/Button.tsx` (`variant`, `size`, `fullWidth`, `to`)
+- [x] Standard CTAs use `<Button>` (not raw `primaryButtonClass` / `secondaryButtonClass`)
+- [x] Primary actions: `variant="primary"` (Indigo)
+- [x] Secondary actions: `variant="secondary"` (teal border/text)
+- [x] Ghost toolbar/icon controls: `variant="ghost"`
 - [x] Accent reserved for errors and high-emphasis warnings (not stats or status chips)
+- [x] Raw `*ButtonClass` from `uiClasses.ts` only for documented exceptions (segmented controls, modal overlays, contextual chips)
 
 ## Forms
 

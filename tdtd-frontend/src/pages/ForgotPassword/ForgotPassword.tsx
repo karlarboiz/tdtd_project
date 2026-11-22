@@ -2,12 +2,12 @@ import { FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageContainer } from '@/layouts/PageContainer'
 import * as authApi from '@/api/authApi'
+import { Button } from '@/components/Button/Button'
 import {
   bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 
 export function ForgotPassword() {
@@ -60,13 +60,9 @@ export function ForgotPassword() {
             />
           </div>
           {error ? <p className={errorAlertClass}>{error}</p> : null}
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`${primaryButtonClass} px-4 py-3`}
-          >
+          <Button type="submit" disabled={submitting}>
             {submitting ? 'Sending…' : 'Send reset link'}
-          </button>
+          </Button>
         </form>
       )}
 

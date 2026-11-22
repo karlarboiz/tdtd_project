@@ -83,17 +83,17 @@ async function tryRefreshAccessToken(): Promise<boolean> {
   }
 
   if (!res.ok) {
-    clearTokens()
+    await clearTokens()
     return false
   }
 
   const session = parsed as AuthTokensResponse
   if (!session?.accessToken || !session?.refreshToken) {
-    clearTokens()
+    await clearTokens()
     return false
   }
 
-  setTokens(session.accessToken, session.refreshToken)
+  await setTokens(session.accessToken, session.refreshToken)
   return true
 }
 

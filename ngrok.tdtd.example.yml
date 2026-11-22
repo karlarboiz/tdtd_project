@@ -1,5 +1,9 @@
-# TDTD — Option B: API + UI tunnels in ONE ngrok agent (required on many free accounts).
-# Do not run two separate `ngrok http` commands; use this file instead.
+# TDTD — Option B only: API + UI tunnels in ONE ngrok agent.
+# On ngrok FREE tier you often get ONE public URL — use Option A instead:
+#   VITE_API_URL= in .env.local, then: ngrok http 5173
+# See .cursor/documentation/Ngrok-Demo.md
+#
+# Use this file only when ngrok shows TWO DIFFERENT HTTPS hostnames for tdtd-api and tdtd-web.
 #
 # Setup (once): ngrok config add-authtoken YOUR_TOKEN
 #

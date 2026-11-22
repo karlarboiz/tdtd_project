@@ -1,5 +1,13 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
-import { getAppTarget, isMobileApp, isOfflineCapable } from '@/mobile/appTarget'
+import { getAppTarget, isMobileApp, isNativePlatform, isOfflineCapable } from '@/mobile/appTarget'
+
+vi.mock('@capacitor/core', () => ({
+  Capacitor: {
+    isNativePlatform: vi.fn(() => false),
+  },
+}))
+
+import { Capacitor } from '@capacitor/core'
 
 describe('appTarget', () => {
   afterEach(() => {
@@ -18,5 +26,12 @@ describe('appTarget', () => {
     expect(getAppTarget()).toBe('mobile')
     expect(isMobileApp()).toBe(true)
     expect(isOfflineCapable()).toBe(true)
+  })
+
+  it('isNativePlatform delegates to Capacitor', () => {
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+    expect(isNativePlatform()).toBe(true)
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false)
+    expect(isNativePlatform()).toBe(false)
   })
 })

@@ -15,13 +15,12 @@ import { PageContainer } from '@/layouts/PageContainer'
 import { PageContentReveal } from '@/layouts/PageContentReveal'
 import { formatClassShiftLabel } from '@/lib/classShift'
 import { ApiError } from '@/lib/http'
+import { Button } from '@/components/Button/Button'
 import {
   bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
-  secondaryButtonClass,
 } from '@/lib/uiClasses'
 import type { ClassRow } from '@/types/schema'
 
@@ -243,12 +242,9 @@ export function Reports() {
             <p className={`mt-2 ${bodyMutedClass}`}>
               Register a class and students before exporting DepEd forms.
             </p>
-            <Link
-              to="/classes"
-              className={`mt-4 inline-flex py-3 px-6 ${primaryButtonClass}`}
-            >
+            <Button to="/classes" className="mt-4">
               Go to Classes
-            </Link>
+            </Button>
           </section>
         ) : (
           <div className="mt-8 space-y-6">
@@ -354,14 +350,13 @@ export function Reports() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <button
+                  <Button
                     type="button"
                     disabled={saveBusy || !settings.schoolName.trim()}
                     onClick={() => void handleSaveSettings()}
-                    className={`py-2.5 px-5 ${primaryButtonClass}`}
                   >
                     {saveBusy ? 'Saving…' : 'Save header'}
-                  </button>
+                  </Button>
                   {saveOk ? (
                     <span className="text-sm font-medium text-secondary">
                       Saved
@@ -465,16 +460,17 @@ export function Reports() {
                   </p>
                 ) : null}
 
-                <button
+                <Button
                   type="button"
+                  fullWidth
+                  className="mt-5 sm:w-auto"
                   disabled={exportBusy || !classId}
                   onClick={() => void handleExport()}
-                  className={`mt-5 w-full py-3 sm:w-auto sm:px-8 ${primaryButtonClass}`}
                 >
                   {exportBusy
                     ? 'Generating PDF…'
                     : `Download ${selectedForm?.code ?? 'form'} PDF`}
-                </button>
+                </Button>
               </section>
             </div>
 
@@ -491,15 +487,16 @@ export function Reports() {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {[1, 2, 3, 4].map((q) => (
-                  <button
+                  <Button
                     key={q}
                     type="button"
+                    variant="secondary"
+                    className="min-w-[4.5rem]"
                     disabled={!classId || computeBusy !== null}
                     onClick={() => void handleCompute(q)}
-                    className={`min-w-[4.5rem] py-2.5 px-4 ${secondaryButtonClass}`}
                   >
                     {computeBusy === q ? 'Computing…' : `Q${q}`}
-                  </button>
+                  </Button>
                 ))}
               </div>
 

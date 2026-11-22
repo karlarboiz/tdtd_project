@@ -52,19 +52,18 @@ Prerequisites for public hosting, per-teacher isolation, and safe mobile sync.
 
 | ID | Title | Spec § | Source doc | Depends | Closes |
 |----|-------|--------|------------|---------|--------|
-| GAP-001 | Scope domain data to authenticated teacher (`userId` on classes, students, attendance, scores) | §2, §12 | [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A4 IDOR review; [Role-Based-Function.md](./Role-Based-Function.md) authorization matrix; [core.md](../schemas/core.md) future extensions | AUTH-001 shipped | Personal workspace; teacher owns data |
+| GAP-001 | Scope domain data to authenticated teacher (`userId` on classes, students, attendance, scores) | §2, §12 | [GAP-001.md](../gaps/GAP-001.md) · [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A4 | AUTH-001 shipped | Personal workspace; teacher owns data |
 | GAP-002 | Enforce IDOR on all read/write routes (filter by `req.auth.id`) | §12 | [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A4; [Role-Based-Function.md](./Role-Based-Function.md) §2 middleware | GAP-001 | Data ownership; safe hosting |
-| GAP-003 | Deploy `tdtd-node` to HTTPS with persistent SQLite volume + backups | §3, §12 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 1; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A1 | — | Sync endpoint reachable; production auth |
-| GAP-004 | Production CORS allowlist + secrets matrix (`dev` / `staging` / `prod`) | §12 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 1; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A1, §A4 | GAP-003 | Safe public API |
-| GAP-005 | Mobile secure token storage (replace `sessionStorage` on Capacitor) | §3, §12 | [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A3; [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 2 | GAP-003 | Play Store online-only v1 |
+| GAP-003 | Deploy `tdtd-node` to HTTPS with persistent SQLite volume + backups | §3, §12 | [GAP-003.md](../gaps-p0/GAP-003.md) · [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 1; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A1 | GAP-002 recommended | Sync endpoint reachable; production auth |
+| GAP-004 | Production CORS allowlist + secrets matrix (`dev` / `staging` / `prod`) | §12 | [GAP-004.md](../gaps-p0/GAP-004.md) §Track B · [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 1; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A1, §A4 | GAP-003 | Safe public API |
+| GAP-005 | Mobile secure token storage (replace `sessionStorage` on Capacitor) | §3, §12 | [GAP-004.md](../gaps-p0/GAP-004.md) §Track A · [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §A3; [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 2 | GAP-003 | Play Store online-only v1 |
 | GAP-006 | Lock Phase 0 product decisions (offline scope, conflict policy, notification policy) | §3, §10 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 0; [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §B | — | Unblocks offline implementation |
 
-**GAP-001 implementation sketch (for agents):**
+**GAP-001:** See epic [GAP-001.md](../gaps/GAP-001.md) for schema, migration, DAO/service threading, and acceptance criteria. Next: GAP-002 route-level IDOR audit.
 
-- Migration: add `user_id` FK to `classes` (and cascade scope to students via `classId`, or denormalize for query speed).
-- Backfill: assign existing rows to first user or migration script per deployment.
-- Update DAOs/services: all list/create/update filtered by authenticated user.
-- Document in [core.md](../schemas/core.md) when shipped.
+**GAP-003:** See epic [GAP-003.md](../gaps-p0/GAP-003.md) for Docker Compose reference stack, backups, and deferred CI deploy wiring. Env matrix → [GAP-004.md](../gaps-p0/GAP-004.md) §Track B.
+
+**GAP-004 / GAP-005:** See epic [GAP-004.md](../gaps-p0/GAP-004.md) — Track A (mobile secure tokens) + Track B (CORS/secrets closure).
 
 ---
 
@@ -74,12 +73,12 @@ Target: **faster than Excel** for daily attendance and score entry on the curren
 
 | ID | Title | Spec § | Source doc | Depends | Closes |
 |----|-------|--------|------------|---------|--------|
-| GAP-010 | Attendance auto-save (debounced save on toggle; remove Save button or keep as fallback) | §1 | **TBD epic** — track here; touches [Attendance-Function-Doc.md](./Attendance-Function-Doc.md), [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) | — | Instant auto-save |
+| ~~GAP-010~~ | ~~Attendance auto-save (debounced save on toggle; Save button removed)~~ | §1 | Shipped — [Attendance-Function-Doc.md](./Attendance-Function-Doc.md) ATT-008 | — | Instant auto-save (attendance) |
 | GAP-011 | Default “all present” on class load (invert to uncheck absentees) | §1 | **TBD epic** — aligns with “mark all present except…” | GAP-010 optional | “Mark all present except…” |
 | GAP-012 | Score sheet auto-save in edit mode (debounced `PUT` entries) | §1 | [Quiz-Function-Doc.md](./Quiz-Function-Doc.md); [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) | — | Instant auto-save |
 | GAP-013 | Keyboard-first score entry (Enter advances row; optional Tab column) | §1 | **TBD epic** — [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) | GAP-012 optional | Keyboard-first input |
 | GAP-014 | Paste column of scores from clipboard (map to roster order) | §1, §7 | **TBD epic** — reuse patterns from [`studentImportParse.ts`](../../tdtd-frontend/src/lib/studentImportParse.ts) | — | Paste-from-Excel for scores |
-| GAP-015 | Streamline attendance: skip class picker when only one class for period | §1 | [Attendance-Function-Doc.md](./Attendance-Function-Doc.md); partial auto-pick in [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) | — | One-tap attendance (partial) |
+| ~~GAP-015~~ | ~~Streamline attendance: skip class picker when only one class for period~~ | §1 | Shipped — [Attendance-Function-Doc.md](./Attendance-Function-Doc.md) ATT-009 | — | One-tap attendance (partial) |
 | GAP-016 | Reduce school-year setup friction (sensible defaults on first login wizard) | §2 | [Subject-Function-Doc.md](./Subject-Function-Doc.md); [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phase 0 offline scope (defer SY registration offline) | — | Zero setup |
 
 **Suggested P1 sprint order:** GAP-015 → GAP-011 → GAP-010 → GAP-012 → GAP-013 → GAP-014 → GAP-016
@@ -194,7 +193,7 @@ Large epic; schema future notes in [core.md](../schemas/core.md), [quiz.md](../s
 | GAP-100 | `school_year_quarters` calendar + date→quarter inference | [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md) |
 | GAP-101 | Final grade (`quarter=0`) + class rank | Same |
 | GAP-102 | Manual grade override API + adviser UI | Same |
-| GAP-103 | Configurable WW/PT/QA weights per SY/grade | Same |
+| ~~GAP-103~~ | ~~Configurable WW/PT/QA weights per SY/grade~~ | Shipped — [Components-Weights-Function-Doc.md](./Components-Weights-Function-Doc.md) |
 | GAP-104 | Performance exam subtype (PT default) | Same |
 | GAP-105 | Auto recompute on score save | Same |
 
@@ -256,12 +255,12 @@ Focus: **Smart** (rules) then **DepEd**.
 | GAP-004 | P0 | Production CORS + env matrix | §12 | Mobile Phase 1 |
 | GAP-005 | P0 | Mobile secure token storage | §3, §12 | MH §A3 |
 | GAP-006 | P0 | Phase 0 product decisions locked | §3, §10 | Mobile Phase 0, MH §B |
-| GAP-010 | P1 | Attendance auto-save | §1 | TBD → Attendance-Function-Doc |
+| ~~GAP-010~~ | P1 | ~~Attendance auto-save~~ | §1 | Shipped — Attendance-Function-Doc ATT-008 |
 | GAP-011 | P1 | Default all present | §1 | TBD epic |
 | GAP-012 | P1 | Score auto-save | §1 | Quiz-Function-Doc |
 | GAP-013 | P1 | Keyboard-first scores | §1 | TBD epic |
 | GAP-014 | P1 | Paste scores from clipboard | §1, §7 | TBD epic |
-| GAP-015 | P1 | Skip single-class picker | §1 | Attendance-Function-Doc |
+| ~~GAP-015~~ | P1 | ~~Skip single-class picker~~ | §1 | Shipped — Attendance-Function-Doc ATT-009 |
 | GAP-016 | P1 | First-login setup wizard | §2 | Subject-Function-Doc |
 | GAP-020 | P2 | DueList: scores due | §10 | Due-List-Function-Doc |
 | GAP-021 | P2 | DueList: setup due | §2, §10 | Due-List-Function-Doc |

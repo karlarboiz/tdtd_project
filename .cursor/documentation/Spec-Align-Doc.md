@@ -41,12 +41,12 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 
 | Spec item | Status | Evidence in TDTD |
 |-----------|--------|------------------|
-| One-tap attendance | **Not started** | Flow: pick class → load roster → checkboxes → **Save attendance** — [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) |
+| One-tap attendance | **Partial** | Single-class teachers: dropdown pre-selected, roster auto-loads (ATT-009 / GAP-015). Multi-class teachers still pick from dropdown. GAP-011 (default all present) not started — [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) |
 | “Mark all present except…” shortcut | **Partial** | **Select all / Clear all** marks every student present or absent (present-only model: unchecked = absent); no “all except these N” shortcut — same file |
 | Bulk edit multiple students | **Not started** | Bulk **import** only via `POST /api/students/bulk` — [`Classes.tsx`](../../tdtd-frontend/src/pages/Classes/Classes.tsx), [`RegisterStudentsModal.tsx`](../../tdtd-frontend/src/components/RegisterStudentsModal/RegisterStudentsModal.tsx) |
 | Keyboard-first input (type → Enter → next) | **Not started** | No score or attendance keyboard navigation flow |
 | Paste-from-Excel for scores | **Not started** | Excel import exists for **students** and **subjects** only |
-| Instant auto-save (no submit buttons) | **Not started** | Explicit save on attendance and scores — [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx), [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) |
+| Instant auto-save (no submit buttons) | **Partial** | Attendance: debounced auto-save on [`AttendanceSession.tsx`](../../tdtd-frontend/src/pages/AttendanceSession/AttendanceSession.tsx) (ATT-008). Scores still explicit save on [`ScoreGrading.tsx`](../../tdtd-frontend/src/pages/ScoreGrading/ScoreGrading.tsx) until GAP-012. |
 
 **Partial wins:** [`Home.tsx`](../../tdtd-frontend/src/pages/Home/Home.tsx) **TodayAttendanceCTA** deep-links to today’s session; attendance checkboxes use `touch-manipulation`; inline roster setup from the attendance screen.
 
@@ -60,7 +60,7 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 | Create class → start immediately | **Shipped** | `/classes` and `RegisterStudentsModal` from attendance — [Classes-Function-Doc.md](./Classes-Function-Doc.md) |
 | Flexible grading system (not rigid templates) | **Shipped** | `QUIZ` / `EXAM` / `PARTICIPATION`, custom titles, optional `maxScore` — [quiz.md](../schemas/quiz.md), [Quiz-Function-Doc.md](./Quiz-Function-Doc.md) |
 | Editable anytime without restrictions | **Shipped** | Past attendance dates; score **Edit Changes** mode — [Quiz-Function-Doc.md](./Quiz-Function-Doc.md) QUIZ-004 |
-| Personal workspace per teacher | **Not started** | `classes` / `students` have **no `userId`**; one shared SQLite DB per deployment — [core.md](../schemas/core.md) |
+| Personal workspace per teacher | **Planned** | GAP-001 in progress — [GAP-001.md](../gaps/GAP-001.md); `user_id` on domain tables |
 
 ---
 
@@ -73,7 +73,7 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 | Sync when online | **Scaffold** | `GET /api/sync/pull`, `POST /api/sync/push`; client [`syncClient.ts`](../../tdtd-frontend/src/mobile/sync/syncClient.ts) — [sync.md](../schemas/sync.md) |
 | Conflict resolution | **Planned** | Last-write-wins documented in [sync.md](../schemas/sync.md); not wired to domain tables |
 
-**Note:** [`sync.service.ts`](../../tdtd-node/src/services/sync.service.ts) `pullSync` returns **empty `changes`**; `pushSync` accepts idempotency keys but does **not apply** mutations. See [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phases 4–5 and [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §D.
+**Note:** [`sync.service.ts`](../../tdtd-node/src/services/sync.service.ts) `pullSync` returns **empty `changes`**; `pushSync` accepts idempotency keys but does **not apply** mutations. See [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) Phases 4–5 and [MH-Mobile-App-Deployment.md](../must-haves/MH-Mobile-App-Deployment.md) §D. **Hosted HTTPS API** (prerequisite for sync when online) — [GAP-003.md](../gaps-p0/GAP-003.md) in progress.
 
 ---
 

@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { primaryButtonClass } from '@/lib/uiClasses'
+import { Button } from '@/components/Button/Button'
 
 type InactivityWarningModalProps = {
   open: boolean
@@ -38,13 +38,9 @@ export function InactivityWarningModal({
           {secondsRemaining === 1 ? 'second' : 'seconds'} due to inactivity.
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onStaySignedIn}
-            className={`min-h-11 px-4 py-2.5 text-sm ${primaryButtonClass}`}
-          >
+          <Button type="button" size="sm" onClick={onStaySignedIn}>
             Stay signed in
-          </button>
+          </Button>
         </div>
       </div>
     </div>

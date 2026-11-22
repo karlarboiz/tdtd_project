@@ -1,5 +1,6 @@
 import cors from 'cors'
 import express from 'express'
+import { getCorsMiddlewareOptions } from './lib/cors-config.js'
 import type { SqliteDatabase } from './db/sqlite-types.js'
 import { attendanceRouter } from './routes/attendance.routes.js'
 import { authRouter } from './routes/auth.routes.js'
@@ -21,7 +22,7 @@ import { holidayRouter } from './routes/holiday.routes.js'
 
 export function createApp(db: SqliteDatabase): express.Express {
   const app = express()
-  app.use(cors({ origin: true }))
+  app.use(cors(getCorsMiddlewareOptions()))
   app.use(express.json())
 
   const api = express.Router()

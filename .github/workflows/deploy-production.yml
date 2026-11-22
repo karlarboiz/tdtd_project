@@ -45,6 +45,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           environment: production
 
+      # Real deploy steps: see .cursor/gaps-p0/GAP-003.md (Docker build/push + host pull)
       - name: Deploy (placeholder — Docker later)
         run: |
           echo "Production deploy placeholder for commit ${{ github.sha }}"

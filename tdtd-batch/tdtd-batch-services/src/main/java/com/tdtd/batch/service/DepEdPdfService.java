@@ -36,6 +36,7 @@ public final class DepEdPdfService {
 
   public Path generate(
       Connection conn,
+      String userId,
       String form,
       String classId,
       String studentId,
@@ -53,14 +54,17 @@ public final class DepEdPdfService {
     Path finalPath = outputDir.resolve(baseName + ".pdf");
     Path tempPath = outputDir.resolve(baseName + ".pdf.tmp");
 
-    String schoolName = reportDao.getSchoolName(conn);
+    String schoolName = reportDao.getSchoolName(conn, userId);
     ClassRow classRow =
         classId != null && !classId.isBlank()
-            ? reportDao.getClass(conn, classId)
+            ? reportDao.getClass(conn, userId, classId)
             : null;
+    if (classId != null && !classId.isBlank() && classRow == null) {
+      throw new IllegalArgumentException("class not found for user: " + classId);
+    }
     List<StudentRow> students =
         classId != null && !classId.isBlank()
-            ? reportDao.listStudentsByClass(conn, classId)
+            ? reportDao.listStudentsByClass(conn, userId, classId)
             : List.of();
 
     try (PDDocument doc = new PDDocument()) {
@@ -123,6 +127,7 @@ public final class DepEdPdfService {
   }
 
   public static void runFromEnvironment(BatchConfig config) throws Exception {
+    String userId = config.requireReportUserId();
     String form = envOrThrow("TDTD_BATCH_RUN_ONCE");
     String classId = envOrDefault("TDTD_REPORT_CLASS_ID", "");
     String studentId = envOrDefault("TDTD_REPORT_STUDENT_ID", "");
@@ -134,6 +139,7 @@ public final class DepEdPdfService {
       new DepEdPdfService()
           .generate(
               conn,
+              userId,
               form.replace("_PDF", ""),
               classId,
               studentId,

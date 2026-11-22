@@ -18,6 +18,8 @@ Roster setup: **classes** (grade/group + morning or afternoon **section**) and *
 
 **Related:** [Attendance-Function-Doc.md](./Attendance-Function-Doc.md) (AM → MRNG, PM → AFTNN), [Student-Lab-Function-Doc.md](./Student-Lab-Function-Doc.md) (shift-aware absent counts).
 
+**Data ownership (GAP-001):** Classes belong to the authenticated teacher (`classes.user_id`). List/create APIs return only the caller's classes. See [GAP-001.md](../gaps/GAP-001.md).
+
 ---
 
 ## Entry CLS-001 — Document class shift vs roster duplication

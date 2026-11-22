@@ -17,13 +17,12 @@ import {
   tryBuildStudentDraft,
 } from '../../lib/studentImportParse'
 import { downloadStudentImportSample } from '../../lib/studentImportSampleXlsx'
+import { Button } from '@/components/Button/Button'
 import {
   errorAlertClass,
   formInputClasses,
   formLabelClass,
   formLabelInlineClass,
-  primaryButtonClass,
-  secondaryButtonClass,
 } from '@/lib/uiClasses'
 import type {
   ClassRow,
@@ -531,17 +530,13 @@ export function RegisterStudentsModal({
                   {error}
                 </p>
               )}
-              <button
-                type="submit"
-                disabled={busy}
-                className={`w-full py-3 ${primaryButtonClass}`}
-              >
+              <Button type="submit" fullWidth disabled={busy}>
                 {busy
                   ? 'Saving…'
                   : view === 'existing'
                     ? 'Add students to class'
                     : 'Save class and students'}
-              </button>
+              </Button>
             </form>
           )}
 
@@ -635,14 +630,16 @@ export function RegisterStudentsModal({
                     onChange={(e) => void saveExcel(e.target.files)}
                     className={`block w-full min-w-0 flex-1 text-sm text-neutral-label file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white ${error ? 'rounded-xl border-2 border-primary' : ''}`}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="shrink-0"
                     disabled={busy}
                     onClick={() => downloadStudentImportSample()}
-                    className={`shrink-0 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
                   >
                     Download sample (.xlsx)
-                  </button>
+                  </Button>
                 </div>
               </div>
 

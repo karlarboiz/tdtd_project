@@ -93,8 +93,12 @@ function studentToParams(row: StudentRow) {
   }
 }
 
-export function classExists(db: SqliteDatabase, classId: string): boolean {
-  const row = db.prepare(STUDENT_QUERIES.classExists).get(classId) as
+export function classExists(
+  db: SqliteDatabase,
+  classId: string,
+  userId: string,
+): boolean {
+  const row = db.prepare(STUDENT_QUERIES.classExists).get(classId, userId) as
     | { ok: 1 }
     | undefined
   return row !== undefined
@@ -123,6 +127,17 @@ export function getStudentById(
   studentId: string,
 ): StudentRow | undefined {
   const row = db.prepare(STUDENT_QUERIES.getById).get(studentId) as
+    | StudentDbRow
+    | undefined
+  return row ? mapStudentDbRow(row) : undefined
+}
+
+export function getStudentByIdForUser(
+  db: SqliteDatabase,
+  studentId: string,
+  userId: string,
+): StudentRow | undefined {
+  const row = db.prepare(STUDENT_QUERIES.getByIdForUser).get(userId, studentId) as
     | StudentDbRow
     | undefined
   return row ? mapStudentDbRow(row) : undefined

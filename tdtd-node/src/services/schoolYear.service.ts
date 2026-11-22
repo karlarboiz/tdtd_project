@@ -27,12 +27,12 @@ function parseOptionalDate(raw: unknown, field: string): IsoDateString | undefin
   return s as IsoDateString
 }
 
-export function listSchoolYears(db: SqliteDatabase): SchoolYearRow[] {
-  return schoolYearDao.listSchoolYears(db)
+export function listSchoolYears(db: SqliteDatabase, userId: string): SchoolYearRow[] {
+  return schoolYearDao.listSchoolYears(db, userId)
 }
 
-export function getActiveSchoolYear(db: SqliteDatabase): SchoolYearRow {
-  const row = schoolYearDao.getActiveSchoolYear(db)
+export function getActiveSchoolYear(db: SqliteDatabase, userId: string): SchoolYearRow {
+  const row = schoolYearDao.getActiveSchoolYear(db, userId)
   if (!row) {
     throw new HttpError(404, 'no active school year; create one and set it active')
   }
@@ -48,6 +48,7 @@ export type CreateSchoolYearInput = {
 
 export function createSchoolYear(
   db: SqliteDatabase,
+  userId: string,
   input: CreateSchoolYearInput,
 ): SchoolYearRow {
   const label =
@@ -66,6 +67,7 @@ export function createSchoolYear(
 
   const row: SchoolYearRow = {
     id: randomUUID(),
+    userId,
     label,
     startDate,
     endDate,
@@ -76,17 +78,17 @@ export function createSchoolYear(
   schoolYearDao.insertSchoolYear(db, row)
 
   if (setActive) {
-    schoolYearDao.setActiveSchoolYear(db, row.id, now)
+    schoolYearDao.setActiveSchoolYear(db, userId, row.id, now)
   }
 
-  const saved = schoolYearDao.getSchoolYearById(db, row.id) ?? row
-  recordActivity(db, {
+  const saved = schoolYearDao.getSchoolYearById(db, row.id, userId) ?? row
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SCHOOL_YEAR_CREATED,
     summary: `Created school year ${saved.label}`,
     metadata: { schoolYearId: saved.id },
   })
   if (saved.isActive) {
-    recordActivity(db, {
+    recordActivity(db, userId, {
       action: ACTIVITY_ACTION.SCHOOL_YEAR_ACTIVATED,
       summary: `Set active school year to ${saved.label}`,
       metadata: { schoolYearId: saved.id },
@@ -97,17 +99,18 @@ export function createSchoolYear(
 
 export function activateSchoolYear(
   db: SqliteDatabase,
+  userId: string,
   schoolYearId: string,
 ): SchoolYearRow {
   const id = schoolYearId.trim()
   if (!id) throw new HttpError(400, 'schoolYearId is required')
-  const existing = schoolYearDao.getSchoolYearById(db, id)
+  const existing = schoolYearDao.getSchoolYearById(db, id, userId)
   if (!existing) throw new HttpError(404, 'school year not found')
 
   const now = Date.now()
-  schoolYearDao.setActiveSchoolYear(db, id, now)
-  const updated = schoolYearDao.getSchoolYearById(db, id) ?? existing
-  recordActivity(db, {
+  schoolYearDao.setActiveSchoolYear(db, userId, id, now)
+  const updated = schoolYearDao.getSchoolYearById(db, id, userId) ?? existing
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SCHOOL_YEAR_ACTIVATED,
     summary: `Set active school year to ${updated.label}`,
     metadata: { schoolYearId: updated.id },
@@ -117,21 +120,23 @@ export function activateSchoolYear(
 
 export function getSchoolYearOrThrow(
   db: SqliteDatabase,
+  userId: string,
   schoolYearId: string,
 ): SchoolYearRow {
   const id = schoolYearId.trim()
   if (!id) throw new HttpError(400, 'schoolYearId is required')
-  const row = schoolYearDao.getSchoolYearById(db, id)
+  const row = schoolYearDao.getSchoolYearById(db, id, userId)
   if (!row) throw new HttpError(404, 'school year not found')
   return row
 }
 
 export function listRegisteredSubjects(
   db: SqliteDatabase,
+  userId: string,
   schoolYearId: string,
 ): SchoolYearSubjectListRow[] {
-  getSchoolYearOrThrow(db, schoolYearId)
-  return schoolYearDao.listSchoolYearSubjects(db, schoolYearId)
+  getSchoolYearOrThrow(db, userId, schoolYearId)
+  return schoolYearDao.listSchoolYearSubjects(db, userId, schoolYearId)
 }
 
 function parseGradeLevel(raw: unknown): string {
@@ -149,10 +154,11 @@ export type RegisterSubjectInput = {
 
 export function registerSubjectForSchoolYear(
   db: SqliteDatabase,
+  userId: string,
   schoolYearId: string,
   input: RegisterSubjectInput,
 ): SchoolYearSubjectListRow {
-  getSchoolYearOrThrow(db, schoolYearId)
+  getSchoolYearOrThrow(db, userId, schoolYearId)
   const gradeLevel = parseGradeLevel(input.gradeLevel)
 
   let subjectId =
@@ -160,11 +166,11 @@ export function registerSubjectForSchoolYear(
 
   if (!subjectId) {
     const name = typeof input.name === 'string' ? input.name : ''
-    subjectId = resolveSubjectIdForRegistration(db, {
+    subjectId = resolveSubjectIdForRegistration(db, userId, {
       name,
       shortCode: normalizeSubjectShortCode(input.shortCode),
     })
-  } else if (!subjectDao.subjectExists(db, subjectId)) {
+  } else if (!subjectDao.subjectExists(db, subjectId, userId)) {
     throw new HttpError(404, 'subject not found')
   }
 
@@ -185,10 +191,10 @@ export function registerSubjectForSchoolYear(
     createdAt: now,
   })
 
-  const list = schoolYearDao.listSchoolYearSubjects(db, schoolYearId)
+  const list = schoolYearDao.listSchoolYearSubjects(db, userId, schoolYearId)
   const found = list.find((x) => x.id === regId)
   if (!found) throw new HttpError(500, 'failed to load school year subject')
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SUBJECT_REGISTERED,
     summary: `Registered ${found.subjectName} for ${gradeLevel}`,
     metadata: { schoolYearId },
@@ -198,10 +204,11 @@ export function registerSubjectForSchoolYear(
 
 export function unregisterSubjectFromSchoolYear(
   db: SqliteDatabase,
+  userId: string,
   schoolYearId: string,
   registrationId: string,
 ): void {
-  getSchoolYearOrThrow(db, schoolYearId)
+  getSchoolYearOrThrow(db, userId, schoolYearId)
   const rid = registrationId.trim()
   if (!rid) throw new HttpError(400, 'registrationId is required')
 
@@ -211,13 +218,13 @@ export function unregisterSubjectFromSchoolYear(
   }
 
   const listed = schoolYearDao
-    .listSchoolYearSubjects(db, schoolYearId)
+    .listSchoolYearSubjects(db, userId, schoolYearId)
     .find((x) => x.id === rid)
   if (!listed) {
     throw new HttpError(404, 'subject registration not found for this school year')
   }
 
-  if (schoolYearDao.subjectUsedInClassOrScores(db, reg.subjectId)) {
+  if (schoolYearDao.subjectUsedInClassOrScores(db, userId, reg.subjectId)) {
     throw new HttpError(
       409,
       'cannot unregister: subject is assigned to a class or used in score events',
@@ -229,7 +236,7 @@ export function unregisterSubjectFromSchoolYear(
     throw new HttpError(404, 'subject registration not found for this school year')
   }
 
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.SUBJECT_UNREGISTERED,
     summary: `Removed ${listed.subjectName} (${listed.gradeLevel}) from school year`,
     metadata: { schoolYearId },
@@ -239,15 +246,16 @@ export function unregisterSubjectFromSchoolYear(
 /** Used when assigning a subject to a class. */
 export function assertSubjectRegisteredForActiveYear(
   db: SqliteDatabase,
+  userId: string,
   subjectId: string,
 ): void {
-  if (!schoolYearDao.getActiveSchoolYear(db)) {
+  if (!schoolYearDao.getActiveSchoolYear(db, userId)) {
     throw new HttpError(
       400,
       'no active school year; create one and register subjects first',
     )
   }
-  if (!schoolYearDao.isSubjectRegisteredForActiveYear(db, subjectId)) {
+  if (!schoolYearDao.isSubjectRegisteredForActiveYear(db, userId, subjectId)) {
     throw new HttpError(
       400,
       'subject must be registered for the active school year before assigning to a class',

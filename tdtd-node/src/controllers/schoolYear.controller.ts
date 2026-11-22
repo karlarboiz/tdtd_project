@@ -1,6 +1,7 @@
-import type { Request, Response } from 'express'
+import type { Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { HttpError } from '../errors/http-error.js'
+import type { AuthenticatedRequest } from '../middleware/authenticate.js'
 import {
   activateSchoolYear,
   createSchoolYear,
@@ -21,9 +22,9 @@ function handleError(e: unknown, res: Response): void {
 }
 
 export function listSchoolYearsHandler(db: SqliteDatabase) {
-  return (_req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
-      res.json(listSchoolYears(db))
+      res.json(listSchoolYears(db, req.auth!.id))
     } catch (e) {
       handleError(e, res)
     }
@@ -31,9 +32,13 @@ export function listSchoolYearsHandler(db: SqliteDatabase) {
 }
 
 export function createSchoolYearHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
-      const created = createSchoolYear(db, req.body as Record<string, unknown>)
+      const created = createSchoolYear(
+        db,
+        req.auth!.id,
+        req.body as Record<string, unknown>,
+      )
       res.status(201).json(created)
     } catch (e) {
       handleError(e, res)
@@ -42,9 +47,9 @@ export function createSchoolYearHandler(db: SqliteDatabase) {
 }
 
 export function getActiveSchoolYearHandler(db: SqliteDatabase) {
-  return (_req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
-      res.json(getActiveSchoolYear(db))
+      res.json(getActiveSchoolYear(db, req.auth!.id))
     } catch (e) {
       handleError(e, res)
     }
@@ -52,10 +57,10 @@ export function getActiveSchoolYearHandler(db: SqliteDatabase) {
 }
 
 export function activateSchoolYearHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const id = typeof req.params.schoolYearId === 'string' ? req.params.schoolYearId : ''
-      res.json(activateSchoolYear(db, id))
+      res.json(activateSchoolYear(db, req.auth!.id, id))
     } catch (e) {
       handleError(e, res)
     }
@@ -63,10 +68,10 @@ export function activateSchoolYearHandler(db: SqliteDatabase) {
 }
 
 export function listSchoolYearSubjectsHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const id = typeof req.params.schoolYearId === 'string' ? req.params.schoolYearId : ''
-      res.json(listRegisteredSubjects(db, id))
+      res.json(listRegisteredSubjects(db, req.auth!.id, id))
     } catch (e) {
       handleError(e, res)
     }
@@ -74,10 +79,15 @@ export function listSchoolYearSubjectsHandler(db: SqliteDatabase) {
 }
 
 export function registerSchoolYearSubjectHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const id = typeof req.params.schoolYearId === 'string' ? req.params.schoolYearId : ''
-      const created = registerSubjectForSchoolYear(db, id, req.body as Record<string, unknown>)
+      const created = registerSubjectForSchoolYear(
+        db,
+        req.auth!.id,
+        id,
+        req.body as Record<string, unknown>,
+      )
       res.status(201).json(created)
     } catch (e) {
       handleError(e, res)
@@ -86,13 +96,13 @@ export function registerSchoolYearSubjectHandler(db: SqliteDatabase) {
 }
 
 export function unregisterSchoolYearSubjectHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const yearId =
         typeof req.params.schoolYearId === 'string' ? req.params.schoolYearId : ''
       const registrationId =
         typeof req.params.registrationId === 'string' ? req.params.registrationId : ''
-      unregisterSubjectFromSchoolYear(db, yearId, registrationId)
+      unregisterSubjectFromSchoolYear(db, req.auth!.id, yearId, registrationId)
       res.status(204).send()
     } catch (e) {
       handleError(e, res)

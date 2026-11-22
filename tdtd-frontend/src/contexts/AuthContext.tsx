@@ -12,6 +12,7 @@ import {
   clearTokens,
   getAccessToken,
   getRefreshToken,
+  hydrateTokens,
   setTokens,
 } from '@/lib/authStorage'
 import type { AuthTokensResponse, AuthUser } from '@/types/schema'
@@ -23,7 +24,7 @@ type AuthState = {
 }
 
 type AuthContextValue = AuthState & {
-  applySession: (session: AuthTokensResponse) => void
+  applySession: (session: AuthTokensResponse) => Promise<void>
   login: (email: string, password: string) => Promise<AuthTokensResponse>
   signup: (input: {
     firstName: string
@@ -40,12 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const applySession = useCallback((session: AuthTokensResponse) => {
-    setTokens(session.accessToken, session.refreshToken)
+  const applySession = useCallback(async (session: AuthTokensResponse) => {
+    await setTokens(session.accessToken, session.refreshToken)
     setUser(session.user)
   }, [])
 
   const bootstrap = useCallback(async () => {
+    await hydrateTokens()
     const access = getAccessToken()
     const refresh = getRefreshToken()
     if (!access && !refresh) {
@@ -57,10 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (access) {
         setUser(await authApi.fetchMe())
       } else if (refresh) {
-        applySession(await authApi.refreshSession(refresh))
+        await applySession(await authApi.refreshSession(refresh))
       }
     } catch {
-      clearTokens()
+      await clearTokens()
       setUser(null)
     } finally {
       setLoading(false)
@@ -74,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string) => {
       const session = await authApi.login({ email, password })
-      applySession(session)
+      await applySession(session)
       return session
     },
     [applySession],
@@ -87,14 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: string
       password: string
     }) => {
-      applySession(await authApi.signup(input))
+      await applySession(await authApi.signup(input))
     },
     [applySession],
   )
 
   const logout = useCallback(async () => {
     const refresh = getRefreshToken()
-    clearTokens()
+    await clearTokens()
     setUser(null)
     if (refresh) {
       try {

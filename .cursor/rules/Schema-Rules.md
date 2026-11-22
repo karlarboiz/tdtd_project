@@ -16,6 +16,7 @@ All generated code must follow those schemas. Do not modify schema structure unl
 - **Frontend** (`tdtd-frontend`) uses the API only — no embedded offline database.
 - **DDL:** `tdtd-node/src/db/migrate.ts`
 - **REST base path:** `/api` (`tdtd-node/src/app.ts`)
+- **Multi-teacher ownership (GAP-001):** Domain rows scoped by `user_id` — see [GAP-001.md](../gaps/GAP-001.md).
 - Limited offline/sync may be added later for specific features — not the default model.
 
 Full index: [schemas/README.md](../schemas/README.md).

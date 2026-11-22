@@ -8,6 +8,7 @@ import type {
 } from '../schema/types.js'
 import { HttpError } from '../errors/http-error.js'
 import { isSchoolDayYmd } from '../lib/schoolDay.js'
+import { assertClassOwned, assertStudentOwned } from '../lib/ownership.js'
 import * as attendanceDao from '../dao/attendance.dao.js'
 import * as studentDao from '../dao/student.dao.js'
 import { ACTIVITY_ACTION, recordActivity } from './activityLog.service.js'
@@ -55,6 +56,7 @@ function ymdDaysBetweenInclusive(from: string, to: string): number {
 
 export function listAttendanceSessionDatesInRange(
   db: SqliteDatabase,
+  userId: string,
   fromRaw: string,
   toRaw: string,
 ): string[] {
@@ -70,7 +72,7 @@ export function listAttendanceSessionDatesInRange(
       `date range cannot exceed ${SESSION_DATES_MAX_SPAN_DAYS} days`,
     )
   }
-  return attendanceDao.listDistinctSessionDatesInRange(db, from, to)
+  return attendanceDao.listDistinctSessionDatesInRange(db, userId, from, to)
 }
 
 export type PresentAttendanceRosterResult = {
@@ -81,16 +83,21 @@ export type PresentAttendanceRosterResult = {
 
 export function getPresentAttendanceRoster(
   db: SqliteDatabase,
+  userId: string,
   dateRaw: string,
   periodRaw: string,
 ): PresentAttendanceRosterResult {
   const date = assertValidDate(dateRaw)
   const period = assertPeriod(periodRaw)
-  const session = attendanceDao.findSessionByDatePeriod(db, date, period)
+  const session = attendanceDao.findSessionByDatePeriod(db, userId, date, period)
   if (!session) {
     return { session: null, presentStudents: [] }
   }
-  const presentStudents = attendanceDao.listPresentStudentsForSession(db, session.id)
+  const presentStudents = attendanceDao.listPresentStudentsForSession(
+    db,
+    userId,
+    session.id,
+  )
   return { session, presentStudents }
 }
 
@@ -101,6 +108,7 @@ export type AttendanceStateResult = {
 
 export function getAttendanceState(
   db: SqliteDatabase,
+  userId: string,
   dateRaw: string,
   periodRaw: string,
   classIdRaw: string,
@@ -109,13 +117,11 @@ export function getAttendanceState(
   const period = assertPeriod(periodRaw)
   const classId = classIdRaw.trim()
   if (!classId) throw new HttpError(400, 'classId is required')
-  if (!studentDao.classExists(db, classId)) {
-    throw new HttpError(404, 'class not found')
-  }
+  assertClassOwned(db, classId, userId)
 
   const students = studentDao.listStudentsByClass(db, classId)
   const ids = students.map((s) => s.id)
-  const session = attendanceDao.findSessionByDatePeriod(db, date, period)
+  const session = attendanceDao.findSessionByDatePeriod(db, userId, date, period)
   if (!session) {
     return { session: null, presentStudentIds: [] }
   }
@@ -130,7 +136,11 @@ export type SaveAttendanceInput = {
   presentStudentIds: string[]
 }
 
-export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): AttendanceSessionRow {
+export function saveAttendance(
+  db: SqliteDatabase,
+  userId: string,
+  input: SaveAttendanceInput,
+): AttendanceSessionRow {
   const date = assertValidDate(input.date)
   assertSchoolDay(db, date)
   const period = assertPeriod(input.period)
@@ -141,13 +151,19 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
     Boolean,
   )
 
+  const allStudentIds = [...new Set([...classIds, ...presentRequested])]
+  for (const studentId of allStudentIds) {
+    assertStudentOwned(db, studentId, userId)
+  }
+
   const allowed = new Set(classIds)
   const presentFiltered = presentRequested.filter((id) => allowed.has(id))
 
-  let session = attendanceDao.findSessionByDatePeriod(db, date, period)
+  let session = attendanceDao.findSessionByDatePeriod(db, userId, date, period)
   if (!session) {
     const row: AttendanceSessionRow = {
       id: randomUUID(),
+      userId,
       date,
       period,
       createdAt: Date.now(),
@@ -156,8 +172,8 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
       attendanceDao.insertSession(db, row)
       session = row
     } catch (e) {
-      /** Concurrent create: UNIQUE(date, period) — load existing */
-      session = attendanceDao.findSessionByDatePeriod(db, date, period)
+      /** Concurrent create: UNIQUE(user_id, date, period) — load existing */
+      session = attendanceDao.findSessionByDatePeriod(db, userId, date, period)
       if (!session) throw e
     }
   }
@@ -177,7 +193,7 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
   })
   run()
 
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.ATTENDANCE_SAVED,
     summary: `Saved ${period} attendance for ${date} (${presentFiltered.length} present)`,
     metadata: {
@@ -187,7 +203,7 @@ export function saveAttendance(db: SqliteDatabase, input: SaveAttendanceInput): 
     },
   })
 
-  resolveAttendanceReminder(db, date, period)
+  resolveAttendanceReminder(db, userId, date, period)
 
   return session
 }

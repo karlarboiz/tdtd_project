@@ -1,4 +1,7 @@
-/** Shared Tailwind class strings aligned with .cursor/rules/UI-Rules.md */
+/**
+ * Shared Tailwind class strings aligned with .cursor/rules/UI-Rules.md.
+ * Prefer the `<Button>` component for actions; raw *ButtonClass exports remain for edge cases.
+ */
 
 export const formLabelClass =
   'block text-sm font-medium text-neutral-label'
@@ -36,6 +39,9 @@ export const secondaryButtonClass =
 
 export const secondaryLinkTileClass =
   'rounded-2xl border-2 border-secondary bg-white px-5 py-4 text-center text-lg font-semibold text-secondary shadow-sm transition hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary'
+
+export const ghostButtonClass =
+  'inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-slate-700 transition hover:bg-slate-100 active:bg-slate-100 touch-manipulation'
 
 export const errorAlertClass = 'text-sm font-medium text-accent'
 

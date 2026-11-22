@@ -8,6 +8,7 @@ import type {
 import { HttpError } from '../errors/http-error.js'
 import * as studentDao from '../dao/student.dao.js'
 import * as classDao from '../dao/class.dao.js'
+import { assertClassOwned, assertStudentOwned } from '../lib/ownership.js'
 import {
   ACTIVITY_ACTION,
   formatStudentDisplayName,
@@ -133,11 +134,11 @@ export function toStudentRow(
 
 export function updateStudentProfile(
   db: SqliteDatabase,
+  userId: string,
   studentId: string,
   input: Partial<StudentPayloadInput>,
 ): StudentRow {
-  const existing = studentDao.getStudentById(db, studentId)
-  if (!existing) throw new HttpError(404, 'student not found')
+  const existing = assertStudentOwned(db, studentId, userId)
 
   const row = toStudentRow(
     existing.classId,
@@ -173,23 +174,27 @@ export function updateStudentProfile(
   return row
 }
 
-export function listStudentsByClass(db: SqliteDatabase, classId: string): StudentRow[] {
+export function listStudentsByClass(
+  db: SqliteDatabase,
+  userId: string,
+  classId: string,
+): StudentRow[] {
   const id = classId.trim()
   if (!id) throw new HttpError(400, 'classId is required')
-  if (!studentDao.classExists(db, id)) {
-    throw new HttpError(404, 'class not found')
-  }
+  assertClassOwned(db, id, userId)
   return studentDao.listStudentsByClass(db, id)
 }
 
-export function registerStudent(db: SqliteDatabase, input: RegisterStudentInput): StudentRow {
+export function registerStudent(
+  db: SqliteDatabase,
+  userId: string,
+  input: RegisterStudentInput,
+): StudentRow {
   const classId = input.classId.trim()
   if (!classId) {
     throw new HttpError(400, 'classId is required')
   }
-  if (!studentDao.classExists(db, classId)) {
-    throw new HttpError(404, 'class not found')
-  }
+  assertClassOwned(db, classId, userId)
 
   const ts = Date.now()
   const row = toStudentRow(
@@ -205,9 +210,9 @@ export function registerStudent(db: SqliteDatabase, input: RegisterStudentInput)
     ts,
   )
   studentDao.insertStudent(db, row)
-  const classRow = classDao.getClassById(db, classId)
+  const classRow = classDao.getClassById(db, classId, userId)
   const classLabel = classRow?.name ?? 'class'
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.STUDENT_REGISTERED,
     summary: `Added student ${formatStudentDisplayName(row)} to ${classLabel}`,
     metadata: { classId, studentId: row.id },
@@ -217,13 +222,12 @@ export function registerStudent(db: SqliteDatabase, input: RegisterStudentInput)
 
 export function registerStudentsBulk(
   db: SqliteDatabase,
+  userId: string,
   input: BulkRegisterInput,
 ): StudentRow[] {
   const classId = input.classId.trim()
   if (!classId) throw new HttpError(400, 'classId is required')
-  if (!studentDao.classExists(db, classId)) {
-    throw new HttpError(404, 'class not found')
-  }
+  assertClassOwned(db, classId, userId)
 
   const list = Array.isArray(input.students) ? input.students : []
   if (list.length === 0) {
@@ -240,9 +244,9 @@ export function registerStudentsBulk(
     }
   })
   run(list)
-  const classRow = classDao.getClassById(db, classId)
+  const classRow = classDao.getClassById(db, classId, userId)
   const classLabel = classRow?.name ?? 'class'
-  recordActivity(db, {
+  recordActivity(db, userId, {
     action: ACTIVITY_ACTION.STUDENTS_IMPORTED,
     summary: `Imported ${created.length} students into ${classLabel}`,
     metadata: { classId, count: created.length },

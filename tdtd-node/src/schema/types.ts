@@ -33,6 +33,7 @@ export type IsoDateString = string
  */
 export interface ClassRow {
   id: string
+  userId: string
   name: string
   shift: ClassShift
   gradeLevel?: string
@@ -77,6 +78,7 @@ export interface StudentRow {
 
 export interface SchoolSettingsRow {
   id: string
+  userId: string
   schoolName: string
   schoolId?: string
   district?: string
@@ -86,6 +88,39 @@ export interface SchoolSettingsRow {
   schoolHeadName?: string
   defaultSchoolYearId?: string
   updatedAt: number
+}
+
+/** Grading system profile — WW/PT/QA weights per grade band (GAP-103). */
+export interface GradingSystemRow {
+  id: string
+  userId: string
+  name: string
+  isActive: boolean
+  createdAt: number
+  updatedAt: number
+}
+
+export interface GradingComponentWeightRow {
+  id: string
+  gradingSystemId: string
+  gradeBandMin: number
+  gradeBandMax: number
+  wwWeight: number
+  ptWeight: number
+  qaWeight: number
+}
+
+/** API payload: weights as display percents (0–100). */
+export interface GradingWeightBandInput {
+  gradeBandMin: number
+  gradeBandMax: number
+  ww: number
+  pt: number
+  qa: number
+}
+
+export interface GradingWeightBandDisplay extends GradingWeightBandInput {
+  label: string
 }
 
 export interface DailyAttendanceRecordRow {
@@ -125,6 +160,7 @@ export interface EnrollmentHistoryRow {
 }
 export interface AttendanceSessionRow {
   id: string
+  userId: string
   date: IsoDateString
   period: AttendancePeriod
   createdAt: number
@@ -148,6 +184,7 @@ export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
 
 export interface SchoolYearRow {
   id: string
+  userId: string
   label: string
   startDate?: IsoDateString
   endDate?: IsoDateString
@@ -158,6 +195,7 @@ export interface SchoolYearRow {
 
 export interface SubjectRow {
   id: string
+  userId: string
   name: string
   shortCode?: string
   createdAt: number
@@ -223,6 +261,7 @@ export type ActivityLogMetadata = {
  */
 export interface ActivityLogRow {
   id: string
+  userId: string
   action: string
   summary: string
   metadata?: ActivityLogMetadata
@@ -268,6 +307,7 @@ export type TeacherReminderStatus = 'open' | 'dismissed' | 'resolved'
 
 export interface TeacherReminderRow {
   id: string
+  userId: string
   type: TeacherReminderType
   date: IsoDateString
   period: AttendancePeriod

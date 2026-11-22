@@ -17,12 +17,12 @@ import { ApiError } from '../../lib/http'
 import { defaultSchoolYearLabel } from '../../lib/schoolYearLabel'
 import { parseSubjectImportWorkbook } from '../../lib/subjectImportParse'
 import { downloadSubjectImportSample } from '../../lib/subjectImportSampleXlsx'
+import { Button } from '@/components/Button/Button'
 import {
+  bodyMutedClass,
   errorAlertClass,
   formInputClasses,
   formLabelInlineClass,
-  primaryButtonClass,
-  secondaryButtonClass,
 } from '@/lib/uiClasses'
 import type { SchoolYearRow, SchoolYearSubjectRow } from '@/types/schema'
 
@@ -229,14 +229,15 @@ export function Subjects() {
             Create an active school year before registering subjects (suggested:{' '}
             <strong>{defaultSchoolYearLabel()}</strong>).
           </p>
-          <button
+          <Button
             type="button"
+            fullWidth
+            className="mt-4 sm:w-auto"
             disabled={setupBusy}
             onClick={() => void setupSchoolYear()}
-            className={`mt-4 w-full py-3 sm:w-auto sm:px-6 ${primaryButtonClass}`}
           >
             {setupBusy ? 'Creating…' : 'Create active school year'}
-          </button>
+          </Button>
         </section>
       ) : (
         <>
@@ -246,13 +247,14 @@ export function Subjects() {
               <p className="mt-1 text-sm text-slate-600">
                 Add one subject at a time or import many from Excel.
               </p>
-              <button
+              <Button
                 type="button"
+                fullWidth
+                className="mt-4"
                 onClick={() => setAddOpen(true)}
-                className={`mt-4 w-full py-3 ${primaryButtonClass}`}
               >
                 Add subject manually
-              </button>
+              </Button>
             </section>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-8">
@@ -277,14 +279,16 @@ export function Subjects() {
                   className={`block w-full min-w-0 flex-1 text-sm text-neutral-label file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white disabled:opacity-50 ${importError ? 'rounded-xl border-2 border-primary' : ''}`}
                   aria-invalid={Boolean(importError)}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="shrink-0"
                   disabled={importBusy}
                   onClick={() => downloadSubjectImportSample()}
-                  className={`shrink-0 px-4 py-2.5 text-sm ${secondaryButtonClass}`}
                 >
                   Download sample (.xlsx)
-                </button>
+                </Button>
               </div>
               {importBusy ? (
                 <p className="mt-2 text-sm text-slate-500">Importing…</p>

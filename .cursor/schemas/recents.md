@@ -13,6 +13,7 @@ Append-only log of **teacher actions** (writes) for the Recents page. Depends on
 ```
 activity_logs: {
   id: string (uuid, primary key)
+  userId: string // FK → users.id — owning teacher (GAP-001)
   action: string // machine code — see ActivityActions
   summary: string // human-readable line for UI
   metadata?: string // JSON: ActivityLogMetadata (camelCase keys in API)
@@ -63,6 +64,7 @@ Used for deep links on the Recents page (not enforced FKs).
 
 - Log **after successful** mutations only.
 - **One row per user-facing action** (not per score line or per import row).
+- **`userId`** set from authenticated teacher on every insert.
 - Do **not** log GET/read requests.
 - `summary` is pre-rendered at write time (stable display if entities are renamed later).
 - If insert into `activity_logs` fails, `recordActivity` logs an error and **does not** fail the parent mutation (scores, attendance, etc. still commit).
@@ -71,7 +73,7 @@ Used for deep links on the Recents page (not enforced FKs).
 
 ## API
 
-- `GET /api/recents?limit=100` — newest first (default limit 100, max 500).
+- `GET /api/recents?limit=100` — newest first for authenticated teacher only (default limit 100, max 500).
 
 DDL: `tdtd-node/src/db/migrate.ts` (`migrateActivityLogsTable`).
 

@@ -134,6 +134,9 @@ export async function signup(
     createdAt: now,
   })
 
+  const { backfillOrphanDomainData } = await import('../db/migrate-user-ownership.js')
+  backfillOrphanDomainData(db, user.id)
+
   return issueTokenPair(db, user)
 }
 

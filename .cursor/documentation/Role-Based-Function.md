@@ -141,6 +141,15 @@ Log role-sensitive actions:
 
 This can use existing activity log patterns or a dedicated audit table.
 
+## Data ownership (GAP-001)
+
+Per-teacher personal workspace — see [GAP-001.md](../gaps/GAP-001.md).
+
+- Domain tables carry `user_id` FK → `users.id` (directly or via `classes.user_id` join).
+- DAOs and services accept `userId` on list/create/update; set `user_id` on insert.
+- Controllers pass `req.auth.id` from JWT (`AuthenticatedRequest`).
+- **RBAC vs ownership:** Role (`admin` | `teacher`) controls *which endpoints* are reachable; `user_id` controls *which rows* are visible. GAP-002 enforces both at the route layer.
+
 ## Security Notes
 
 - Never trust client-provided role fields.

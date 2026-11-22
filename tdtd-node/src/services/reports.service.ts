@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { HttpError } from '../errors/http-error.js'
+import { assertClassOwned, assertStudentOwned, assertSchoolYearOwned } from '../lib/ownership.js'
 import * as deped from './deped.service.js'
 import * as schoolSettings from './schoolSettings.service.js'
 
@@ -27,6 +28,7 @@ const FORM_TO_BATCH: Record<ReportForm, string> = {
 
 function resolveBatchJar(): string {
   const candidates = [
+    '/opt/tdtd/tdtd-batch-app.jar',
     path.join(process.cwd(), '..', 'tdtd-batch', 'tdtd-batch-app', 'target', 'tdtd-batch-app.jar'),
     path.join(process.cwd(), 'tdtd-batch', 'tdtd-batch-app', 'target', 'tdtd-batch-app.jar'),
   ]
@@ -44,6 +46,7 @@ function resolveDbPath(_db: SqliteDatabase): string {
 
 export function generateReport(
   db: SqliteDatabase,
+  userId: string,
   input: GenerateReportInput,
 ): { outputPath: string; form: ReportForm } {
   const form = input.form
@@ -55,7 +58,7 @@ export function generateReport(
   const studentId = input.studentId?.trim()
   const month = input.month?.trim()
   const schoolYearId =
-    input.schoolYearId?.trim() ?? deped.getActiveSchoolYearId(db)
+    input.schoolYearId?.trim() ?? deped.getActiveSchoolYearId(db, userId)
 
   if (['sf1', 'sf2', 'sf4', 'sf5'].includes(form) && !classId) {
     throw new HttpError(400, 'classId is required for this form')
@@ -67,6 +70,16 @@ export function generateReport(
     throw new HttpError(400, 'month (YYYY-MM) is required for SF2/SF4')
   }
 
+  if (classId) {
+    assertClassOwned(db, classId, userId)
+  }
+  if (studentId) {
+    assertStudentOwned(db, studentId, userId)
+  }
+  if (input.schoolYearId?.trim()) {
+    assertSchoolYearOwned(db, input.schoolYearId.trim(), userId)
+  }
+
   const outputDir = process.env.TDTD_REPORT_OUTPUT_DIR ?? 'data/reports'
   const jar = resolveBatchJar()
   const dbPath = resolveDbPath(db)
@@ -76,6 +89,7 @@ export function generateReport(
     TDTD_BATCH_RUN_ONCE: FORM_TO_BATCH[form],
     TDTD_DB_PATH: dbPath,
     TDTD_REPORT_OUTPUT_DIR: path.resolve(outputDir),
+    TDTD_REPORT_USER_ID: userId,
     TDTD_REPORT_CLASS_ID: classId ?? '',
     TDTD_REPORT_STUDENT_ID: studentId ?? '',
     TDTD_REPORT_MONTH: month ?? '',
@@ -98,23 +112,29 @@ export function generateReport(
 
 export function autoFillReportCardData(
   db: SqliteDatabase,
+  userId: string,
   classId: string,
   schoolYearId?: string,
 ) {
-  const syId = schoolYearId ?? deped.getActiveSchoolYearId(db)
+  assertClassOwned(db, classId, userId)
+  const syId = schoolYearId ?? deped.getActiveSchoolYearId(db, userId)
   if (!syId) throw new HttpError(400, 'no active school year')
-
-  for (const quarter of [1, 2, 3, 4]) {
-    deped.computeGradesForClassQuarter(db, classId, syId, quarter)
+  if (schoolYearId) {
+    assertSchoolYearOwned(db, schoolYearId, userId)
   }
 
-  const settings = schoolSettings.getSchoolSettings(db)
+  for (const quarter of [1, 2, 3, 4]) {
+    deped.computeGradesForClassQuarter(db, userId, classId, syId, quarter)
+  }
+
+  const settings = schoolSettings.getSchoolSettings(db, userId)
   deped.archiveEnrollmentForClass(
     db,
+    userId,
     classId,
     syId,
     settings?.schoolName ?? 'School',
   )
 
-  return deped.listGradesByClass(db, classId, syId)
+  return deped.listGradesByClass(db, userId, classId, syId)
 }

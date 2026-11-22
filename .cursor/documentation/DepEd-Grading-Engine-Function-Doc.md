@@ -24,7 +24,7 @@ flowchart LR
 |------|-------------------|---------------------|
 | Assessment classification | Map each score to WW, PT, or QA | `score_events.assessment_bucket` derived from kind + subtype; optional override |
 | Quarter scoping | Q1–Q4 per school year | `score_events.quarter` (1–4), required on create |
-| Component weights | WW/PT/QA % by grade band | `defaultWeights(gradeLevel)` in `transmutation.ts` |
+| Component weights | WW/PT/QA % by grade band | Active grading system via `resolveComponentWeights()` — [Components-Weights-Function-Doc.md](./Components-Weights-Function-Doc.md) |
 | PS (percentage score) | `(score / max) × 100`, averaged per bucket | `computeGradesForClassQuarter` in `deped.service.ts` |
 | Initial grade | Weighted sum of bucket PS | Stored as `computed_subject_grades.raw_score` |
 | Transmutation | Official table → 60–100 | `transmuteRawPercent()` in `transmutation.ts` |
@@ -57,7 +57,7 @@ Subtype codes are stored on `score_events.subtype` for audit; bucket is persiste
 | Grades 7–10 | 40% | 40% | 20% |
 | Grades 11–12 | 25% | 50% | 25% |
 
-Parsed from `classes.grade_level` string. **Configurable weights deferred** (GAP-103).
+Parsed from `classes.grade_level` string. **Configurable** — GAP-103 shipped; see [Components-Weights-Function-Doc.md](./Components-Weights-Function-Doc.md).
 
 ---
 
@@ -105,7 +105,7 @@ Manual override (`PATCH /api/deped/classes/:classId/grades/:gradeId`) — **defe
 | `school_year_quarters` calendar + date→quarter inference | GAP-100 |
 | Final grade (`quarter = 0`) + class rank | GAP-101 |
 | Manual grade override API + UI | GAP-102 |
-| Configurable WW/PT/QA weights | GAP-103 |
+| ~~Configurable WW/PT/QA weights~~ | ~~GAP-103~~ — shipped ([Components-Weights-Function-Doc.md](./Components-Weights-Function-Doc.md)) |
 | Performance exam subtype (PT default) | GAP-104 |
 | Auto recompute on score save | GAP-105 |
 

@@ -1,20 +1,39 @@
 export const SCORE_EVENT_QUERIES = {
   getById: `
     SELECT
-      id,
-      class_id,
-      subject_id,
-      kind,
-      quarter,
-      assessment_bucket,
-      subtype,
-      title,
-      date,
-      max_score,
-      created_at,
-      updated_at
-    FROM score_events
-    WHERE id = ?
+      se.id,
+      se.class_id,
+      se.subject_id,
+      se.kind,
+      se.quarter,
+      se.assessment_bucket,
+      se.subtype,
+      se.title,
+      se.date,
+      se.max_score,
+      se.created_at,
+      se.updated_at
+    FROM score_events se
+    WHERE se.id = ?
+    LIMIT 1
+  `,
+  getByIdForUser: `
+    SELECT
+      se.id,
+      se.class_id,
+      se.subject_id,
+      se.kind,
+      se.quarter,
+      se.assessment_bucket,
+      se.subtype,
+      se.title,
+      se.date,
+      se.max_score,
+      se.created_at,
+      se.updated_at
+    FROM score_events se
+    INNER JOIN classes c ON c.id = se.class_id AND c.user_id = ?
+    WHERE se.id = ?
     LIMIT 1
   `,
   listByClass: `

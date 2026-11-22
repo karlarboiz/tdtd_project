@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines **global** daily attendance: one session per calendar date + period (AM/PM), with per-student present records.
+Defines **per-teacher** daily attendance: one session per teacher + calendar date + period (AM/PM), with per-student present records. See [GAP-001.md](../gaps/GAP-001.md).
 
 Depends on [core.md](./core.md) (`classes`, `students`). Class filtering at save time uses `classes.shift` vs session `period`.
 
@@ -17,6 +17,7 @@ Represents a single attendance event for a specific day and period.
 ```
 attendance_sessions: {
   id: string (uuid, primary key)
+  userId: string // FK → users.id — owning teacher (GAP-001)
   date: string // format: "YYYY-MM-DD"
   period: string // "AM" | "PM"
   createdAt: number (timestamp)
@@ -43,9 +44,9 @@ attendance_records: {
 
 ### attendance_sessions
 
-- One session per **date + period** (globally, not per class).
-- Prevent duplicate sessions for same date + period (`UNIQUE(date, period)` in SQLite).
-- Do NOT include `classId` — this is a **global** attendance session.
+- One session per **teacher + date + period** (not per class).
+- Prevent duplicate sessions for same teacher + date + period (`UNIQUE(user_id, date, period)` in SQLite).
+- Do NOT include `classId` — session is per-teacher; class filtering uses `classes.shift` vs session `period`.
 
 ### attendance_records
 
@@ -92,7 +93,7 @@ Attendance records link students to a session; classes are used only when filter
 
 See `tdtd-node/src/db/migrate.ts`:
 
-- `attendance_sessions`: primary key; **`UNIQUE(date, period)`**; `idx_sessions_date` on `date`.
+- `attendance_sessions`: primary key; **`UNIQUE(user_id, date, period)`**; `idx_sessions_user_date` on `(user_id, date)`.
 - `attendance_records`: primary key; **`UNIQUE(session_id, student_id)`**; indexes on `session_id`, `student_id`.
 
 ---

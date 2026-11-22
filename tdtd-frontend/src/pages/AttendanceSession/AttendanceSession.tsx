@@ -11,11 +11,11 @@ import { listClasses } from '../../api/classesApi'
 import {
   getAttendancePresentRoster,
   getAttendanceState,
-  saveAttendance as saveAttendanceRequest,
 } from '../../api/attendanceApi'
 import { getHolidayForDate } from '../../api/holidaysApi'
 import { listStudentsByClass } from '../../api/studentsApi'
 import { listClassesForAttendancePeriod } from '../../lib/classShift'
+import { resolveAttendanceClassId } from '../../lib/attendanceAutoPick'
 import { formatStudentName } from '../../lib/studentDisplay'
 import type {
   AttendancePeriod,
@@ -24,17 +24,18 @@ import type {
   StudentRow,
 } from '@/types/schema'
 import { formatLongDate, isWeekendYmd, parseYMD } from '../../lib/dates'
+import { Button } from '@/components/Button/Button'
 import {
   formInputClasses,
   formLabelClass,
   formLabelInlineClass,
-  primaryButtonClass,
 } from '@/lib/uiClasses'
 import {
   getCurrentPeriod,
   otherAttendancePeriod,
   parseAttendancePeriod,
 } from '../../lib/period'
+import { useAttendanceAutoSave } from '../../hooks/useAttendanceAutoSave'
 
 export function AttendanceSession() {
   const { date: dateParam } = useParams<{ date: string }>()
@@ -125,17 +126,11 @@ export function AttendanceSession() {
     }
   }, [dateYmd, isDateValid, isNonSchoolSession, holidayLoading, periodFromUrl, setSearchParams])
 
-  function setPeriod(next: AttendancePeriod) {
-    setSearchParams({ period: next }, { replace: true })
-  }
-
   const [allClasses, setAllClasses] = useState<ClassRow[]>([])
   const [classId, setClassId] = useState('')
   const [students, setStudents] = useState<StudentRow[]>([])
   const [present, setPresent] = useState<Record<string, boolean>>({})
   const [loadingClass, setLoadingClass] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [rosterLoading, setRosterLoading] = useState(true)
   const [rosterSession, setRosterSession] = useState<AttendanceSessionRow | null>(
@@ -188,6 +183,58 @@ export function AttendanceSession() {
     void refreshPresentRoster()
   }, [refreshPresentRoster])
 
+  const autoSaveEnabled =
+    !loadingClass &&
+    !resolvingPeriod &&
+    !isNonSchoolSession &&
+    !holidayLoading &&
+    Boolean(classId) &&
+    students.length > 0
+
+  const {
+    saveStatus,
+    hasEdited,
+    notifyPresentChanged,
+    syncBaseline,
+    flush: flushAutoSave,
+    retry,
+  } = useAttendanceAutoSave({
+    dateYmd,
+    period,
+    classId,
+    students,
+    present,
+    enabled: autoSaveEnabled,
+    onSaved: refreshPresentRoster,
+  })
+
+  const handlePeriodChange = useCallback(
+    (next: AttendancePeriod) => {
+      void (async () => {
+        await flushAutoSave()
+        setSearchParams({ period: next }, { replace: true })
+      })()
+    },
+    [flushAutoSave, setSearchParams],
+  )
+
+  const handleClassChange = useCallback(
+    (nextClassId: string) => {
+      void (async () => {
+        await flushAutoSave()
+        setClassId(nextClassId)
+      })()
+    },
+    [flushAutoSave],
+  )
+
+  const handleGoToCalendar = useCallback(() => {
+    void (async () => {
+      await flushAutoSave()
+      navigate('/attendance')
+    })()
+  }, [flushAutoSave, navigate])
+
   const classesForPeriod = useMemo(
     () => listClassesForAttendancePeriod(allClasses, period),
     [allClasses, period],
@@ -200,21 +247,30 @@ export function AttendanceSession() {
   }, [classesForPeriod])
 
   useEffect(() => {
-    if (didAutoPickClassRef.current || rosterLoading) return
-    if (!rosterSession || savedPresentStudents.length === 0) return
-    const uniq = [...new Set(savedPresentStudents.map((s) => s.classId))]
-    if (uniq.length !== 1) return
-    const onlyClassId = uniq[0]
-    if (!classesForPeriod.some((c) => c.id === onlyClassId)) return
-    setClassId((prev) => (prev ? prev : onlyClassId))
+    if (didAutoPickClassRef.current || resolvingPeriod) return
+    const singleClass = classesForPeriod.length === 1
+    if (!singleClass && rosterLoading) return
+
+    const nextId = resolveAttendanceClassId({
+      classesForPeriod,
+      savedPresentStudents,
+      currentClassId: classId,
+    })
+    if (!nextId) return
+    setClassId(nextId)
     didAutoPickClassRef.current = true
-  }, [rosterLoading, rosterSession, savedPresentStudents, classesForPeriod])
+  }, [
+    classId,
+    classesForPeriod,
+    savedPresentStudents,
+    rosterLoading,
+    resolvingPeriod,
+  ])
 
   const loadClassStudents = useCallback(
     async (cid: string) => {
       if (resolvingPeriod) return
       setLoadingClass(true)
-      setSaveMsg(null)
       try {
         const list = await listStudentsByClass(cid)
         const ids = list.map((s) => s.id)
@@ -233,11 +289,12 @@ export function AttendanceSession() {
         }
         setStudents(list)
         setPresent(next)
+        syncBaseline(next)
       } finally {
         setLoadingClass(false)
       }
     },
-    [dateYmd, period, resolvingPeriod],
+    [dateYmd, period, resolvingPeriod, syncBaseline],
   )
 
   useEffect(() => {
@@ -255,45 +312,27 @@ export function AttendanceSession() {
   function toggleSelectAll() {
     if (students.length === 0) return
     const turnOn = !allChecked
-    setPresent((prev) => {
-      const next = { ...prev }
-      for (const s of students) next[s.id] = turnOn
-      return next
-    })
+    const next = { ...present }
+    for (const s of students) next[s.id] = turnOn
+    setPresent(next)
+    notifyPresentChanged(next)
   }
 
   function toggleOne(studentId: string) {
-    setPresent((prev) => ({ ...prev, [studentId]: !prev[studentId] }))
-  }
-
-  async function handleSave() {
-    if (!classId || students.length === 0) return
-    setSaving(true)
-    setSaveMsg(null)
-    try {
-      const ids = students.map((s) => s.id)
-      const presentIds = ids.filter((id) => present[id])
-      await saveAttendanceRequest({
-        date: dateYmd,
-        period,
-        classStudentIds: ids,
-        presentStudentIds: presentIds,
-      })
-      setSaveMsg('Attendance saved.')
-      await refreshPresentRoster()
-    } catch {
-      setSaveMsg('Could not save. Try again.')
-    } finally {
-      setSaving(false)
-    }
+    const next = { ...present, [studentId]: !present[studentId] }
+    setPresent(next)
+    notifyPresentChanged(next)
   }
 
   function handleRegisterSaved(createdClassId?: string) {
     void (async () => {
       const list = await listClasses()
       setAllClasses(list)
+      const available = listClassesForAttendancePeriod(list, period)
+      if (available.length > 1) {
+        didAutoPickClassRef.current = false
+      }
       if (createdClassId) {
-        const available = listClassesForAttendancePeriod(list, period)
         const match = available.some((c) => c.id === createdClassId)
         setClassId(match ? createdClassId : '')
       } else if (classId) {
@@ -306,13 +345,9 @@ export function AttendanceSession() {
     return (
       <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
         <p className="text-slate-700">Invalid date in URL.</p>
-        <button
-          type="button"
-          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-          onClick={() => navigate('/attendance')}
-        >
+        <Button type="button" className="mt-4" onClick={() => navigate('/attendance')}>
           Choose a date
-        </button>
+        </Button>
       </div>
     )
   }
@@ -322,13 +357,9 @@ export function AttendanceSession() {
       <div className="mx-auto w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-sm">
         <p className="text-sm font-medium text-slate-500">{formatLongDate(dateYmd)}</p>
         <p className="mt-2 text-slate-700">Attendance is not taken on weekends.</p>
-        <button
-          type="button"
-          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-          onClick={() => navigate('/attendance')}
-        >
+        <Button type="button" className="mt-4" onClick={() => navigate('/attendance')}>
           Choose a date
-        </button>
+        </Button>
       </div>
     )
   }
@@ -353,13 +384,9 @@ export function AttendanceSession() {
         <p className="mt-2 text-slate-700">
           Attendance is not taken on {holidayName}.
         </p>
-        <button
-          type="button"
-          className="mt-4 rounded-xl bg-primary px-4 py-2 font-semibold text-white"
-          onClick={() => navigate('/attendance')}
-        >
+        <Button type="button" className="mt-4" onClick={() => navigate('/attendance')}>
           Choose a date
-        </button>
+        </Button>
       </div>
     )
   }
@@ -386,7 +413,7 @@ export function AttendanceSession() {
         <div className="mb-6 flex items-center gap-3 lg:mb-8">
           <button
             type="button"
-            onClick={() => navigate('/attendance')}
+            onClick={handleGoToCalendar}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
           >
             ← Calendar
@@ -415,7 +442,7 @@ export function AttendanceSession() {
                       type="button"
                       aria-pressed={active}
                       disabled={resolvingPeriod}
-                      onClick={() => setPeriod(p)}
+                      onClick={() => handlePeriodChange(p)}
                       className={[
                         'rounded-lg px-3 py-2.5 text-sm font-semibold transition',
                         active
@@ -494,7 +521,7 @@ export function AttendanceSession() {
               id="class-select"
               className={`mt-2 py-3 ${formInputClasses()}`}
               value={hasClassesForPeriod ? classId : ''}
-              onChange={(e) => setClassId(e.target.value)}
+              onChange={(e) => handleClassChange(e.target.value)}
               disabled={!hasClassesForPeriod}
             >
               <option value="">{selectPlaceholder}</option>
@@ -511,7 +538,9 @@ export function AttendanceSession() {
                 ? 'Set up your roster first — register a class (with morning or afternoon schedule) and add students.'
                 : !hasClassesForPeriod
                   ? `Only classes scheduled for ${period === 'AM' ? 'morning (MRNG)' : 'afternoon (AFTNN)'} appear during ${period === 'AM' ? 'morning' : 'afternoon'} attendance. Manage all classes under Classes & Students.`
-                  : 'Choose a class to load its student list.'}
+                  : classesForPeriod.length === 1
+                    ? 'Only one class for this period — roster loaded automatically.'
+                    : 'Choose a class to load its student list.'}
             </p>
 
             <button
@@ -576,23 +605,24 @@ export function AttendanceSession() {
                 </ul>
               )}
 
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={
-                  saving || !classId || students.length === 0 || loadingClass
-                }
-                className={`mt-6 w-full rounded-xl py-3 text-lg ${primaryButtonClass}`}
-              >
-                {saving ? 'Saving…' : 'Save attendance'}
-              </button>
-              {saveMsg ? (
-                <p
-                  className={`mt-3 text-center text-sm font-medium ${
-                    saveMsg.startsWith('Could') ? 'text-accent' : 'text-secondary'
-                  }`}
-                >
-                  {saveMsg}
+              {saveStatus === 'pending' || saveStatus === 'saving' ? (
+                <p className="mt-6 text-center text-sm font-medium text-slate-500">
+                  Saving…
+                </p>
+              ) : saveStatus === 'error' ? (
+                <p className="mt-6 text-center text-sm font-medium text-accent">
+                  Could not save.{' '}
+                  <button
+                    type="button"
+                    className="font-semibold underline"
+                    onClick={retry}
+                  >
+                    Retry
+                  </button>
+                </p>
+              ) : hasEdited && saveStatus === 'saved' ? (
+                <p className="mt-6 text-center text-sm font-medium text-secondary">
+                  Saved
                 </p>
               ) : null}
             </section>

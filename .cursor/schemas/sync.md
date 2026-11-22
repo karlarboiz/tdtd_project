@@ -15,6 +15,8 @@ Routes (authenticated):
 
 Conflict policy (default): **last-write-wins** per row id; document overrides per table when implemented.
 
+**Domain sync (GAP-042):** When row-level sync is wired, `pullSync` / `pushSync` must filter all domain changes by authenticated `userId`. Schema prepared by [GAP-001.md](../gaps/GAP-001.md).
+
 ## Mobile local only (`tdtd-frontend/src/mobile/db`)
 
 | Table | Purpose |
