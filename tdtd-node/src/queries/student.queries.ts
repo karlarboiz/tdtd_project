@@ -26,6 +26,28 @@ export const STUDENT_QUERIES = {
     WHERE class_id = ?
     ORDER BY last_name COLLATE NOCASE ASC, first_name COLLATE NOCASE ASC
   `,
+  /** Cross-class name search. @term is already trimmed; match is case-insensitive. */
+  searchByName: `
+    SELECT
+      id,
+      first_name,
+      middle_name,
+      last_name,
+      birth_date,
+      gender,
+      class_id,
+      created_at
+    FROM students
+    WHERE instr(lower(
+      CASE
+        WHEN middle_name IS NULL OR trim(middle_name) = ''
+        THEN first_name || ' ' || last_name
+        ELSE first_name || ' ' || middle_name || ' ' || last_name
+      END
+    ), lower(@term)) > 0
+    OR instr(lower(first_name || ' ' || last_name), lower(@term)) > 0
+    ORDER BY last_name COLLATE NOCASE ASC, first_name COLLATE NOCASE ASC
+  `,
   classIdByStudentId: `
     SELECT class_id AS class_id FROM students WHERE id = ? LIMIT 1
   `,

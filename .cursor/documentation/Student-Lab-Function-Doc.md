@@ -10,12 +10,45 @@ Per-student **read-only** dashboard: profile, shift-aware attendance (summary + 
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| GET | `/api/students?classId=` | Roster for one class |
+| GET | `/api/students?q=` | Cross-class name search (ignores `classId` when `q` is set) |
 | GET | `/api/students/:studentId` | Student + class for header |
 | GET | `/api/students/:studentId/lab?from=&to=&scoresFrom=&scoresTo=` | Aggregated lab payload |
 
-**UI routes:** `/student-lab` (picker), `/student-lab/:studentId` (detail)
+**UI routes:** `/student-lab` (picker + cross-class search), `/student-lab/:studentId` (detail)
 
 **Entry points:** App nav **Student Lab**; clickable student rows on `/classes`.
+
+---
+
+## Entry LAB-002 — Cross-class student search
+
+**Date:** 2026-11-22
+
+**Summary:** Teachers can type a name on `/student-lab` and open matching students from every class. The class select and selected-class roster stay.
+
+**Reason:** Finding one student meant switching classes until the roster showed them. Name search should span the whole school without a new table or a second list endpoint.
+
+**What changed:**
+
+- `GET /api/students?q=` searches first, middle, and last name (case-insensitive substring). A “First Last” query still matches when a middle name sits between them. Non-empty `q` ignores `classId`. `GET /api/students?classId=` is unchanged. GETs are not logged.
+- `/student-lab` keeps the class roster and adds a search field. Matches list the student’s class, birth date, and gender, and link to `/student-lab/:studentId`.
+
+**Files involved:**
+
+- `.cursor/schemas/student-lab.md`
+- `.cursor/documentation/Student-Lab-Function-Doc.md`
+- `tdtd-node/src/queries/student.queries.ts`
+- `tdtd-node/src/dao/student.dao.ts`
+- `tdtd-node/src/services/student.service.ts`
+- `tdtd-node/src/controllers/student.controller.ts`
+- `tdtd-frontend/src/api/studentsApi.ts`
+- `tdtd-frontend/src/pages/StudentLabPicker/StudentLabPicker.tsx`
+
+**Schemas involved:**
+
+- [student-lab.md](../schemas/student-lab.md) — `GET /api/students?q=`
+- [core.md](../schemas/core.md) — `students` name fields
 
 ---
 

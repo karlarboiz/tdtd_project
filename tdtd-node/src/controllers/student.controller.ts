@@ -5,6 +5,7 @@ import {
   listStudentsByClass,
   registerStudent,
   registerStudentsBulk,
+  searchStudentsByName,
 } from '../services/student.service.js'
 import { HttpError } from '../errors/http-error.js'
 
@@ -54,6 +55,11 @@ export function registerStudentHandler(db: SqliteDatabase) {
 export function listStudentsHandler(db: SqliteDatabase) {
   return (req: Request, res: Response): void => {
     try {
+      const q = typeof req.query.q === 'string' ? req.query.q.trim() : ''
+      if (q) {
+        res.json(searchStudentsByName(db, q))
+        return
+      }
       const classId =
         typeof req.query.classId === 'string' ? req.query.classId : ''
       const list = listStudentsByClass(db, classId)

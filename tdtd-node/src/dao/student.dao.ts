@@ -73,3 +73,11 @@ export function listStudentsByClass(
   const rows = db.prepare(STUDENT_QUERIES.listByClass).all(classId) as StudentDbRow[]
   return rows.map(mapStudentDbRow)
 }
+
+export function searchStudentsByName(
+  db: SqliteDatabase,
+  term: string,
+): StudentRow[] {
+  const rows = db.prepare(STUDENT_QUERIES.searchByName).all({ term }) as StudentDbRow[]
+  return rows.map(mapStudentDbRow)
+}
