@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<job id="import-students" xmlns="https://jakarta.ee/xml/ns/jakartaee" version="2.0">
+  <step id="import">
+    <chunk item-count="50" skip-limit="10000">
+      <reader ref="com.tdtd.batch.students.StudentImportReader">
+        <properties>
+          <property name="file" value="#{jobParameters['file']}"/>
+          <property name="classId" value="#{jobParameters['classId']}"/>
+        </properties>
+      </reader>
+      <processor ref="com.tdtd.batch.students.StudentImportProcessor"/>
+      <writer ref="com.tdtd.batch.students.StudentImportWriter">
+        <properties>
+          <property name="classId" value="#{jobParameters['classId']}"/>
+        </properties>
+      </writer>
+      <skippable-exception-classes>
+        <include class="com.tdtd.batch.students.InvalidStudentRowException"/>
+      </skippable-exception-classes>
+    </chunk>
+  </step>
+</job>
