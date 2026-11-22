@@ -13,6 +13,21 @@ export type SchoolSettings = {
   defaultSchoolYearId?: string
 }
 
+export type ComputedSubjectGrade = {
+  id: string
+  studentId: string
+  subjectId: string
+  classId: string
+  schoolYearId: string
+  quarter: number
+  rawScore?: number
+  transmutedGrade?: number
+  descriptor?: string
+  finalGrade?: number
+  manualOverride?: boolean
+  computedAt: number
+}
+
 export type ReportForm = 'sf1' | 'sf2' | 'sf4' | 'sf5' | 'sf9' | 'sf10'
 
 export function getSchoolSettings() {
@@ -30,23 +45,28 @@ export function computeGrades(
   classId: string,
   quarter: number,
   schoolYearId?: string,
-) {
-  return apiJson(`/api/deped/classes/${classId}/grades/compute`, {
-    method: 'POST',
-    body: JSON.stringify({ quarter, schoolYearId }),
-  })
+): Promise<ComputedSubjectGrade[]> {
+  return apiJson<ComputedSubjectGrade[]>(
+    `/api/deped/classes/${classId}/grades/compute`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ quarter, schoolYearId }),
+    },
+  )
 }
 
 export function listGrades(
   classId: string,
   quarter?: number,
   schoolYearId?: string,
-) {
+  subjectId?: string,
+): Promise<ComputedSubjectGrade[]> {
   const q = new URLSearchParams()
   if (quarter != null) q.set('quarter', String(quarter))
   if (schoolYearId) q.set('schoolYearId', schoolYearId)
+  if (subjectId) q.set('subjectId', subjectId)
   const qs = q.toString()
-  return apiJson(
+  return apiJson<ComputedSubjectGrade[]>(
     `/api/deped/classes/${classId}/grades${qs ? `?${qs}` : ''}`,
   )
 }

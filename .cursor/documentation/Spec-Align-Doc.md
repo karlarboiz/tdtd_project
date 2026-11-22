@@ -32,7 +32,7 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 |----------------|--------|-------|
 | **Speed** (faster than Excel) | **Partial** | Attendance has Select all and Home deep links; scores and attendance still use explicit Save buttons and multi-step flows |
 | **Offline-first** | **Scaffold** | Capacitor shell, sync routes, outbox — not usable offline; see [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) |
-| **DepEd automation** | **Not started** | SF forms, WW/PT/QA weights, quarter automation — future notes in schema docs only |
+| **DepEd automation** | **Partial** | Grading engine MVP (GAP-080–082); SF forms shipped; final grade/rank deferred — [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md) |
 | **Smart insights** | **Partial** | Student Lab summary stats only; no at-risk, trends, or AI layer |
 
 ---
@@ -99,8 +99,8 @@ Maps the **teacher-first product checklist** (12 areas + four priority different
 |-----------|--------|------------------|
 | One-click SF1, SF2, SF4, SF5, SF9, SF10 generation | **Shipped** | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md); batch jobs REP-004–REP-010; `GET /api/reports/*` |
 | Auto-fill report cards from encoded data | **Shipped** | GAP-085 — Reports page pre-fills from `computed_subject_grades` |
-| Quarter-based grading automation | **Shipped** | GAP-082 — [deped-grading.md](../schemas/deped-grading.md), grade computation API |
-| Built-in DepEd grading logic (WW/PT/QA weights) | **Shipped** | GAP-080–081 — `score_events.quarter`, `assessment_bucket`, transmutation |
+| Quarter-based grading automation | **Partial** | GAP-082 MVP — quarter compute works when events have quarter+bucket; calendar config deferred |
+| Built-in DepEd grading logic (WW/PT/QA weights) | **Partial** | GAP-080–081 MVP — bucket on create, official transmutation; configurable weights deferred |
 | Export-ready PDF/Excel (DepEd formats) | **Shipped** | [Report-Generation-Function-Doc.md](./Report-Generation-Function-Doc.md) REP-004–REP-010 |
 | LRN, address, parent info, school metadata | **Shipped** | GAP-087 — extended `students`, `school_settings`, [deped-forms.md](../schemas/deped-forms.md) |
 | DepEd attendance codes (absent/late/excused) | **Shipped** | GAP-088 — `daily_attendance_records` |

@@ -2,13 +2,13 @@
 
 Design for quarter-based grading, WW/PT/QA weights, transmutation, and descriptors. Powers SF5, SF9, SF10 exports.
 
-**Related:** [quiz.md](./quiz.md) · [deped-forms.md](./deped-forms.md) · [DepEd-School-Forms-Function-Doc.md](../documentation/DepEd-School-Forms-Function-Doc.md)
+**Related:** [quiz.md](./quiz.md) · [deped-forms.md](./deped-forms.md) · [DepEd-Grading-Engine-Function-Doc.md](../documentation/DepEd-Grading-Engine-Function-Doc.md) · [DepEd-School-Forms-Function-Doc.md](../documentation/DepEd-School-Forms-Function-Doc.md)
 
 ---
 
 ## Quarters
 
-Each **school year** has four quarters (Q1–Q4). Default date ranges (Philippines SY, configurable per `school_years`):
+Each **school year** has four quarters (Q1–Q4). Default date ranges (Philippines SY; configurable per school year — **post-MVP**, GAP-100):
 
 | Quarter | Typical range |
 |---------|---------------|
@@ -17,17 +17,13 @@ Each **school year** has four quarters (Q1–Q4). Default date ranges (Philippin
 | Q3 | November – December |
 | Q4 | January – March |
 
-Stored on `score_events.quarter` (1–4) and used when computing `computed_subject_grades`.
+Stored on `score_events.quarter` (1–4, **required on create**) and used when computing `computed_subject_grades`.
 
 ---
 
 ## Assessment buckets (WW / PT / QA)
 
-<<<<<<< Updated upstream
-DepEd K–12 component weights (defaults; may vary by grade level):
-=======
 DepEd K–12 component weights (defaults; **configurable** — GAP-103 shipped; see [Components-Weights-Function-Doc.md](../documentation/Components-Weights-Function-Doc.md)):
->>>>>>> Stashed changes
 
 | Grade band | WW | PT | QA |
 |------------|----|----|-----|
@@ -35,17 +31,16 @@ DepEd K–12 component weights (defaults; **configurable** — GAP-103 shipped; 
 | Grades 7–10 | 40% | 40% | 20% |
 | Grades 11–12 | 25% | 50% | 25% |
 
-**Mapping (GAP-081):**
+**Mapping (GAP-081 — shipped MVP):**
 
-| `score_events.kind` (legacy) | `assessment_bucket` |
-|------------------------------|---------------------|
-| QUIZ | WW |
-| PARTICIPATION | WW |
-| EXAM (quiz-style) | WW |
-| EXAM (performance) | PT |
-| EXAM (quarterly) | QA |
+| `score_events.kind` | `subtype` | `assessment_bucket` |
+|-----------------------|-----------|---------------------|
+| QUIZ | RZ, WZ, QZ | WW |
+| PARTICIPATION | — | WW |
+| EXAM | QE | QA |
+| EXAM | (none) | WW (override to PT for performance tasks) |
 
-Teachers set `assessment_bucket` explicitly: **`WW` | `PT` | `QA`**.
+Teachers may set `assessment_bucket` explicitly: **`WW` | `PT` | `QA`**. UI subtype codes stored on `score_events.subtype`.
 
 ### Grading system profiles (GAP-103)
 
@@ -79,7 +74,7 @@ For each student, subject, quarter:
 
 1. Collect all `score_entries` for events in that quarter + subject + class.
 2. Per bucket: average raw scores (respecting `maxScore` → percentage if set).
-3. Apply bucket weights → **quarter raw percentage**.
+3. Apply bucket weights → **quarter raw percentage** (`rawScore`).
 4. **Transmute** to 60–100 scale (see table below).
 5. Store in `computed_subject_grades`.
 
@@ -91,9 +86,9 @@ For each student, subject, quarter:
 | 98.40–99.99 | 99 |
 | 96.80–98.39 | 98 |
 | … | (DepEd standard table) |
-| 0–39.99 | 60 |
+| 0–3.99 | 60 |
 
-Implementation: `tdtd-node/src/lib/transmutation.ts` — lookup or formula per DepEd MATATAG guidelines.
+Implementation: `tdtd-node/src/lib/transmutation.ts` — official DepEd lookup bands.
 
 ---
 
@@ -111,9 +106,22 @@ Implementation: `tdtd-node/src/lib/transmutation.ts` — lookup or formula per D
 
 ## Final grade and general average
 
-- **Final grade per subject:** average of Q1–Q4 transmuted grades (or weighted by school policy).
+- **Final grade per subject:** average of Q1–Q4 transmuted grades (or weighted by school policy). **Post-MVP** (GAP-101).
 - **General average (GA):** mean of final grades across learning areas for the student.
 - **Promotion (SF5):** PROMOTED if GA ≥ 75 and no subject below 75; CONDITIONAL/RETAINED per school rules.
+
+---
+
+## score_events (DepEd fields)
+
+```
+score_events: {
+  ...
+  quarter: number // 1–4, required on create
+  assessmentBucket?: string // "WW" | "PT" | "QA"
+  subtype?: string // UI code: RZ, WZ, QZ, QE
+}
+```
 
 ---
 
@@ -126,8 +134,8 @@ computed_subject_grades: {
   subjectId: string
   classId: string
   schoolYearId: string
-  quarter: number // 1–4, or 0 for final
-  rawScore?: number
+  quarter: number // 1–4, or 0 for final (post-MVP)
+  rawScore?: number // initial weighted grade before transmutation
   transmutedGrade?: number
   descriptor?: string
   finalGrade?: number // when quarter=0 or end-of-year
@@ -144,22 +152,21 @@ computed_subject_grades: {
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/classes/:classId/grades?quarter=&subjectId=` | List computed grades |
-| POST | `/api/classes/:classId/grades/compute` | Recompute from score events |
-| PATCH | `/api/classes/:classId/grades/:gradeId` | Manual override (adviser adjustment) |
+| GET | `/api/deped/classes/:classId/grades?quarter=&subjectId=&schoolYearId=` | List computed grades |
+| POST | `/api/deped/classes/:classId/grades/compute` | Recompute from score events |
+| PATCH | `/api/deped/classes/:classId/grades/:gradeId` | Manual override — **post-MVP** (GAP-102) |
+
+Score event create: `POST /api/classes/:classId/score-events` with `quarter`, optional `subtype`, `assessmentBucket`.
 
 ---
 
-## Future extensions
+## Post-MVP extensions
 
-<<<<<<< Updated upstream
-=======
 - `school_year_quarters` calendar config (GAP-100)
 - Final grade row (`quarter = 0`) and class rank (GAP-101)
 - Manual grade override API (GAP-102)
 - ~~Configurable WW/PT/QA weights (GAP-103)~~ — shipped ([Components-Weights-Function-Doc.md](../documentation/Components-Weights-Function-Doc.md))
 - Performance exam subtype for PT (GAP-104)
->>>>>>> Stashed changes
 - Conduct/values grades (SF9 section)
 - Per-subject transmutation overrides
 - SHS strand-specific weights (Grades 11–12)

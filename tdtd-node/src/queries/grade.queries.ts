@@ -11,13 +11,14 @@ export const GRADE_QUERIES = {
   upsert: `
     INSERT INTO computed_subject_grades (
       id, student_id, subject_id, class_id, school_year_id, quarter,
-      transmuted_grade, descriptor, final_grade, manual_override, computed_at
+      raw_score, transmuted_grade, descriptor, final_grade, manual_override, computed_at
     )
     VALUES (
       @id, @student_id, @subject_id, @class_id, @school_year_id, @quarter,
-      @transmuted_grade, @descriptor, @final_grade, @manual_override, @computed_at
+      @raw_score, @transmuted_grade, @descriptor, @final_grade, @manual_override, @computed_at
     )
     ON CONFLICT(student_id, subject_id, school_year_id, quarter) DO UPDATE SET
+      raw_score = excluded.raw_score,
       transmuted_grade = excluded.transmuted_grade,
       descriptor = excluded.descriptor,
       final_grade = excluded.final_grade,
@@ -27,11 +28,12 @@ export const GRADE_QUERIES = {
   listByClass: `
     SELECT
       id, student_id, subject_id, class_id, school_year_id, quarter,
-      transmuted_grade, descriptor, final_grade, manual_override, computed_at
+      raw_score, transmuted_grade, descriptor, final_grade, manual_override, computed_at
     FROM computed_subject_grades
     WHERE class_id = @class_id
       AND school_year_id = @school_year_id
       AND (@quarter IS NULL OR quarter = @quarter)
+      AND (@subject_id IS NULL OR subject_id = @subject_id)
     ORDER BY student_id, subject_id, quarter
   `,
   scoresForComputation: `

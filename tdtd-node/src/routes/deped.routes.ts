@@ -270,6 +270,8 @@ export function depedRouter(db: SqliteDatabase): Router {
 
       : undefined
 
+    const subjectId = req.query.subjectId as string | undefined
+
     if (!schoolYearId) {
 
       res.status(400).json({ error: 'no active school year' })
@@ -278,7 +280,11 @@ export function depedRouter(db: SqliteDatabase): Router {
 
     }
 
-    res.json(deped.listGradesByClass(db, userId, classId, schoolYearId, quarter))
+    res.json(
+
+      deped.listGradesByClass(db, userId, classId, schoolYearId, quarter, subjectId),
+
+    )
 
   })
 

@@ -171,8 +171,8 @@ Large epic; schema future notes in [core.md](../schemas/core.md), [quiz.md](../s
 | ID | Title | Spec § | Source doc | Depends | Closes |
 |----|-------|--------|------------|---------|--------|
 | GAP-080 | Design doc: quarters, WW/PT/QA weights, transmutation | §5 | [deped-grading.md](../schemas/deped-grading.md) | Stable score history | Built-in DepEd grading logic |
-| GAP-081 | Map `score_events` kinds/subtypes to WW/PT/QA buckets | §5 | [quiz.md](../schemas/quiz.md) | GAP-080 | Quarter-based grading automation |
-| GAP-082 | Quarter grade computation API | §5 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | GAP-081 | Quarter-based grading automation |
+| GAP-081 | Map `score_events` kinds/subtypes to WW/PT/QA buckets | §5 | [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md) | GAP-080 | Quarter-based grading automation |
+| GAP-082 | Quarter grade computation API | §5 | [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md) | GAP-081 | Quarter-based grading automation |
 | GAP-087 | School settings + student enrollment schema (LRN, address, parents) | §5 | [deped-forms.md](../schemas/deped-forms.md), [core.md](../schemas/core.md) | — | SF1/SF9/SF10 headers |
 | GAP-088 | DepEd attendance codes + daily register | §5 | [attendance.md](../schemas/attendance.md) | — | SF2, SF4, SF1 monthly cols |
 | GAP-089 | SF2 generation (PDF/Excel) | §5 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | GAP-087, GAP-088 | Daily attendance report |
@@ -184,9 +184,6 @@ Large epic; schema future notes in [core.md](../schemas/core.md), [quiz.md](../s
 | GAP-085 | Auto-fill report cards from computed grades | §5 | [DepEd-School-Forms-Function-Doc.md](./DepEd-School-Forms-Function-Doc.md) | GAP-082 | Auto-fill report cards |
 | GAP-086 | DueList: quarter deadline approaching | §10 | [Mobile-App-Version-Plan.md](./Mobile-App-Version-Plan.md) optional deadlines | GAP-082 | Quarter deadline approaching |
 
-<<<<<<< Updated upstream
-**Suggested P7 order:** GAP-080 → GAP-081 → GAP-082; GAP-087 ∥ GAP-088 → GAP-089 → GAP-097 → GAP-083 → GAP-084 + GAP-099 → GAP-098 → GAP-085 → GAP-086
-=======
 **Suggested P7 order:** GAP-080 → GAP-081 → GAP-082 (MVP shipped — see [DepEd-Grading-Engine-Function-Doc.md](./DepEd-Grading-Engine-Function-Doc.md)); GAP-087 ∥ GAP-088 → GAP-089 → GAP-097 → GAP-083 → GAP-084 + GAP-099 → GAP-098 → GAP-085 → GAP-086
 
 ### Post-MVP grading (deferred)
@@ -199,7 +196,6 @@ Large epic; schema future notes in [core.md](../schemas/core.md), [quiz.md](../s
 | ~~GAP-103~~ | ~~Configurable WW/PT/QA weights per SY/grade~~ | Shipped — [Components-Weights-Function-Doc.md](./Components-Weights-Function-Doc.md) |
 | GAP-104 | Performance exam subtype (PT default) | Same |
 | GAP-105 | Auto recompute on score save | Same |
->>>>>>> Stashed changes
 
 ---
 
