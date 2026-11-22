@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines **global** daily attendance: one session per calendar date + period (AM/PM), with an explicit per-student status of `present`, `absent`, or `late`.
+Defines **per-teacher** daily attendance: one session per teacher + calendar date + period (AM/PM), with an explicit per-student status of `present`, `absent`, `late`, or `excused`. See [GAP-001.md](../gaps/GAP-001.md).
 
 Depends on [core.md](./core.md) (`classes`, `students`). Class filtering at save time uses `classes.shift` vs session `period`.
 
@@ -17,6 +17,7 @@ Represents a single attendance event for a specific day and period.
 ```
 attendance_sessions: {
   id: string (uuid, primary key)
+  userId: string // FK → users.id — owning teacher (GAP-001)
   date: string // format: "YYYY-MM-DD"
   period: string // "AM" | "PM"
   createdAt: number (timestamp)
@@ -32,7 +33,7 @@ attendance_records: {
   id: string (uuid, primary key)
   sessionId: string // FK → attendance_sessions.id
   studentId: string // FK → students.id
-  status: string // "present" | "absent" | "late"
+  status: string // present | absent | late | excused (DepEd codes)
   timestamp: number
 }
 ```
@@ -43,16 +44,33 @@ attendance_records: {
 
 ### attendance_sessions
 
-- One session per **date + period** (globally, not per class).
-- Prevent duplicate sessions for same date + period (`UNIQUE(date, period)` in SQLite).
-- Do NOT include `classId` — this is a **global** attendance session.
+- One session per **teacher + date + period** (not per class).
+- Prevent duplicate sessions for same teacher + date + period (`UNIQUE(user_id, date, period)` in SQLite).
+- Do NOT include `classId` — session is per-teacher; class filtering uses `classes.shift` vs session `period`.
 
 ### attendance_records
 
 - One record per student per session (`UNIQUE(session_id, student_id)`).
-- `status` is **`present`**, **`absent`**, or **`late`** (`CHECK (status IN ('present', 'absent', 'late'))`).
+- `status` values (GAP-088): **`present`**, **`absent`**, **`late`**, **`excused`**.
 - Saving a class writes one row per student on that roster. Each row stores the chosen status. A missing row is not an absent or late mark.
 - Must reference valid session and student.
+
+### daily_attendance_records
+
+One coded mark per learner per school day — see [deped-forms.md](./deped-forms.md).
+
+```
+daily_attendance_records: {
+  id: string (uuid, primary key)
+  studentId: string
+  date: string // YYYY-MM-DD
+  status: string // present | absent | late | excused
+  classId: string
+  updatedAt: number (timestamp)
+}
+```
+
+**Unique:** `(student_id, date)`
 
 ---
 
@@ -74,7 +92,7 @@ Attendance records link students to a session; classes are used only when filter
 
 See `tdtd-node/src/db/migrate.ts`:
 
-- `attendance_sessions`: primary key; **`UNIQUE(date, period)`**; `idx_sessions_date` on `date`.
+- `attendance_sessions`: primary key; **`UNIQUE(user_id, date, period)`**; `idx_sessions_user_date` on `(user_id, date)`.
 - `attendance_records`: primary key; **`UNIQUE(session_id, student_id)`**; indexes on `session_id`, `student_id`.
 
 ---
@@ -89,12 +107,14 @@ See `tdtd-node/src/db/migrate.ts`:
 
 1. Check if a session exists for the selected **date** and **period**.
 2. If NOT → create new session.
-3. Replace that class's records in the session: one row per submitted student, with status `present`, `absent`, or `late`.
+3. Replace that class's records in the session: one row per submitted student, with status `present`, `absent`, `late`, or `excused`.
 
 ### Class / shift filtering
 
 - **AM** attendance → offer only classes with `shift = MRNG`.
 - **PM** attendance → offer only classes with `shift = AFTNN`.
+
+Roster setup rules (do not duplicate the same children under both shifts): [core.md](./core.md) **Class shift and roster rules**, [Classes-Function-Doc.md](../documentation/Classes-Function-Doc.md).
 
 ### Frontend session route
 
@@ -104,8 +124,8 @@ See `tdtd-node/src/db/migrate.ts`:
 ### Data integrity
 
 - Do NOT create multiple sessions for the same date + period (DB enforces uniqueness).
-- API in **tdtd-node** rejects any status outside `present`, `absent`, and `late`, and requires a status for every submitted class student.
-- Existing databases rebuild `attendance_records` when the CHECK is still present-only. Copied rows keep `status = present`. SQLite cannot `ALTER` a CHECK constraint.
+- API in **tdtd-node** accepts `present`, `absent`, `late`, and `excused`, and requires a status for every submitted class student.
+- Existing databases rebuild `attendance_records` when the CHECK is still present-only, including `excused`. Copied rows keep their status. SQLite cannot `ALTER` a CHECK constraint.
 
 ---
 
@@ -121,4 +141,10 @@ See `tdtd-node/src/db/migrate.ts`:
 
 ## Status values
 
-Shipped on `attendance_records.status`: **`present`**, **`absent`**, and **`late`**. See ATT-006 in [Attendance-Function-Doc.md](../documentation/Attendance-Function-Doc.md).
+Shipped on `attendance_records.status`: **`present`**, **`absent`**, **`late`**, and **`excused`**. See ATT-011 in [Attendance-Function-Doc.md](../documentation/Attendance-Function-Doc.md).
+
+Do not implement yet:
+
+- Cutting class / on_leave status codes (optional v2).
+
+**DepEd daily register and SF2/SF4 exports** — shipped; see [deped-forms.md](./deped-forms.md).

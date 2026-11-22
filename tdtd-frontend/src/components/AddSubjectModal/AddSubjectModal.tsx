@@ -1,12 +1,12 @@
 import { type FormEvent, useEffect, useId, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { registerSchoolYearSubject } from '../../api/schoolYearApi'
 import { ApiError } from '../../lib/http'
+import { Button } from '@/components/Button/Button'
 import {
   errorAlertClass,
   formInputClasses,
   formLabelClass,
-  primaryButtonClass,
-  secondaryButtonClass,
 } from '@/lib/uiClasses'
 
 type AddSubjectModalProps = {
@@ -73,18 +73,22 @@ export function AddSubjectModal({
 
   const inputError = Boolean(error)
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
       role="presentation"
-      onClick={onClose}
     >
+      <button
+        type="button"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 max-h-[min(90svh,640px)] w-full max-w-md overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] shadow-xl sm:rounded-2xl sm:pb-5"
       >
         <h2 id={titleId} className="text-lg font-semibold text-slate-900">
           Add subject
@@ -143,24 +147,22 @@ export function AddSubjectModal({
             />
           </div>
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               disabled={busy}
               onClick={onClose}
-              className={`px-4 py-2.5 text-sm ${secondaryButtonClass}`}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={busy}
-              className={`px-4 py-2.5 text-sm ${primaryButtonClass}`}
-            >
+            </Button>
+            <Button type="submit" size="sm" disabled={busy}>
               {busy ? 'Saving…' : 'Add subject'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

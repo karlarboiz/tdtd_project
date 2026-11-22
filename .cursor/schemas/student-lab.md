@@ -8,7 +8,7 @@ Defines the **Student Lab** feature: a student-centric **read-only** view aggreg
 
 **Depends on:**
 
-- [core.md](./core.md) — `students`, `classes` (`shift` drives attendance session eligibility)
+- [core.md](./core.md) — `students`, `classes` (`shift` drives attendance session eligibility; roster rules: **Class shift and roster rules**)
 - [attendance.md](./attendance.md) — `attendance_sessions`, `attendance_records`
 - [quiz.md](./quiz.md) — `score_events`, `score_entries`
 - [subjects.md](./subjects.md) — `subjects` (display name on score rows)
@@ -37,12 +37,30 @@ Base: `/api/students`
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| GET | `/?classId=` | Roster for one class |
+| GET | `/?q=` | Cross-class name search (first, middle, and last) |
 | GET | `/:studentId` | Student + class context (header / picker validation) |
 | GET | `/:studentId/lab` | Aggregated lab payload (profile + attendance + scores) |
 
-Existing list route unchanged: `GET /api/students?classId=`.
+`GET /api/students?classId=` is unchanged when `q` is omitted.
 
 Register `/:studentId/lab` **before** or alongside `/:studentId` so `lab` is not parsed as an id.
+
+---
+
+## Query parameters — `GET /` (list)
+
+| Param | Required | Used for |
+|--------|----------|----------|
+| `classId` | Required when `q` is omitted | Roster for one class. Unknown class → 404. |
+| `q` | No | Name search across the signed-in teacher's classes. When non-empty after trim, `classId` is ignored. |
+
+**Name match** (case-insensitive substring; repeated spaces collapsed):
+
+- Display name: `firstName`, optional `middleName`, `lastName`.
+- `firstName` + `lastName`, so a middle name does not hide a “First Last” query.
+
+A middle-name-only query matches because the display name includes it. Results use the same order as a class roster (`last_name`, then `first_name`, `NOCASE`) and are limited to classes owned by the authenticated teacher. This GET is not written to activity logs.
 
 ---
 
@@ -213,6 +231,8 @@ No migration required. Queries rely on:
 ## Future extensions (not in v1)
 
 - `PATCH /api/students/:studentId` from Student Lab UI.
-- Recents deep link when `metadata.studentId` is set.
-- Cross-class student search on `/student-lab`.
 - Charts, PDF export, photo on profile card.
+
+**Shipped:** Cross-class student search on `/student-lab` (`GET /api/students?q=`). The class select and selected-class roster stay. See LAB-002 in [Student-Lab-Function-Doc.md](../documentation/Student-Lab-Function-Doc.md).
+
+**Shipped:** Recents opens `/student-lab/:studentId` when `metadata.studentId` is set and the log has no `eventId` or attendance `date`. See REC-003 in [Recents-Function-Doc.md](../documentation/Recents-Function-Doc.md).

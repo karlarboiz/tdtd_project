@@ -10,6 +10,9 @@ export interface ClassRow {
   id: string
   name: string
   shift: ClassShift
+  gradeLevel?: string
+  sectionName?: string
+  classAdviserName?: string
   createdAt: number
   updatedAt?: number
 }
@@ -22,6 +25,24 @@ export interface StudentRow {
   birthDate: string
   gender: StudentGenderCode
   classId: string
+  lrn?: string
+  learnerStatus?: string
+  houseNo?: string
+  street?: string
+  barangay?: string
+  cityMunicipality?: string
+  province?: string
+  fatherName?: string
+  motherName?: string
+  guardianName?: string
+  parentContact?: string
+  motherTongue?: string
+  religion?: string
+  is4ps?: boolean
+  isIp?: boolean
+  dateEnrolled?: string
+  previousSchool?: string
+  lastGradeCompleted?: string
   createdAt: number
 }
 
@@ -32,10 +53,28 @@ export type StudentUpsertPayload = {
   lastName: string
   birthDate: string
   gender: string
+  lrn?: string
+  learnerStatus?: string
+  houseNo?: string
+  street?: string
+  barangay?: string
+  cityMunicipality?: string
+  province?: string
+  fatherName?: string
+  motherName?: string
+  guardianName?: string
+  parentContact?: string
+  motherTongue?: string
+  religion?: string
+  is4ps?: boolean
+  isIp?: boolean
+  dateEnrolled?: string
+  previousSchool?: string
+  lastGradeCompleted?: string
 }
 
 /** Stored on attendance_records.status. */
-export type AttendanceRecordStatus = 'present' | 'absent' | 'late'
+export type AttendanceRecordStatus = 'present' | 'absent' | 'late' | 'excused'
 
 export interface AttendanceSessionRow {
   id: string
@@ -43,6 +82,8 @@ export interface AttendanceSessionRow {
   period: AttendancePeriod
   createdAt: number
 }
+
+export type AssessmentBucket = 'WW' | 'PT' | 'QA'
 
 export type ScoreEventKind = 'QUIZ' | 'EXAM' | 'PARTICIPATION'
 
@@ -88,6 +129,9 @@ export interface ScoreEventRow {
   classId: string
   subjectId: string
   kind: ScoreEventKind
+  quarter?: number
+  assessmentBucket?: AssessmentBucket
+  subtype?: string
   title: string
   date?: string
   maxScore?: number
@@ -154,6 +198,34 @@ export interface StudentLabProfile {
   class: ClassRow
 }
 
+export type TeacherReminderType = 'ATTENDANCE_DUE'
+
+export type TeacherReminderStatus = 'open' | 'dismissed' | 'resolved'
+
+export interface TeacherReminderRow {
+  id: string
+  type: TeacherReminderType
+  date: string
+  period: AttendancePeriod
+  status: TeacherReminderStatus
+  message: string
+  createdAt: number
+  resolvedAt?: number
+}
+
+export type DueItemKind = 'ATTENDANCE_DUE'
+
+export interface DueItem {
+  id: string
+  kind: DueItemKind
+  title: string
+  message: string
+  date: string
+  period?: AttendancePeriod
+  actionPath: string
+  createdAt: number
+}
+
 export interface StudentLabPayload {
   profile: StudentLabProfile
   attendance: {
@@ -165,4 +237,24 @@ export interface StudentLabPayload {
     recentExams: StudentLabScoreRow[]
     recentParticipation: StudentLabScoreRow[]
   }
+}
+
+export type UserRole = 'admin' | 'teacher'
+
+export interface AuthUser {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: UserRole
+  isActive: boolean
+  passwordChangedAt: number
+  mustChangePassword: boolean
+  passwordExpiresAt: number
+}
+
+export interface AuthTokensResponse {
+  accessToken: string
+  refreshToken: string
+  user: AuthUser
 }

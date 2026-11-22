@@ -22,6 +22,13 @@ export type {
   StudentLabScoreRow,
   StudentRow,
   SubjectRow,
+  UserRole,
+  UserRow,
+  RefreshTokenRow,
+  AuthUser,
+  AuthTokensResponse,
+  GovernmentHolidayType,
+  GovernmentHolidayRow,
 } from './types.js'
 export {
   TEACHER_APP_SQLITE_FILENAME,

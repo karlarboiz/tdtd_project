@@ -1,17 +1,18 @@
-import type { Request, Response } from 'express'
+import type { Response } from 'express'
 import type { SqliteDatabase } from '../db/sqlite-types.js'
 import { HttpError } from '../errors/http-error.js'
+import type { AuthenticatedRequest } from '../middleware/authenticate.js'
 import {
   getStudentLab,
   getStudentProfile,
 } from '../services/studentLab.service.js'
 
 export function getStudentProfileHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const studentId =
         typeof req.params.studentId === 'string' ? req.params.studentId : ''
-      const profile = getStudentProfile(db, studentId)
+      const profile = getStudentProfile(db, req.auth!.id, studentId)
       res.json(profile)
     } catch (e) {
       if (e instanceof HttpError) {
@@ -25,12 +26,12 @@ export function getStudentProfileHandler(db: SqliteDatabase) {
 }
 
 export function getStudentLabHandler(db: SqliteDatabase) {
-  return (req: Request, res: Response): void => {
+  return (req: AuthenticatedRequest, res: Response): void => {
     try {
       const studentId =
         typeof req.params.studentId === 'string' ? req.params.studentId : ''
       const q = req.query
-      const payload = getStudentLab(db, studentId, {
+      const payload = getStudentLab(db, req.auth!.id, studentId, {
         from: typeof q.from === 'string' ? q.from : undefined,
         to: typeof q.to === 'string' ? q.to : undefined,
         scoresFrom: typeof q.scoresFrom === 'string' ? q.scoresFrom : undefined,

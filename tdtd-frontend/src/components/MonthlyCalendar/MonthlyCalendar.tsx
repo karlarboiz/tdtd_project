@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { toYMD, startOfLocalDay } from '../../lib/dates'
+import { isWeekendDate, toYMD, startOfLocalDay } from '../../lib/dates'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -13,7 +13,12 @@ type Cell =
       isToday: boolean
     }
 
-function buildMonthGrid(year: number, month: number, today: Date): Cell[] {
+function buildMonthGrid(
+  year: number,
+  month: number,
+  today: Date,
+  nonSchoolDates?: ReadonlySet<string>,
+): Cell[] {
   const todayStart = startOfLocalDay(today).getTime()
   const first = new Date(year, month, 1)
   const startWeekday = first.getDay()
@@ -26,10 +31,10 @@ function buildMonthGrid(year: number, month: number, today: Date): Cell[] {
     const date = new Date(year, month, d)
     const ymd = toYMD(date)
     const dayStart = startOfLocalDay(date).getTime()
-    const dow = date.getDay()
-    const isWeekend = dow === 0 || dow === 6
+    const isWeekend = isWeekendDate(date)
+    const isHoliday = nonSchoolDates?.has(ymd) ?? false
     const isFuture = dayStart > todayStart
-    const disabled = isFuture || isWeekend
+    const disabled = isFuture || isWeekend || isHoliday
     const isToday = dayStart === todayStart
     cells.push({
       kind: 'day',
@@ -46,6 +51,12 @@ type MonthlyCalendarProps = {
   onSelectDate: (ymd: string) => void
   /** Dates (YYYY-MM-DD) that already have at least one saved attendance session */
   sessionDatesWithSavedAttendance?: ReadonlySet<string>
+  /** Weekday dates on or before today with at least one missing AM/PM session */
+  sessionDatesWithMissedAttendance?: ReadonlySet<string>
+  /** Non-school weekdays (government holidays) to gray out */
+  nonSchoolDates?: ReadonlySet<string>
+  /** Holiday names keyed by YYYY-MM-DD for accessible labels */
+  holidayNamesByDate?: ReadonlyMap<string, string>
   /** Called when the visible month/year changes (including initial mount). */
   onVisibleMonthChange?: (year: number, month: number) => void
 }
@@ -53,6 +64,9 @@ type MonthlyCalendarProps = {
 export function MonthlyCalendar({
   onSelectDate,
   sessionDatesWithSavedAttendance,
+  sessionDatesWithMissedAttendance,
+  nonSchoolDates,
+  holidayNamesByDate,
   onVisibleMonthChange,
 }: MonthlyCalendarProps) {
   const today = useMemo(() => new Date(), [])
@@ -71,8 +85,8 @@ export function MonthlyCalendar({
   )
 
   const grid = useMemo(
-    () => buildMonthGrid(view.year, view.month, today),
-    [today, view.month, view.year],
+    () => buildMonthGrid(view.year, view.month, today, nonSchoolDates),
+    [today, view.month, view.year, nonSchoolDates],
   )
 
   useEffect(() => {
@@ -101,16 +115,16 @@ export function MonthlyCalendar({
         <button
           type="button"
           onClick={goPrev}
-          className="rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
           aria-label="Previous month"
         >
           ←
         </button>
-        <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-center text-base font-semibold text-slate-800 sm:text-lg">{title}</h2>
         <button
           type="button"
           onClick={goNext}
-          className="rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-neutral-bg px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-secondary hover:bg-teal-50 disabled:cursor-not-allowed"
           aria-label="Next month"
         >
           →
@@ -135,17 +149,27 @@ export function MonthlyCalendar({
           const hasSavedAttendance =
             !disabled &&
             (sessionDatesWithSavedAttendance?.has(ymd) ?? false)
+          const hasMissedAttendance =
+            !disabled &&
+            (sessionDatesWithMissedAttendance?.has(ymd) ?? false)
           const dayLabel = cell.date.toLocaleDateString(undefined, {
             weekday: 'long',
             month: 'long',
             day: 'numeric',
             year: 'numeric',
           })
+          const holidayName = holidayNamesByDate?.get(ymd)
           const ariaLabel = disabled
-            ? undefined
-            : hasSavedAttendance
-              ? `${dayLabel}, attendance saved`
-              : `${dayLabel}, select to take attendance`
+            ? holidayName
+              ? `${dayLabel}, ${holidayName}, no attendance`
+              : undefined
+            : hasSavedAttendance && hasMissedAttendance
+              ? `${dayLabel}, attendance partially saved`
+              : hasSavedAttendance
+                ? `${dayLabel}, attendance saved`
+                : hasMissedAttendance
+                  ? `${dayLabel}, attendance missed`
+                  : `${dayLabel}, select to take attendance`
           return (
             <button
               key={ymd}
@@ -162,11 +186,15 @@ export function MonthlyCalendar({
               ].join(' ')}
             >
               <span>{cell.date.getDate()}</span>
-              {hasSavedAttendance && (
-                <span
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                  aria-hidden
-                />
+              {(hasSavedAttendance || hasMissedAttendance) && (
+                <span className="flex flex-row gap-0.5" aria-hidden>
+                  {hasSavedAttendance ? (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  ) : null}
+                  {hasMissedAttendance ? (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500 ring-1 ring-red-600" />
+                  ) : null}
+                </span>
               )}
             </button>
           )

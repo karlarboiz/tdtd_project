@@ -16,6 +16,7 @@ All generated code must follow those schemas. Do not modify schema structure unl
 - **Frontend** (`tdtd-frontend`) uses the API only — no embedded offline database.
 - **DDL:** `tdtd-node/src/db/migrate.ts`
 - **REST base path:** `/api` (`tdtd-node/src/app.ts`)
+- **Multi-teacher ownership (GAP-001):** Domain rows scoped by `user_id` — see [GAP-001.md](../gaps/GAP-001.md).
 - Limited offline/sync may be added later for specific features — not the default model.
 
 Full index: [schemas/README.md](../schemas/README.md).
@@ -40,7 +41,7 @@ Subject tables (`school_years`, `subjects`, `school_year_subjects`, `class_subje
 ## Expected usage flow
 
 1. Set active school year and register subjects ([subjects.md](../schemas/subjects.md))
-2. Create class ([core.md](../schemas/core.md))
+2. Create class ([core.md](../schemas/core.md)) — one **section** per row: set `shift` to `MRNG` or `AFTNN`; do not mirror the same roster under both (see **Class shift and roster rules** in core.md and [Classes-Function-Doc.md](../documentation/Classes-Function-Doc.md))
 3. Add students ([core.md](../schemas/core.md))
 4. Assign subjects to classes ([subjects.md](../schemas/subjects.md))
 5. Select date and period (AM/PM)
